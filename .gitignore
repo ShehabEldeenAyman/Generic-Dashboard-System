@@ -1,4 +1,4 @@
-*.jar
+pipeline/rmlmapper.jar
 # Logs
 logs
 *.log
