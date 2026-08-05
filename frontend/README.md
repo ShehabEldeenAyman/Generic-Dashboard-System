@@ -1,6 +1,6 @@
 # Generic Semantic Pipeline Dashboard
 
-React and Vite frontend for CSV upload, semantic pipeline configuration, artifact previews, validation reports, and LDES ZIP downloads.
+React and Vite frontend for CSV/XLSX upload, semantic pipeline configuration, artifact previews, validation reports, and LDES ZIP downloads.
 
 ```powershell
 npm install

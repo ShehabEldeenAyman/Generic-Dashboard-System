@@ -60,6 +60,10 @@ button { cursor: pointer; }
 .workspace-header > div > p:last-child { max-width: 720px; margin: 19px 0 0; color: #687a80; font-size: .91rem; line-height: 1.65; }
 .secondary-button { flex: 0 0 auto; padding: 10px 14px; border: 1px solid #cdd8d9; border-radius: 8px; color: #3a5157; background: rgba(255,255,255,.65); font-size: .73rem; font-weight: 750; }
 .secondary-button:hover { border-color: #9eb4b6; background: #fff; }
+.secondary-button:disabled { cursor: not-allowed; opacity: .55; }
+.danger-button { border-color: #e9b8ae; color: #a44231; background: #fff8f6; }
+.danger-button:hover { border-color: #d99283; background: #fff1ed; }
+.danger-button .spinner { margin-right: 6px; border-color: rgba(164,66,49,.25); border-top-color: #a44231; }
 .system-strip { display: grid; grid-template-columns: repeat(4,1fr); max-width: 1180px; margin: 0 auto 20px; overflow: hidden; border: 1px solid #d8e1e1; border-radius: 11px; background: rgba(255,255,255,.58); }
 .system-strip > div { padding: 14px 17px; border-right: 1px solid #dce4e4; }
 .system-strip > div:last-child { border-right: 0; }
@@ -90,6 +94,10 @@ button { cursor: pointer; }
 .stage-controls { display: grid; gap: 14px; margin-top: 23px; }
 .stage-actions { display: flex; align-items: center; gap: 13px; margin-top: 15px; }
 .stage-actions > span { color: #899698; font-size: .67rem; }
+.upload-delete-actions { padding-top: 2px; }
+.delete-confirmation { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-top: 15px; padding: 13px 14px; border: 1px solid #edc1b8; border-radius: 9px; background: #fff7f4; }
+.delete-confirmation strong, .delete-confirmation span { display: block; }.delete-confirmation strong { color: #8f3829; font-size: .72rem; }.delete-confirmation span { margin-top: 4px; color: #866b65; font-size: .64rem; line-height: 1.45; }
+.delete-confirmation > div:last-child { display: flex; flex: 0 0 auto; gap: 8px; }
 .run-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 132px; min-height: 38px; padding: 9px 14px; border: 0; border-radius: 8px; color: #fff; background: var(--accent); box-shadow: 0 5px 15px rgba(228,78,42,.17); font-size: .72rem; font-weight: 800; }
 .run-button:hover:not(:disabled) { background: #e95a36; transform: translateY(-1px); }
 .run-button:disabled { cursor: not-allowed; color: #93a0a2; background: #e7ebeb; box-shadow: none; }
@@ -162,5 +170,5 @@ details { margin-top: 11px; }.stage-feedback summary { color: #587075; cursor: p
   .workspace { padding: 30px 13px 50px; }.workspace-header { flex-direction: column; }.workspace-header h1 { font-size: 2.25rem; }.system-strip { grid-template-columns: 1fr 1fr; }
   .pipeline-stage { grid-template-columns: 38px minmax(0,1fr); }.stage-main { padding: 20px 15px; }.stage-title-row { flex-direction: column; gap: 12px; }.status-pill { align-self: flex-start; }
   .drop-zone { align-items: flex-start; flex-wrap: wrap; }.drop-zone > b { margin-left: 65px; }.two-column { grid-template-columns: 1fr; }.preview-meta { align-items: flex-start; flex-direction: column; }.preview-meta > div:last-child { flex-wrap: wrap; }
-  .stage-actions { align-items: flex-start; flex-direction: column; }.run-button { width: 100%; }.stage-feedback > div:first-child { flex-direction: column; }.artifact-drawer { padding: 20px 14px; }
+  .stage-actions { align-items: flex-start; flex-direction: column; }.run-button { width: 100%; }.delete-confirmation { align-items: stretch; flex-direction: column; }.delete-confirmation > div:last-child { flex-wrap: wrap; }.stage-feedback > div:first-child { flex-direction: column; }.artifact-drawer { padding: 20px 14px; }
 }

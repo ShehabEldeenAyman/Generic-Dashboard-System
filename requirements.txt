@@ -1,5 +1,6 @@
 pywaterinfo
 pandas
+openpyxl
 rdflib
 requests
 python-dateutil

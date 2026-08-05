@@ -1,12 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
 
 const API = import.meta.env.VITE_PIPELINE_API_URL || 'http://localhost:8000'
 const completedStatuses = new Set(['success', 'nonconformant'])
 
 const stageDefinitions = [
-  { id: 'upload', title: 'Upload CSV', eyebrow: 'Data input', description: 'Upload a CSV file and inspect a parsed preview before processing begins.' },
-  { id: 'rml', title: 'Map CSV to RDF', eyebrow: 'RML mapping', description: 'Paste your RML mapping and run RMLMapper against the uploaded filename.' },
+  { id: 'upload', title: 'Upload tabular data', eyebrow: 'Data input', description: 'Upload a CSV file or Excel workbook and inspect a parsed preview before processing begins.' },
+  { id: 'rml', title: 'Map data to RDF', eyebrow: 'RML mapping', description: 'Paste your RML mapping and run RMLMapper against the prepared CSV source.' },
   { id: 'ingest', title: 'Ingest into Fuseki', eyebrow: 'Triple store', description: 'Publish the mapped RDF into the named graph you choose.' },
   { id: 'shacl_in', title: 'Validate mapped RDF', eyebrow: 'SHACL in', description: 'Run your input shape without stopping the pipeline when violations are found.' },
   { id: 'reason', title: 'Apply semantic rules', eyebrow: 'N3 reasoner', description: 'Run user-provided N3 rules and materialise the inferred RDF.' },
@@ -27,6 +27,7 @@ const requestJson = async (path, options = {}) => {
     }
     throw new Error(message)
   }
+  if (response.status === 204) return null
   return response.json()
 }
 
@@ -81,11 +82,11 @@ function StageCard({ number, definition, result, enabled, busy, artifacts, onRun
   </article>
 }
 
-function CsvPreview({ source }) {
+function DataPreview({ source }) {
   const preview = source?.preview
   if (!preview) return null
   return <div className="csv-preview">
-    <div className="preview-meta"><div><strong>{source.stored_filename}</strong><span>{preview.total_rows.toLocaleString()} rows · {preview.columns.length} columns</span></div><div><span>{preview.encoding}</span><span>Delimiter: {preview.delimiter}</span><span>{(preview.size / 1024).toFixed(1)} KB</span></div></div>
+    <div className="preview-meta"><div><strong>{source.stored_filename}</strong><span>{preview.total_rows.toLocaleString()} rows · {preview.columns.length} columns</span></div><div><span>{preview.format?.toUpperCase()}</span>{preview.sheet_name && <span>Sheet: {preview.sheet_name}</span>}{preview.encoding && <span>{preview.encoding}</span>}{preview.delimiter && <span>Delimiter: {preview.delimiter}</span>}<span>{(preview.size / 1024).toFixed(1)} KB</span></div></div>
     <div className="table-shell"><table><thead><tr>{preview.columns.map((column) => <th key={column}>{column}</th>)}</tr></thead><tbody>{preview.rows.map((row, index) => <tr key={index}>{preview.columns.map((column) => <td key={column} title={row[column]}>{row[column] || <em>empty</em>}</td>)}</tr>)}</tbody></table></div>
     <p className="preview-caption">Showing the first {preview.preview_row_count} parsed rows.</p>
   </div>
@@ -104,26 +105,36 @@ function ArtifactPreview({ artifact, onClose }) {
     {error && <div className="notice error">{error}</div>}
     {!content && !error && <div className="drawer-loading"><i className="spinner" />Loading preview</div>}
     {content?.text && <pre className="source-preview">{content.text}</pre>}
-    {content?.table && <CsvPreview source={{ stored_filename: artifact.name, preview: content.table }} />}
+    {content?.table && <DataPreview source={{ stored_filename: artifact.name, preview: content.table }} />}
     {content?.truncated && <p className="preview-caption">This preview was limited to 100,000 characters.</p>}
     <a className="drawer-download" href={`${API}${artifact.download_url}`}>Download artifact</a>
   </aside></div>
 }
 
-function UploadStage({ run, file, setFile, busy, onUpload, onPreview }) {
+function UploadStage({ run, file, setFile, busy, deleting, onUpload, onDelete, onPreview }) {
   const definition = stageDefinitions[0]
   const result = run?.stages?.upload
   const artifacts = run?.artifacts?.filter((item) => item.stage === 'upload') || []
+  const fileInput = useRef(null)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  useEffect(() => { setConfirmingDelete(false) }, [run?.id])
   const handleDrop = (event) => { event.preventDefault(); setFile(event.dataTransfer.files?.[0] || null) }
+  const clearSelection = () => {
+    setFile(null)
+    if (fileInput.current) fileInput.current.value = ''
+  }
+  const fileType = file?.name.toLowerCase().endsWith('.xlsx') ? 'XLSX' : 'CSV'
   return <article className={`pipeline-stage ${result?.status || 'ready'}`} id="stage-upload">
     <div className="stage-index">01</div><div className="stage-main">
       <div className="stage-title-row"><div><p className="eyebrow">{definition.eyebrow}</p><h2>{definition.title}</h2><p className="stage-description">{definition.description}</p></div><StatusPill status={result?.status} /></div>
       {!run && <label className="drop-zone" onDrop={handleDrop} onDragOver={(event) => event.preventDefault()}>
-        <input type="file" accept=".csv,text/csv" onChange={(event) => setFile(event.target.files?.[0] || null)} />
-        <span className="upload-mark">CSV</span><div><strong>{file ? file.name : 'Drop a CSV here or choose a file'}</strong><p>{file ? `${(file.size / 1024).toFixed(1)} KB selected` : 'The server parses the header and returns a bounded preview.'}</p></div><b>{file ? 'Change file' : 'Browse'}</b>
+        <input ref={fileInput} type="file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(event) => setFile(event.target.files?.[0] || null)} />
+        <span className="upload-mark">{fileType}</span><div><strong>{file ? file.name : 'Drop a CSV or XLSX file here'}</strong><p>{file ? `${(file.size / 1024).toFixed(1)} KB selected` : 'Excel workbooks use their active worksheet and are prepared as CSV for RMLMapper.'}</p></div><b>{file ? 'Change file' : 'Browse'}</b>
       </label>}
-      {!run && <div className="stage-actions"><button className="run-button" disabled={!file || busy} onClick={onUpload}>{busy ? <><i className="spinner" />Uploading</> : 'Upload and preview'}</button></div>}
-      {run?.source?.preview && <CsvPreview source={run.source} />}
+      {!run && <div className="stage-actions"><button className="run-button" disabled={!file || busy} onClick={onUpload}>{busy ? <><i className="spinner" />Uploading</> : 'Upload and preview'}</button>{file && <button className="secondary-button" disabled={busy} onClick={clearSelection}>Clear selection</button>}</div>}
+      {run?.source?.preview && <DataPreview source={run.source} />}
+      {run && !confirmingDelete && <div className="stage-actions upload-delete-actions"><button className="secondary-button danger-button" disabled={deleting} onClick={() => setConfirmingDelete(true)}>Delete file and start over</button><span>Clears this run so you can upload the correct CSV or XLSX file.</span></div>}
+      {run && confirmingDelete && <div className="delete-confirmation"><div><strong>Delete this run&apos;s files?</strong><span>The upload and every generated artifact will be deleted. Data already ingested into Fuseki will remain.</span></div><div><button className="secondary-button danger-button" disabled={deleting} onClick={onDelete}>{deleting ? <><i className="spinner" />Deleting</> : 'Delete now'}</button><button className="secondary-button" disabled={deleting} onClick={() => setConfirmingDelete(false)}>Cancel</button></div></div>}
       <StageFeedback result={result} artifacts={artifacts} onPreview={onPreview} />
     </div>
   </article>
@@ -172,7 +183,17 @@ function App() {
   }
 
   function resetRun() {
-    setRun(null); setFile(null); setMapping(''); setGraphName(''); setShaclIn(''); setRules(''); setShaclOut(''); setStreamName('dataset'); setError('')
+    setRun(null); setFile(null); setMapping(''); setGraphName(''); setShaclIn(''); setRules(''); setShaclOut(''); setStreamName('dataset'); setError(''); setPreviewArtifact(null)
+  }
+
+  async function deleteUploadedFile() {
+    if (!run) { setFile(null); return }
+    setBusy('delete'); setError('')
+    try {
+      await requestJson(`/api/runs/${run.id}`, { method: 'DELETE' })
+      resetRun()
+    } catch (reason) { setError(reason.message) }
+    finally { setBusy('') }
   }
 
   return <div className="app-shell">
@@ -184,15 +205,15 @@ function App() {
     </aside>
 
     <main className="workspace">
-      <header className="workspace-header"><div><p className="eyebrow">Semantic data operations</p><h1>Build an RDF pipeline from your own data.</h1><p>Upload a CSV, provide each semantic contract, and inspect every result from mapping through LDES packaging.</p></div>{run && <button className="secondary-button" onClick={resetRun}>Start a new run</button>}</header>
+      <header className="workspace-header"><div><p className="eyebrow">Semantic data operations</p><h1>Build an RDF pipeline from your own data.</h1><p>Upload CSV or XLSX data, provide each semantic contract, and inspect every result from mapping through LDES packaging.</p></div></header>
       {error && <div className="notice error"><strong>Request failed</strong><span>{error}</span><button onClick={() => setError('')}>×</button></div>}
       <section className="system-strip"><div><span>API</span><strong>Connected</strong></div><div><span>Fuseki</span><strong className={config?.fuseki?.connected ? 'good' : 'warn'}>{config?.fuseki?.connected ? 'Connected' : 'Offline'}</strong></div><div><span>RMLMapper</span><strong className={config?.tools?.rml_mapper ? 'good' : 'warn'}>{config?.tools?.rml_mapper ? 'Ready' : 'Missing'}</strong></div><div><span>EYE reasoner</span><strong className={config?.tools?.eye ? 'good' : 'warn'}>{config?.tools?.eye ? 'Ready' : 'Missing'}</strong></div></section>
 
       <section className="pipeline-list">
-        <UploadStage run={run} file={file} setFile={setFile} busy={busy === 'upload'} onUpload={upload} onPreview={setPreviewArtifact} />
+        <UploadStage run={run} file={file} setFile={setFile} busy={busy === 'upload'} deleting={busy === 'delete'} onUpload={upload} onDelete={deleteUploadedFile} onPreview={setPreviewArtifact} />
 
         <StageCard number={2} definition={stageDefinitions[1]} result={run?.stages?.rml} enabled={stageDone('upload')} busy={busy === 'rml'} artifacts={artifactsFor('rml')} onPreview={setPreviewArtifact} onRun={() => execute('rml', { mapping })} actionLabel="Run RML mapping">
-          <div className="inline-tip"><strong>CSV source name</strong><code>{run?.source?.stored_filename || 'Upload a CSV first'}</code><span>Use this exact filename as the mapping&apos;s logical source.</span></div>
+          <div className="inline-tip"><strong>RML source name</strong><code>{run?.source?.mapping_source_filename || 'Upload data first'}</code><span>Use this exact prepared CSV filename as the mapping&apos;s logical source.</span></div>
           <CodeEditor id="rml-editor" label="RML mapping (Turtle)" value={mapping} onChange={setMapping} placeholder={'@prefix rml: <http://w3id.org/rml/> .\n\n# Paste your complete RML mapping here.'} />
         </StageCard>
 

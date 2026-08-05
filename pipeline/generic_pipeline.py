@@ -17,8 +17,10 @@ import subprocess
 from threading import Lock
 from typing import Any, Sequence
 from urllib.parse import quote
-from zipfile import ZIP_DEFLATED, ZipFile
+from zipfile import BadZipFile, ZIP_DEFLATED, ZipFile
 
+from openpyxl import load_workbook
+from openpyxl.utils.exceptions import InvalidFileException
 from rdflib import Graph
 
 from RDF2LDES import RDFTSS2LDES
@@ -35,6 +37,7 @@ DEFAULT_GRAPH_BASE = os.getenv("FUSEKI_GRAPH_BASE", "https://example.org/graphs/
 DEFAULT_LDES_BASE = os.getenv("LDES_BASE_URL", "https://example.org/ldes/")
 COMMAND_TIMEOUT_SECONDS = int(os.getenv("PIPELINE_COMMAND_TIMEOUT", "300"))
 LDES_LOCK = Lock()
+SUPPORTED_TABULAR_EXTENSIONS = {".csv", ".xlsx"}
 
 
 class PipelineError(RuntimeError):
@@ -87,8 +90,8 @@ def safe_filename(filename: str | None) -> str:
     cleaned = re.sub(r"[^A-Za-z0-9._-]+", "_", original).strip("._")
     if not cleaned:
         cleaned = "dataset.csv"
-    if not cleaned.lower().endswith(".csv"):
-        raise PipelineError("Please upload a file with a .csv extension.")
+    if Path(cleaned).suffix.lower() not in SUPPORTED_TABULAR_EXTENSIONS:
+        raise PipelineError("Please upload a .csv or .xlsx file.")
     return cleaned
 
 
@@ -129,6 +132,7 @@ def csv_preview(path: str | Path, limit: int = 30) -> dict[str, Any]:
         raise PipelineError(f"The CSV could not be parsed: {error}") from error
 
     return {
+        "format": "csv",
         "columns": columns,
         "rows": rows,
         "preview_row_count": len(rows),
@@ -137,6 +141,126 @@ def csv_preview(path: str | Path, limit: int = 30) -> dict[str, Any]:
         "encoding": encoding,
         "size": source.stat().st_size,
     }
+
+
+def _cell_text(value: Any) -> str:
+    if value is None:
+        return ""
+    if hasattr(value, "isoformat"):
+        try:
+            return value.isoformat()
+        except (TypeError, ValueError):
+            pass
+    return str(value)
+
+
+def _unique_columns(values: Sequence[Any]) -> list[str]:
+    columns: list[str] = []
+    used: dict[str, int] = {}
+    for index, value in enumerate(values, start=1):
+        base = _cell_text(value).strip() or f"column_{index}"
+        count = used.get(base, 0) + 1
+        used[base] = count
+        columns.append(base if count == 1 else f"{base}_{count}")
+    return columns
+
+
+def xlsx_preview(path: str | Path, limit: int = 30) -> dict[str, Any]:
+    source = Path(path)
+    if not source.is_file() or source.stat().st_size == 0:
+        raise PipelineError("The uploaded XLSX file is empty.")
+
+    try:
+        workbook = load_workbook(source, read_only=True, data_only=True)
+    except (InvalidFileException, BadZipFile, OSError, ValueError) as error:
+        raise PipelineError(f"The XLSX workbook could not be opened: {error}") from error
+
+    try:
+        worksheets = workbook.worksheets
+        if not worksheets:
+            raise PipelineError("The XLSX workbook does not contain a worksheet.")
+        worksheet = workbook.active if workbook.active in worksheets else worksheets[0]
+        values = worksheet.iter_rows(values_only=True)
+
+        header: tuple[Any, ...] | None = None
+        for candidate in values:
+            if any(_cell_text(value).strip() for value in candidate):
+                header = candidate
+                break
+        if header is None:
+            raise PipelineError(f"Worksheet '{worksheet.title}' is empty.")
+
+        last_header_cell = max(
+            (index for index, value in enumerate(header) if _cell_text(value).strip()),
+            default=-1,
+        )
+        columns = _unique_columns(header[: last_header_cell + 1])
+        rows: list[dict[str, str]] = []
+        total_rows = 0
+        for raw_row in values:
+            row_values = [_cell_text(value) for value in raw_row[: len(columns)]]
+            row_values.extend([""] * (len(columns) - len(row_values)))
+            if not any(value.strip() for value in row_values):
+                continue
+            total_rows += 1
+            if len(rows) < limit:
+                rows.append(dict(zip(columns, row_values, strict=True)))
+
+        return {
+            "format": "xlsx",
+            "columns": columns,
+            "rows": rows,
+            "preview_row_count": len(rows),
+            "total_rows": total_rows,
+            "sheet_name": worksheet.title,
+            "sheet_names": workbook.sheetnames,
+            "size": source.stat().st_size,
+        }
+    finally:
+        workbook.close()
+
+
+def tabular_preview(path: str | Path, limit: int = 30) -> dict[str, Any]:
+    source = Path(path)
+    if source.suffix.lower() == ".csv":
+        return csv_preview(source, limit)
+    if source.suffix.lower() == ".xlsx":
+        return xlsx_preview(source, limit)
+    raise PipelineError("Please upload a .csv or .xlsx file.")
+
+
+def xlsx_to_csv(
+    source_path: str | Path,
+    destination_path: str | Path,
+    preview: dict[str, Any],
+) -> Path:
+    source = Path(source_path)
+    destination = Path(destination_path)
+    try:
+        workbook = load_workbook(source, read_only=True, data_only=True)
+    except (InvalidFileException, BadZipFile, OSError, ValueError) as error:
+        raise PipelineError(f"The XLSX workbook could not be opened: {error}") from error
+
+    try:
+        worksheet = workbook[preview["sheet_name"]]
+        values = worksheet.iter_rows(values_only=True)
+        header_found = False
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        with destination.open("w", encoding="utf-8", newline="") as handle:
+            writer = csv.writer(handle)
+            writer.writerow(preview["columns"])
+            for raw_row in values:
+                row_values = [_cell_text(value) for value in raw_row[: len(preview["columns"])]]
+                if not header_found:
+                    if any(value.strip() for value in row_values):
+                        header_found = True
+                    continue
+                row_values.extend([""] * (len(preview["columns"]) - len(row_values)))
+                if any(value.strip() for value in row_values):
+                    writer.writerow(row_values)
+    finally:
+        workbook.close()
+    return destination
 
 
 def parse_turtle(text: str, *, label: str) -> int:

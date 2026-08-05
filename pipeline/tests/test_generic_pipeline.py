@@ -1,7 +1,9 @@
+from io import BytesIO
 from pathlib import Path
 import shutil
 
 from fastapi.testclient import TestClient
+from openpyxl import Workbook
 import pytest
 from rdflib import Graph, URIRef
 
@@ -26,6 +28,96 @@ def test_upload_csv_creates_run_and_preview(tmp_path, monkeypatch):
     assert payload["source"]["preview"]["columns"] == ["sku", "price"]
     assert payload["source"]["preview"]["total_rows"] == 2
     assert "relative_path" not in payload["artifacts"][0]
+
+
+def test_upload_xlsx_creates_preview_and_rml_csv_source(tmp_path, monkeypatch):
+    run_store = RunStore(tmp_path / "runs")
+    monkeypatch.setattr(playground_server, "RUN_STORE", run_store)
+    client = TestClient(playground_server.app)
+
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "Inventory"
+    worksheet.append(["sku", "price", "available"])
+    worksheet.append(["A-1", 10.5, True])
+    worksheet.append(["B-2", 20, False])
+    workbook.create_sheet("Notes").append(["This sheet is not active"])
+    content = BytesIO()
+    workbook.save(content)
+    workbook.close()
+
+    response = client.post(
+        "/api/runs",
+        files={
+            "file": (
+                "inventory.xlsx",
+                content.getvalue(),
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["stages"]["upload"]["status"] == "success"
+    assert payload["source"]["stored_filename"] == "inventory.xlsx"
+    assert payload["source"]["mapping_source_filename"] == "inventory.csv"
+    assert payload["source"]["preview"]["format"] == "xlsx"
+    assert payload["source"]["preview"]["sheet_name"] == "Inventory"
+    assert payload["source"]["preview"]["columns"] == ["sku", "price", "available"]
+    assert payload["source"]["preview"]["rows"][0] == {
+        "sku": "A-1",
+        "price": "10.5",
+        "available": "True",
+    }
+    assert {artifact["kind"] for artifact in payload["artifacts"]} == {"xlsx", "csv"}
+
+    saved = run_store.load(payload["id"])
+    mapping_source = run_store.resolve_relative(payload["id"], saved["source"]["relative_path"])
+    assert mapping_source.name == "inventory.csv"
+    assert mapping_source.read_text(encoding="utf-8").splitlines() == [
+        "sku,price,available",
+        "A-1,10.5,True",
+        "B-2,20,False",
+    ]
+
+    workbook_artifact = next(item for item in payload["artifacts"] if item["kind"] == "xlsx")
+    preview_response = client.get(workbook_artifact["preview_url"])
+    assert preview_response.status_code == 200
+    assert preview_response.json()["table"]["sheet_name"] == "Inventory"
+
+
+def test_upload_rejects_unsupported_tabular_extension(tmp_path, monkeypatch):
+    monkeypatch.setattr(playground_server, "RUN_STORE", RunStore(tmp_path / "runs"))
+    client = TestClient(playground_server.app)
+
+    response = client.post(
+        "/api/runs",
+        files={"file": ("inventory.xls", b"legacy workbook", "application/vnd.ms-excel")},
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Please upload a .csv or .xlsx file."
+
+
+def test_delete_run_removes_uploaded_file_and_artifacts(tmp_path, monkeypatch):
+    run_store = RunStore(tmp_path / "runs")
+    monkeypatch.setattr(playground_server, "RUN_STORE", run_store)
+    client = TestClient(playground_server.app)
+    upload = client.post(
+        "/api/runs",
+        files={"file": ("inventory.csv", b"sku,price\nA-1,10\n", "text/csv")},
+    )
+    run_id = upload.json()["id"]
+    run_directory = run_store.run_dir(run_id)
+    assert run_directory.is_dir()
+
+    response = client.delete(f"/api/runs/{run_id}")
+
+    assert response.status_code == 204
+    assert response.content == b""
+    assert not run_directory.exists()
+    assert client.get(f"/api/runs/{run_id}").status_code == 404
 
 
 def test_graph_name_is_converted_to_a_safe_named_graph_uri():

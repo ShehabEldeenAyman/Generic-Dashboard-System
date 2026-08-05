@@ -14,7 +14,7 @@ from typing import Any, Callable
 import requests
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel, Field
 
 from pipeline import generic_pipeline as pipeline
@@ -22,7 +22,9 @@ from pipeline.run_store import RunStore
 from triple_store_ingestion import ingest
 
 
-MAX_UPLOAD_BYTES = int(os.getenv("MAX_CSV_UPLOAD_BYTES", str(50 * 1024 * 1024)))
+MAX_UPLOAD_BYTES = int(
+    os.getenv("MAX_UPLOAD_BYTES", os.getenv("MAX_CSV_UPLOAD_BYTES", str(50 * 1024 * 1024)))
+)
 RUN_STORE = RunStore()
 
 
@@ -33,7 +35,7 @@ def configured_origins() -> list[str]:
 
 app = FastAPI(
     title="Semantic Pipeline API",
-    description="Run-scoped CSV to RDF, TSS, and LDES processing.",
+    description="Run-scoped CSV/XLSX to RDF, TSS, and LDES processing.",
     version="1.0.0",
 )
 app.add_middleware(
@@ -151,7 +153,7 @@ def execute_stage(
 def source_path(state: dict[str, Any]) -> Path:
     relative_path = state.get("source", {}).get("relative_path")
     if not relative_path:
-        raise pipeline.PipelineError("The uploaded CSV artifact is missing.")
+        raise pipeline.PipelineError("The uploaded tabular source artifact is missing.")
     return RUN_STORE.resolve_relative(state["id"], relative_path)
 
 
@@ -199,6 +201,7 @@ async def create_run(file: UploadFile = File(...)) -> dict[str, Any]:
     state = RUN_STORE.create(file.filename or stored_filename, stored_filename)
     state = RUN_STORE.begin_stage(state, "upload")
     target = RUN_STORE.run_dir(state["id"]) / stored_filename
+    generated_paths: list[Path] = [target]
     size = 0
     try:
         with target.open("wb") as destination:
@@ -206,17 +209,39 @@ async def create_run(file: UploadFile = File(...)) -> dict[str, Any]:
                 size += len(chunk)
                 if size > MAX_UPLOAD_BYTES:
                     raise pipeline.PipelineError(
-                        f"The CSV exceeds the {MAX_UPLOAD_BYTES // (1024 * 1024)} MB upload limit."
+                        f"The file exceeds the {MAX_UPLOAD_BYTES // (1024 * 1024)} MB upload limit."
                     )
                 destination.write(chunk)
-        preview = pipeline.csv_preview(target)
-        artifact = RUN_STORE.add_artifact(state, "upload", target, name=stored_filename, kind="csv")
+        preview = pipeline.tabular_preview(target)
+        upload_artifact = RUN_STORE.add_artifact(
+            state,
+            "upload",
+            target,
+            name=stored_filename,
+            kind=target.suffix.lower().lstrip("."),
+        )
+        source_path = target
+        artifact_ids = [upload_artifact["id"]]
+        if target.suffix.lower() == ".xlsx":
+            source_path = target.with_suffix(".csv")
+            pipeline.xlsx_to_csv(target, source_path, preview)
+            generated_paths.append(source_path)
+            source_artifact = RUN_STORE.add_artifact(
+                state,
+                "upload",
+                source_path,
+                name=f"RML source · {source_path.name}",
+                kind="csv",
+            )
+            artifact_ids.append(source_artifact["id"])
         state["source"].update(
             {
-                "relative_path": target.relative_to(RUN_STORE.run_dir(state["id"])).as_posix(),
+                "relative_path": source_path.relative_to(RUN_STORE.run_dir(state["id"])).as_posix(),
                 "size": size,
                 "preview": preview,
-                "artifact_id": artifact["id"],
+                "format": preview["format"],
+                "mapping_source_filename": source_path.name,
+                "artifact_id": upload_artifact["id"],
             }
         )
         state = RUN_STORE.finish_stage(
@@ -227,14 +252,15 @@ async def create_run(file: UploadFile = File(...)) -> dict[str, Any]:
             details={
                 "columns": len(preview["columns"]),
                 "rows": preview["total_rows"],
-                "encoding": preview["encoding"],
-                "delimiter": preview["delimiter"],
+                "format": preview["format"],
+                **({"encoding": preview["encoding"], "delimiter": preview["delimiter"]} if preview["format"] == "csv" else {"sheet_name": preview["sheet_name"]}),
             },
-            artifact_ids=[artifact["id"]],
+            artifact_ids=artifact_ids,
         )
     except pipeline.PipelineError as error:
-        if target.exists():
-            target.unlink()
+        for generated_path in generated_paths:
+            if generated_path.exists():
+                generated_path.unlink()
         state = RUN_STORE.finish_stage(state, "upload", "error", str(error), log=error.log)
     finally:
         await file.close()
@@ -244,6 +270,15 @@ async def create_run(file: UploadFile = File(...)) -> dict[str, Any]:
 @app.get("/api/runs/{run_id}")
 def get_run(run_id: str) -> dict[str, Any]:
     return public_state(load_run(run_id))
+
+
+@app.delete("/api/runs/{run_id}", status_code=204)
+def delete_run(run_id: str) -> Response:
+    try:
+        RUN_STORE.delete(run_id)
+    except KeyError as error:
+        raise HTTPException(404, str(error)) from error
+    return Response(status_code=204)
 
 
 @app.post("/api/runs/{run_id}/stages/rml")
@@ -404,8 +439,8 @@ def preview_artifact(run_id: str, artifact_id: str) -> dict[str, Any]:
     except KeyError as error:
         raise HTTPException(404, str(error)) from error
     response: dict[str, Any] = {"artifact": public_state({"id": run_id, "artifacts": [artifact]})["artifacts"][0]}
-    if path.suffix.lower() == ".csv":
-        response["table"] = pipeline.csv_preview(path)
+    if path.suffix.lower() in {".csv", ".xlsx"}:
+        response["table"] = pipeline.tabular_preview(path)
         return response
     if path.suffix.lower() == ".zip":
         response["message"] = "Download the ZIP to inspect the complete LDES folder."

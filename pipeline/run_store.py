@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
+import shutil
 import tempfile
 from threading import RLock
 from typing import Any
@@ -83,6 +84,14 @@ class RunStore:
             raise KeyError("Run not found.")
         with self._lock:
             return json.loads(state_path.read_text(encoding="utf-8"))
+
+    def delete(self, run_id: str) -> None:
+        """Delete one UUID-scoped run directory and every artifact it owns."""
+        directory = self.run_dir(run_id)
+        with self._lock:
+            if not directory.is_dir():
+                raise KeyError("Run not found.")
+            shutil.rmtree(directory)
 
     def save(self, state: dict[str, Any]) -> dict[str, Any]:
         with self._lock:

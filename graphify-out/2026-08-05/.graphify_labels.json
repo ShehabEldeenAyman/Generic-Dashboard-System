@@ -27,7 +27,6 @@
   "25": "preprocess2.py",
   "26": "RML_generator.py",
   "27": "contexual_matrix_profile.py",
-  "28": "Q: i have updated the graphify structure so make sure to check the new one out before doing anything. I have tried to test the system, module 1 data input only supports the upload of csv files, I want it to also support xlsx files as well",
   "29": "pyodidetest.jsx",
   "30": "python.worker.js",
   "31": "GraphCard.jsx",

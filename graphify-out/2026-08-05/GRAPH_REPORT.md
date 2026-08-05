@@ -1,11 +1,11 @@
 # Graph Report - Generic Dashboard System  (2026-08-05)
 
 ## Corpus Check
-- 89 files · ~302,857 words
+- 88 files · ~302,409 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 599 nodes · 895 edges · 80 communities (57 shown, 23 thin omitted)
+- 588 nodes · 882 edges · 79 communities (56 shown, 23 thin omitted)
 - Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 36 edges (avg confidence: 0.68)
 - Token cost: 0 input · 0 output
 
@@ -40,7 +40,6 @@
 - preprocess.py
 - LDESTSSChart.jsx
 - preprocess2.py
-- Q: i have updated the graphify structure so make sure to check the new one out before doing anything. I have tried to test the system, module 1 data input only supports the upload of csv files, I want it to also support xlsx files as well
 - pyodidetest.jsx
 - python.worker.js
 - GraphCard.jsx
@@ -70,7 +69,7 @@
 - RandomForest.py
 
 ## God Nodes (most connected - your core abstractions)
-1. `RunStore` - 25 edges
+1. `RunStore` - 23 edges
 2. `PipelineError` - 21 edges
 3. `execute_stage()` - 18 edges
 4. `main()` - 16 edges
@@ -96,15 +95,15 @@
 ## Import Cycles
 - None detected.
 
-## Communities (80 total, 23 thin omitted)
+## Communities (79 total, 23 thin omitted)
 
 ### Community 0 - "main.py"
 Cohesion: 0.07
 Nodes (49): deep_learning(), describe_data(), _feature_matrix(), lag_analysis(), machine_learning(), matrix_profile(), _number(), prepare_observations() (+41 more)
 
 ### Community 1 - "dependencies"
-Cohesion: 0.08
-Nodes (49): delete, FileResponse, configuration(), create_run(), delete_run(), download_artifact(), execute_stage(), get_run() (+41 more)
+Cohesion: 0.10
+Nodes (42): FileResponse, configuration(), download_artifact(), execute_stage(), get_run(), health(), ingest_stage(), IngestRequest (+34 more)
 
 ### Community 2 - "devDependencies"
 Cohesion: 0.40
@@ -123,8 +122,8 @@ Cohesion: 0.14
 Nodes (23): data_path(), ldes_artifacts(), pipeline_working_directory(), Reusable, observable stages for the canal data pipelines.  The functions in this, Run EYE and save inferred triples next to the source RDF file., Return a useful, bounded preview of a generated LDES tree.      A full run can c, Make pipeline collaborators importable without the forecasting server., Support legacy collaborators that resolve paths relative to pipeline/. (+15 more)
 
 ### Community 6 - "timeseriesforecasting.py"
-Cohesion: 0.18
-Nodes (27): validate_shacl(), _cell_text(), CommandResult, csv_preview(), eye_command(), graph_name_to_uri(), ingest_graph(), normalise_stream_name() (+19 more)
+Cohesion: 0.17
+Nodes (29): validate_shacl(), _cell_text(), CommandResult, csv_preview(), eye_command(), graph_name_to_uri(), ingest_graph(), normalise_stream_name() (+21 more)
 
 ### Community 7 - "pipeline.py"
 Cohesion: 0.60
@@ -198,10 +197,6 @@ Nodes (3): headStyles, innerStyles, tableStyles
 Cohesion: 0.50
 Nodes (3): Codex Repository Context, Instructions for Codex, System Architecture & Topology
 
-### Community 28 - "Q: i have updated the graphify structure so make sure to check the new one out before doing anything. I have tried to test the system, module 1 data input only supports the upload of csv files, I want it to also support xlsx files as well"
-Cohesion: 0.40
-Nodes (4): Answer, Outcome, Q: i have updated the graphify structure so make sure to check the new one out before doing anything. I have tried to test the system, module 1 data input only supports the upload of csv files, I want it to also support xlsx files as well, Source Nodes
-
 ### Community 32 - "RML_generator_waterlink.py"
 Cohesion: 0.40
 Nodes (3): applications, canalPath, stations
@@ -219,22 +214,20 @@ Cohesion: 0.40
 Nodes (4): Conductivity units, Fuseki configuration, Lag analytics workspace, Start
 
 ## Knowledge Gaps
-- **91 isolated node(s):** `name`, `private`, `version`, `type`, `dev` (+86 more)
+- **88 isolated node(s):** `name`, `private`, `version`, `type`, `dev` (+83 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **23 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Work-memory lessons
 
 **Preferred sources** — corroborated by past sessions; start here.
-- `App()` (3× useful, score=2.802017696) _(code changed — re-verify)_
-- `create_run()` (2× useful, score=1.957283155) _(code changed — re-verify)_
-- `step_6_RDF2LDES()` (2× useful, score=1.910318057)
+- `App()` (3× useful, score=2.802610066) _(code changed — re-verify)_
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `_iri()` connect `main.py` to `start_preprocessing.py`?**
-  _High betweenness centrality (0.021) - this node is a cross-community bridge._
+  _High betweenness centrality (0.022) - this node is a cross-community bridge._
 - **Why does `test_user_supplied_n3_rules_create_reasoned_rdf()` connect `start_preprocessing.py` to `dependencies`, `timeseriesforecasting.py`?**
   _High betweenness centrality (0.018) - this node is a cross-community bridge._
 - **Why does `test_user_supplied_rml_mapping_runs_against_uploaded_filename()` connect `start_preprocessing.py` to `dependencies`, `timeseriesforecasting.py`?**
@@ -242,8 +235,8 @@ _Questions this graph is uniquely positioned to answer:_
 - **Are the 5 inferred relationships involving `RunStore` (e.g. with `IngestRequest` and `LdesRequest`) actually correct?**
   _`RunStore` has 5 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `name`, `private`, `version` to the rest of the system?**
-  _91 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _88 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `main.py` be split into smaller, more focused modules?**
   _Cohesion score 0.07486338797814207 - nodes in this community are weakly interconnected._
 - **Should `dependencies` be split into smaller, more focused modules?**
-  _Cohesion score 0.08221153846153846 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.09523809523809523 - nodes in this community are weakly interconnected._

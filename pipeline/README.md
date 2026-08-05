@@ -2,7 +2,7 @@
 
 `playground_server.py` exposes run-scoped FastAPI endpoints for the eight-stage semantic workflow. `generic_pipeline.py` contains explicit-path transformation operations, while `run_store.py` persists run metadata and artifact references.
 
-The API does not read historical repository datasets. `POST /api/runs` accepts a CSV upload and creates the input artifact used by all later stages.
+The API does not read historical repository datasets. `POST /api/runs` accepts CSV or XLSX data and creates the input artifact used by all later stages. XLSX uploads preserve the original workbook and convert its active worksheet to a run-local CSV source for RMLMapper.
 
 Start the API from the repository root:
 
