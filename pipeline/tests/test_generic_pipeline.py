@@ -1,4 +1,5 @@
 from io import BytesIO
+from datetime import datetime
 from pathlib import Path
 import shutil
 
@@ -85,6 +86,59 @@ def test_upload_xlsx_creates_preview_and_rml_csv_source(tmp_path, monkeypatch):
     preview_response = client.get(workbook_artifact["preview_url"])
     assert preview_response.status_code == 200
     assert preview_response.json()["table"]["sheet_name"] == "Inventory"
+
+
+def test_upload_xlsx_normalizes_multirow_headers_and_date_time(tmp_path, monkeypatch):
+    run_store = RunStore(tmp_path / "runs")
+    monkeypatch.setattr(playground_server, "RUN_STORE", run_store)
+    client = TestClient(playground_server.app)
+
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "Measurements"
+    worksheet.append([None, None, "Conductivity dokwater + spui ABF"])
+    worksheet.append(
+        ["Datum", "Tijd", "ZHINDS10_WINCC_INDUSS_02_AT9103-B_FEED_CONDUCTIVITY"]
+    )
+    worksheet.append(["eenheid", None, "µs/cm"])
+    worksheet.append([datetime(2025, 1, 1), "00:00:00", 4.679602775605543])
+    worksheet.append([datetime(2025, 1, 1), "00:15:00", 4.023384243091742])
+    content = BytesIO()
+    workbook.save(content)
+    workbook.close()
+
+    response = client.post(
+        "/api/runs",
+        files={
+            "file": (
+                "data.xlsx",
+                content.getvalue(),
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    value_column = (
+        "Conductivity dokwater + spui ABF | "
+        "ZHINDS10_WINCC_INDUSS_02_AT9103-B_FEED_CONDUCTIVITY | µs/cm"
+    )
+    assert payload["source"]["preview"]["columns"] == ["DateTime", value_column]
+    assert payload["source"]["preview"]["header_row_count"] == 3
+    assert payload["source"]["preview"]["data_start_row"] == 4
+    assert payload["source"]["preview"]["rows"] == [
+        {"DateTime": "2025-01-01T00:00:00", value_column: "4.679602775605543"},
+        {"DateTime": "2025-01-01T00:15:00", value_column: "4.023384243091742"},
+    ]
+
+    saved = run_store.load(payload["id"])
+    mapping_source = run_store.resolve_relative(payload["id"], saved["source"]["relative_path"])
+    assert mapping_source.read_text(encoding="utf-8").splitlines() == [
+        f"DateTime,{value_column}",
+        "2025-01-01T00:00:00,4.679602775605543",
+        "2025-01-01T00:15:00,4.023384243091742",
+    ]
 
 
 def test_upload_rejects_unsupported_tabular_extension(tmp_path, monkeypatch):
@@ -177,6 +231,83 @@ def test_user_supplied_rml_mapping_runs_against_uploaded_filename(tmp_path):
 
     graph = Graph().parse(result["output_path"], format="turtle")
     assert (URIRef("https://example.org/items/1"), None, None) in graph
+
+
+@pytest.mark.skipif(
+    not generic_pipeline.RML_MAPPER_JAR.is_file() or not shutil.which("java"),
+    reason="RMLMapper and Java are required for the integration test.",
+)
+def test_normalized_multirow_xlsx_runs_with_user_mapping(tmp_path):
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "Measurements"
+    worksheet.append([None, None, "Conductivity dokwater + spui ABF"])
+    worksheet.append(
+        ["Datum", "Tijd", "ZHINDS10_WINCC_INDUSS_02_AT9103-B_FEED_CONDUCTIVITY"]
+    )
+    worksheet.append(["eenheid", None, "µs/cm"])
+    worksheet.append([datetime(2025, 1, 1), "00:00:00", 4.679602775605543])
+    source_xlsx = tmp_path / "data.xlsx"
+    source_csv = tmp_path / "data.csv"
+    workbook.save(source_xlsx)
+    workbook.close()
+
+    preview = generic_pipeline.xlsx_preview(source_xlsx)
+    generic_pipeline.xlsx_to_csv(source_xlsx, source_csv, preview)
+    mapping = """
+        @base <http://example.com/observations/> .
+        @prefix rr: <http://www.w3.org/ns/r2rml#> .
+        @prefix rml: <http://semweb.mmlab.be/ns/rml#> .
+        @prefix ql: <http://semweb.mmlab.be/ns/ql#> .
+        @prefix sosa: <http://www.w3.org/ns/sosa/> .
+        @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+        @prefix qudt: <http://qudt.org/schema/qudt/> .
+        @prefix unit: <http://qudt.org/vocab/unit/> .
+        @prefix quantitykind: <https://qudt.org/vocab/quantitykind/> .
+
+        <#SensorMapping> a rr:TriplesMap ;
+          rml:logicalSource [
+            rml:source "data.csv" ;
+            rml:referenceFormulation ql:CSV
+          ] ;
+          rr:subjectMap [
+            rr:template "http://example.com/observations/111111111/{DateTime}" ;
+            rr:class sosa:Observation
+          ] ;
+          rr:predicateObjectMap [
+            rr:predicate sosa:madeBySensor ;
+            rr:objectMap [ rr:constant <http://example.com/waterlink/111111111> ; rr:termType rr:IRI ]
+          ] ;
+          rr:predicateObjectMap [
+            rr:predicate sosa:resultTime ;
+            rr:objectMap [ rml:reference "DateTime" ; rr:datatype xsd:dateTime ]
+          ] ;
+          rr:predicateObjectMap [
+            rr:predicate sosa:hasSimpleResult ;
+            rr:objectMap [
+              rml:reference "Conductivity dokwater + spui ABF | ZHINDS10_WINCC_INDUSS_02_AT9103-B_FEED_CONDUCTIVITY | µs/cm" ;
+              rr:datatype xsd:double
+            ]
+          ] ;
+          rr:predicateObjectMap [
+            rr:predicate sosa:observedProperty ;
+            rr:objectMap [ rr:constant quantitykind:ElectricConductivity ; rr:termType rr:IRI ]
+          ] ;
+          rr:predicateObjectMap [
+            rr:predicate qudt:hasUnit ;
+            rr:objectMap [ rr:constant unit:MicroS-PER-CentiM ; rr:termType rr:IRI ]
+          ] .
+    """
+
+    result = generic_pipeline.run_rml_mapping(tmp_path, source_csv, mapping)
+
+    graph = Graph().parse(result["output_path"], format="turtle")
+    assert result["rdf_triples"] == 6
+    assert (
+        URIRef("http://example.com/observations/111111111/2025-01-01T00%3A00%3A00"),
+        URIRef("http://www.w3.org/ns/sosa/hasSimpleResult"),
+        None,
+    ) in graph
 
 
 @pytest.mark.skipif(

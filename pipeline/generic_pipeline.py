@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import csv
 from dataclasses import dataclass
+from datetime import date, datetime, time as time_type
 import os
 from pathlib import Path
 import re
@@ -165,6 +166,173 @@ def _unique_columns(values: Sequence[Any]) -> list[str]:
     return columns
 
 
+@dataclass(frozen=True)
+class XlsxColumn:
+    """One output CSV column derived from one or more worksheet columns."""
+
+    name: str
+    source_indexes: tuple[int, ...]
+    kind: str = "value"
+
+
+@dataclass(frozen=True)
+class XlsxTablePlan:
+    """Detected tabular layout for an XLSX worksheet."""
+
+    columns: tuple[XlsxColumn, ...]
+    data_start_row: int
+    header_row_count: int
+    source_column_count: int
+
+
+def _is_data_value(value: Any) -> bool:
+    return value is not None and not isinstance(value, str) and isinstance(
+        value, (date, time_type, int, float, bool)
+    )
+
+
+def _date_part(value: Any) -> date | None:
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date) and not isinstance(value, time_type):
+        return value
+    if isinstance(value, str):
+        text = value.strip()
+        try:
+            return datetime.fromisoformat(text).date()
+        except ValueError:
+            try:
+                return date.fromisoformat(text)
+            except ValueError:
+                return None
+    return None
+
+
+def _time_part(value: Any) -> time_type | None:
+    if isinstance(value, datetime):
+        return value.time()
+    if isinstance(value, time_type):
+        return value
+    if isinstance(value, str):
+        try:
+            return time_type.fromisoformat(value.strip())
+        except ValueError:
+            return None
+    return None
+
+
+def _is_date_value(value: Any) -> bool:
+    return _date_part(value) is not None
+
+
+def _is_time_value(value: Any) -> bool:
+    return _time_part(value) is not None
+
+
+def _last_populated_index(row: Sequence[Any]) -> int:
+    return max(
+        (index for index, value in enumerate(row) if _cell_text(value).strip()),
+        default=-1,
+    )
+
+
+def _xlsx_table_plan(worksheet: Any, sample_size: int = 20) -> XlsxTablePlan:
+    sampled_rows: list[tuple[int, tuple[Any, ...]]] = []
+    for row_number, row in enumerate(worksheet.iter_rows(values_only=True), start=1):
+        if not any(_cell_text(value).strip() for value in row):
+            continue
+        sampled_rows.append((row_number, row))
+        if len(sampled_rows) >= sample_size:
+            break
+
+    if not sampled_rows:
+        raise PipelineError(f"Worksheet '{worksheet.title}' is empty.")
+
+    first_row_number = sampled_rows[0][0]
+    data_sample_index: int | None = None
+    for index, (_, row) in enumerate(sampled_rows[1:], start=1):
+        populated = [value for value in row if _cell_text(value).strip()]
+        data_values = sum(_is_data_value(value) for value in populated)
+        if populated and data_values and data_values / len(populated) >= 0.5:
+            data_sample_index = index
+            break
+
+    if data_sample_index is None:
+        header_rows = [sampled_rows[0][1]]
+        data_start_row = first_row_number + 1
+        first_data_row: tuple[Any, ...] = ()
+    else:
+        header_rows = [row for _, row in sampled_rows[:data_sample_index]]
+        data_start_row = sampled_rows[data_sample_index][0]
+        first_data_row = sampled_rows[data_sample_index][1]
+
+    source_column_count = max(
+        (_last_populated_index(row) + 1 for _, row in sampled_rows),
+        default=0,
+    )
+    raw_columns: list[XlsxColumn] = []
+    source_index = 0
+    while source_index < source_column_count:
+        if (
+            source_index + 1 < source_column_count
+            and source_index < len(first_data_row)
+            and source_index + 1 < len(first_data_row)
+            and _is_date_value(first_data_row[source_index])
+            and _is_time_value(first_data_row[source_index + 1])
+        ):
+            raw_columns.append(
+                XlsxColumn("DateTime", (source_index, source_index + 1), "datetime")
+            )
+            source_index += 2
+            continue
+
+        fragments: list[str] = []
+        for header_row in header_rows:
+            if source_index >= len(header_row):
+                continue
+            fragment = _cell_text(header_row[source_index]).strip()
+            if fragment and fragment not in fragments:
+                fragments.append(fragment)
+        raw_columns.append(
+            XlsxColumn(" | ".join(fragments) or f"column_{source_index + 1}", (source_index,))
+        )
+        source_index += 1
+
+    unique_names = _unique_columns([column.name for column in raw_columns])
+    columns = tuple(
+        XlsxColumn(name, column.source_indexes, column.kind)
+        for name, column in zip(unique_names, raw_columns, strict=True)
+    )
+    return XlsxTablePlan(
+        columns=columns,
+        data_start_row=data_start_row,
+        header_row_count=len(header_rows),
+        source_column_count=source_column_count,
+    )
+
+
+def _combined_datetime(date_value: Any, time_value: Any) -> str:
+    parsed_date = _date_part(date_value)
+    parsed_time = _time_part(time_value)
+    if parsed_date is None or parsed_time is None:
+        return ""
+    return datetime.combine(parsed_date, parsed_time).isoformat()
+
+
+def _xlsx_row_values(row: Sequence[Any], plan: XlsxTablePlan) -> list[str]:
+    values: list[str] = []
+    for column in plan.columns:
+        if column.kind == "datetime":
+            date_index, time_index = column.source_indexes
+            date_value = row[date_index] if date_index < len(row) else None
+            time_value = row[time_index] if time_index < len(row) else None
+            values.append(_combined_datetime(date_value, time_value))
+        else:
+            source_index = column.source_indexes[0]
+            values.append(_cell_text(row[source_index] if source_index < len(row) else None))
+    return values
+
+
 def xlsx_preview(path: str | Path, limit: int = 30) -> dict[str, Any]:
     source = Path(path)
     if not source.is_file() or source.stat().st_size == 0:
@@ -180,26 +348,12 @@ def xlsx_preview(path: str | Path, limit: int = 30) -> dict[str, Any]:
         if not worksheets:
             raise PipelineError("The XLSX workbook does not contain a worksheet.")
         worksheet = workbook.active if workbook.active in worksheets else worksheets[0]
-        values = worksheet.iter_rows(values_only=True)
-
-        header: tuple[Any, ...] | None = None
-        for candidate in values:
-            if any(_cell_text(value).strip() for value in candidate):
-                header = candidate
-                break
-        if header is None:
-            raise PipelineError(f"Worksheet '{worksheet.title}' is empty.")
-
-        last_header_cell = max(
-            (index for index, value in enumerate(header) if _cell_text(value).strip()),
-            default=-1,
-        )
-        columns = _unique_columns(header[: last_header_cell + 1])
+        plan = _xlsx_table_plan(worksheet)
+        columns = [column.name for column in plan.columns]
         rows: list[dict[str, str]] = []
         total_rows = 0
-        for raw_row in values:
-            row_values = [_cell_text(value) for value in raw_row[: len(columns)]]
-            row_values.extend([""] * (len(columns) - len(row_values)))
+        for raw_row in worksheet.iter_rows(min_row=plan.data_start_row, values_only=True):
+            row_values = _xlsx_row_values(raw_row, plan)
             if not any(value.strip() for value in row_values):
                 continue
             total_rows += 1
@@ -214,6 +368,8 @@ def xlsx_preview(path: str | Path, limit: int = 30) -> dict[str, Any]:
             "total_rows": total_rows,
             "sheet_name": worksheet.title,
             "sheet_names": workbook.sheetnames,
+            "header_row_count": plan.header_row_count,
+            "data_start_row": plan.data_start_row,
             "size": source.stat().st_size,
         }
     finally:
@@ -243,19 +399,16 @@ def xlsx_to_csv(
 
     try:
         worksheet = workbook[preview["sheet_name"]]
-        values = worksheet.iter_rows(values_only=True)
-        header_found = False
+        plan = _xlsx_table_plan(worksheet)
         destination.parent.mkdir(parents=True, exist_ok=True)
         with destination.open("w", encoding="utf-8", newline="") as handle:
             writer = csv.writer(handle)
-            writer.writerow(preview["columns"])
-            for raw_row in values:
-                row_values = [_cell_text(value) for value in raw_row[: len(preview["columns"])]]
-                if not header_found:
-                    if any(value.strip() for value in row_values):
-                        header_found = True
-                    continue
-                row_values.extend([""] * (len(preview["columns"]) - len(row_values)))
+            columns = [column.name for column in plan.columns]
+            if columns != preview["columns"]:
+                raise PipelineError("The XLSX worksheet structure changed while it was being parsed.")
+            writer.writerow(columns)
+            for raw_row in worksheet.iter_rows(min_row=plan.data_start_row, values_only=True):
+                row_values = _xlsx_row_values(raw_row, plan)
                 if any(value.strip() for value in row_values):
                     writer.writerow(row_values)
     finally:
@@ -308,14 +461,31 @@ def run_rml_mapping(
     )
     if not output_path.is_file() or output_path.stat().st_size == 0:
         raise PipelineError(
-            "RMLMapper completed without producing RDF. Check that rml:source refers to "
-            f"the uploaded filename '{source_csv.name}'.",
+            "RMLMapper completed without producing RDF. Check that rml:source is "
+            f"'{source_csv.name}' and that every template/reference name matches a CSV column.",
             result.log,
         )
     try:
         mapped_graph = Graph().parse(output_path, format="turtle")
     except Exception as error:
         raise PipelineError(f"RMLMapper produced invalid Turtle: {error}", result.log) from error
+    if not mapped_graph:
+        available_columns: list[str] = []
+        try:
+            with source_csv.open("r", encoding="utf-8-sig", newline="") as handle:
+                available_columns = next(csv.reader(handle), [])
+        except (OSError, csv.Error, StopIteration):
+            pass
+        column_hint = (
+            " Available CSV columns: " + ", ".join(repr(column) for column in available_columns)
+            if available_columns
+            else ""
+        )
+        raise PipelineError(
+            "RMLMapper produced zero triples. A subject template usually cannot be created when "
+            "a referenced column is missing or empty." + column_hint,
+            result.log,
+        )
     return {
         "mapping_path": mapping_path,
         "output_path": output_path,

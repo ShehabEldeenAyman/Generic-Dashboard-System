@@ -8,11 +8,13 @@ agents
 aligned
 alignments
 all
+also
 analysis
 analytics
 and
 answer
 any
+anything
 apache
 api
 app
@@ -59,6 +61,7 @@ case
 cell
 centimetre
 chart
+check
 chronos
 clean
 cleans
@@ -69,6 +72,7 @@ code
 codex
 collaborators
 cols
+column
 columns
 combine
 combined
@@ -114,8 +118,10 @@ definitions
 delete
 dependencies
 deployed
+derived
 describe
 description
+detected
 dev
 dir
 directory
@@ -123,6 +129,7 @@ discord
 display
 divide
 document
+doing
 dom
 domain
 download
@@ -200,6 +207,7 @@ grid
 have
 head
 header
+headers
 health
 higher
 hooks
@@ -209,6 +217,7 @@ ids
 implementation
 implementing
 importable
+index
 indexed
 indices
 indusii
@@ -235,6 +244,7 @@ jsx
 just
 label
 lag
+last
 layout
 ldes
 ldestss
@@ -272,8 +282,11 @@ min
 mobilenet
 model
 models
+module
+more
 motif
 multiple
+multirow
 name
 named
 ndarray
@@ -287,6 +300,7 @@ nodes
 normalise
 normalize
 normalized
+normalizes
 not
 notebook
 notice
@@ -307,11 +321,14 @@ origins
 other
 out
 outcome
+output
+owns
 package
 page
 pair
 parameters
 parse
+part
 path
 paths
 payload
@@ -320,6 +337,7 @@ persist
 pill
 pipeline
 pipelines
+plan
 playground
 plot
 plugin
@@ -327,6 +345,7 @@ plus
 point
 pola
 polyfills
+populated
 post
 pre
 predictions
@@ -377,6 +396,7 @@ registry
 rejects
 relative
 remove
+removes
 report
 reported
 reposit
@@ -393,6 +413,7 @@ returns
 reusable
 rml
 root
+row
 rows
 rules
 run
@@ -454,6 +475,8 @@ styles
 subsection
 supplied
 support
+supports
+sure
 suspected
 svr
 synthetic
@@ -503,6 +526,7 @@ unique
 unit
 units
 unsupported
+updated
 upload
 uploaded
 uri
@@ -514,6 +538,7 @@ useful
 user
 using
 utc
+uuid
 valid
 validate
 validation
@@ -527,10 +552,12 @@ virtuoso
 visualization
 vite
 vitejs
+want
 water
 waterinfo
 waterlink
 website
+well
 what
 when
 which
@@ -543,6 +570,7 @@ without
 worker
 workflow
 working
+worksheet
 workspace
 write
 xgboost
