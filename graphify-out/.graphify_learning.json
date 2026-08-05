@@ -1,0 +1,298 @@
+{
+  "generated_at": "2026-08-03T15:02:33.742824+00:00",
+  "nodes": {
+    "automating_aligments_automated_alignments_transform_unit_optimized": {
+      "code_fingerprint": "d8025c14be4bd397311faf51baed5d0c65f73094f57bcfbaf192845163074ecd",
+      "label": "transform_unit_optimized()",
+      "last": "2026-08-03T12:20:54.803515+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-03T12:20:54.803515+00:00",
+          "outcome": "useful",
+          "q": "User reported Indusii target values far higher than the four Waterinfo sensors and asked to fix suspected unit conversion before analysis."
+        }
+      ],
+      "score": 0.997409691,
+      "source_file": "automating_aligments/automated_alignments.py",
+      "status": "tentative",
+      "uses": 1
+    },
+    "frontend_src_app_app": {
+      "code_fingerprint": "3173626b26cd3e7d586f892c86e6d67d959e3611077c00a976fd673460306840",
+      "label": "App()",
+      "last": "2026-08-03T14:44:23.672597+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-03T14:44:23.672597+00:00",
+          "outcome": "useful",
+          "q": "Examine the current repository and look at the graphify structure. We need to build a generic cloud-deployed system based on the existing pipeline and frontend, not the Gent-Terneuzen use case, with CSV upload/preview, user RML mapping, named-graph Fuseki ingestion, user SHACL-in validation, user N3 reasoning, existing RDF2TSS assumptions, user SHACL-out validation, and existing RDF2LDES assumptions plus ZIP download."
+        },
+        {
+          "date": "2026-08-03T11:18:53.881846+00:00",
+          "outcome": "useful",
+          "q": "examine waterlink and waterinfo pipelines, you will see that I have added a new feature which is RDF2LDES. can you integrate this new feature in the frontend similar to all the other features of the pipeline that you integrated before."
+        },
+        {
+          "date": "2026-07-31T13:37:01.212017+00:00",
+          "outcome": "useful",
+          "q": "Now using this document provided, can you add new subsection to the website explaining what is the usecase and what is the goal maybe add nice figure or an interactive map"
+        }
+      ],
+      "score": 2.927879513,
+      "source_file": "frontend/src/App.jsx",
+      "status": "preferred",
+      "uses": 3
+    },
+    "frontend_src_components_mapcard_usecasetab": {
+      "code_fingerprint": "22d7cd81d5a9a26b024436f0f972c96f1894970872dcf46466bca993208babdd",
+      "label": "UsecaseTab()",
+      "last": "2026-07-31T13:37:01.212017+00:00",
+      "provenance": [
+        {
+          "date": "2026-07-31T13:37:01.212017+00:00",
+          "outcome": "useful",
+          "q": "Now using this document provided, can you add new subsection to the website explaining what is the usecase and what is the goal maybe add nice figure or an interactive map"
+        }
+      ],
+      "score": 0.931753254,
+      "source_file": "frontend/src/components/MapCard.jsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "lag_analytics_workspace_analysis": {
+      "code_fingerprint": "081ecd94560262501764db2525ac28b02220b7c53bca9f8d7bcc54a9bd8a1783",
+      "label": "analysis.py",
+      "last": "2026-08-03T12:20:54.803515+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-03T12:20:54.803515+00:00",
+          "outcome": "useful",
+          "q": "User reported Indusii target values far higher than the four Waterinfo sensors and asked to fix suspected unit conversion before analysis."
+        }
+      ],
+      "score": 0.997409691,
+      "source_file": "lag_analytics_workspace/analysis.py",
+      "status": "tentative",
+      "uses": 1
+    },
+    "lag_analytics_workspace_fuseki_fusekiclient": {
+      "code_fingerprint": "5fc5c5a9f80941594a4139c60a97a9e09c8d90a6797296315e7ac94e5edea681",
+      "label": "FusekiClient",
+      "last": "2026-08-03T12:20:54.803515+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-03T12:20:54.803515+00:00",
+          "outcome": "useful",
+          "q": "User reported Indusii target values far higher than the four Waterinfo sensors and asked to fix suspected unit conversion before analysis."
+        }
+      ],
+      "score": 0.997409691,
+      "source_file": "lag_analytics_workspace/fuseki.py",
+      "status": "tentative",
+      "uses": 1
+    },
+    "lag_analytics_workspace_fuseki_fusekiclient_observations": {
+      "code_fingerprint": "5fc5c5a9f80941594a4139c60a97a9e09c8d90a6797296315e7ac94e5edea681",
+      "label": ".observations()",
+      "last": "2026-08-03T12:20:54.803515+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-03T12:20:54.803515+00:00",
+          "outcome": "useful",
+          "q": "User reported Indusii target values far higher than the four Waterinfo sensors and asked to fix suspected unit conversion before analysis."
+        }
+      ],
+      "score": 0.997409691,
+      "source_file": "lag_analytics_workspace/fuseki.py",
+      "status": "tentative",
+      "uses": 1
+    },
+    "leaflet": {
+      "code_fingerprint": "b6eaf6b6289eea330ef9dea4f2d7644b6c60a278f274a5b469c8220d7573b36d",
+      "label": "leaflet",
+      "last": "2026-07-31T13:37:01.212017+00:00",
+      "provenance": [
+        {
+          "date": "2026-07-31T13:37:01.212017+00:00",
+          "outcome": "useful",
+          "q": "Now using this document provided, can you add new subsection to the website explaining what is the usecase and what is the goal maybe add nice figure or an interactive map"
+        }
+      ],
+      "score": 0.931753254,
+      "source_file": "frontend/package.json",
+      "status": "tentative",
+      "uses": 1
+    },
+    "pipeline_pipeline_core_rml_mapping": {
+      "code_fingerprint": "74ab25a3913ffb529edc7f53158493d24589eda5e39b0e23e65d705acc87e1d0",
+      "label": "_rml_mapping()",
+      "last": "2026-08-03T14:44:23.672597+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-03T14:44:23.672597+00:00",
+          "outcome": "useful",
+          "q": "Examine the current repository and look at the graphify structure. We need to build a generic cloud-deployed system based on the existing pipeline and frontend, not the Gent-Terneuzen use case, with CSV upload/preview, user RML mapping, named-graph Fuseki ingestion, user SHACL-in validation, user N3 reasoning, existing RDF2TSS assumptions, user SHACL-out validation, and existing RDF2LDES assumptions plus ZIP download."
+        }
+      ],
+      "score": 0.999708538,
+      "source_file": "pipeline/pipeline_core.py",
+      "status": "tentative",
+      "uses": 1
+    },
+    "pipeline_pipeline_core_run": {
+      "code_fingerprint": "74ab25a3913ffb529edc7f53158493d24589eda5e39b0e23e65d705acc87e1d0",
+      "label": "_run()",
+      "last": "2026-08-03T11:31:50.816042+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-03T11:31:50.816042+00:00",
+          "outcome": "useful",
+          "q": "can you recheck the system, I tried using the front end testing the water-link use case. I ran step 1 just fine. in step 2 i got attention needed: name '_rml_mapping' is not defined."
+        }
+      ],
+      "score": 0.996624764,
+      "source_file": "pipeline/pipeline_core.py",
+      "status": "tentative",
+      "uses": 1
+    },
+    "pipeline_pipeline_core_step_5_5_reasoner": {
+      "code_fingerprint": "74ab25a3913ffb529edc7f53158493d24589eda5e39b0e23e65d705acc87e1d0",
+      "label": "step_5_5_reasoner()",
+      "last": "2026-08-03T14:44:23.672597+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-03T14:44:23.672597+00:00",
+          "outcome": "useful",
+          "q": "Examine the current repository and look at the graphify structure. We need to build a generic cloud-deployed system based on the existing pipeline and frontend, not the Gent-Terneuzen use case, with CSV upload/preview, user RML mapping, named-graph Fuseki ingestion, user SHACL-in validation, user N3 reasoning, existing RDF2TSS assumptions, user SHACL-out validation, and existing RDF2LDES assumptions plus ZIP download."
+        }
+      ],
+      "score": 0.999708538,
+      "source_file": "pipeline/pipeline_core.py",
+      "status": "tentative",
+      "uses": 1
+    },
+    "pipeline_pipeline_core_step_6_rdf2ldes": {
+      "code_fingerprint": "74ab25a3913ffb529edc7f53158493d24589eda5e39b0e23e65d705acc87e1d0",
+      "label": "step_6_RDF2LDES()",
+      "last": "2026-08-03T14:44:23.672597+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-03T14:44:23.672597+00:00",
+          "outcome": "useful",
+          "q": "Examine the current repository and look at the graphify structure. We need to build a generic cloud-deployed system based on the existing pipeline and frontend, not the Gent-Terneuzen use case, with CSV upload/preview, user RML mapping, named-graph Fuseki ingestion, user SHACL-in validation, user N3 reasoning, existing RDF2TSS assumptions, user SHACL-out validation, and existing RDF2LDES assumptions plus ZIP download."
+        },
+        {
+          "date": "2026-08-03T11:18:53.881846+00:00",
+          "outcome": "useful",
+          "q": "examine waterlink and waterinfo pipelines, you will see that I have added a new feature which is RDF2LDES. can you integrate this new feature in the frontend similar to all the other features of the pipeline that you integrated before."
+        }
+      ],
+      "score": 1.996126259,
+      "source_file": "pipeline/pipeline_core.py",
+      "status": "preferred",
+      "uses": 2
+    },
+    "pipeline_playground_server_artifact": {
+      "code_fingerprint": "d6eb3e9b9db6a91e1b49ba89c599581660397e60c26721ff71d2ea3cd6fc73d6",
+      "label": "artifact()",
+      "last": "2026-08-03T11:18:53.881846+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-03T11:18:53.881846+00:00",
+          "outcome": "useful",
+          "q": "examine waterlink and waterinfo pipelines, you will see that I have added a new feature which is RDF2LDES. can you integrate this new feature in the frontend similar to all the other features of the pipeline that you integrated before."
+        }
+      ],
+      "score": 0.996417721,
+      "source_file": "pipeline/playground_server.py",
+      "status": "tentative",
+      "uses": 1
+    },
+    "pipeline_playground_server_run_stage": {
+      "code_fingerprint": "d6eb3e9b9db6a91e1b49ba89c599581660397e60c26721ff71d2ea3cd6fc73d6",
+      "label": "run_stage()",
+      "last": "2026-08-03T14:44:23.672597+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-03T14:44:23.672597+00:00",
+          "outcome": "useful",
+          "q": "Examine the current repository and look at the graphify structure. We need to build a generic cloud-deployed system based on the existing pipeline and frontend, not the Gent-Terneuzen use case, with CSV upload/preview, user RML mapping, named-graph Fuseki ingestion, user SHACL-in validation, user N3 reasoning, existing RDF2TSS assumptions, user SHACL-out validation, and existing RDF2LDES assumptions plus ZIP download."
+        }
+      ],
+      "score": 0.999708538,
+      "source_file": "pipeline/playground_server.py",
+      "status": "tentative",
+      "uses": 1
+    },
+    "pipeline_playground_server_stage_catalog": {
+      "code_fingerprint": "d6eb3e9b9db6a91e1b49ba89c599581660397e60c26721ff71d2ea3cd6fc73d6",
+      "label": "stage_catalog()",
+      "last": "2026-08-03T11:18:53.881846+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-03T11:18:53.881846+00:00",
+          "outcome": "useful",
+          "q": "examine waterlink and waterinfo pipelines, you will see that I have added a new feature which is RDF2LDES. can you integrate this new feature in the frontend similar to all the other features of the pipeline that you integrated before."
+        }
+      ],
+      "score": 0.996417721,
+      "source_file": "pipeline/playground_server.py",
+      "status": "tentative",
+      "uses": 1
+    },
+    "pipeline_playground_server_stage_result": {
+      "code_fingerprint": "d6eb3e9b9db6a91e1b49ba89c599581660397e60c26721ff71d2ea3cd6fc73d6",
+      "label": "stage_result()",
+      "last": "2026-08-03T14:44:23.672597+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-03T14:44:23.672597+00:00",
+          "outcome": "useful",
+          "q": "Examine the current repository and look at the graphify structure. We need to build a generic cloud-deployed system based on the existing pipeline and frontend, not the Gent-Terneuzen use case, with CSV upload/preview, user RML mapping, named-graph Fuseki ingestion, user SHACL-in validation, user N3 reasoning, existing RDF2TSS assumptions, user SHACL-out validation, and existing RDF2LDES assumptions plus ZIP download."
+        },
+        {
+          "date": "2026-08-03T11:31:50.816042+00:00",
+          "outcome": "useful",
+          "q": "can you recheck the system, I tried using the front end testing the water-link use case. I ran step 1 just fine. in step 2 i got attention needed: name '_rml_mapping' is not defined."
+        }
+      ],
+      "score": 1.996333302,
+      "source_file": "pipeline/playground_server.py",
+      "status": "preferred",
+      "uses": 2
+    },
+    "shacl_shacl_validate_validate_shacl": {
+      "code_fingerprint": "82c7b8e6899b23ea5fcefe0454e0ffbd14fd1362c3965c781b88fd499f5a6d28",
+      "label": "validate_shacl()",
+      "last": "2026-08-03T14:44:23.672597+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-03T14:44:23.672597+00:00",
+          "outcome": "useful",
+          "q": "Examine the current repository and look at the graphify structure. We need to build a generic cloud-deployed system based on the existing pipeline and frontend, not the Gent-Terneuzen use case, with CSV upload/preview, user RML mapping, named-graph Fuseki ingestion, user SHACL-in validation, user N3 reasoning, existing RDF2TSS assumptions, user SHACL-out validation, and existing RDF2LDES assumptions plus ZIP download."
+        }
+      ],
+      "score": 0.999708538,
+      "source_file": "SHACL/SHACL_validate.py",
+      "status": "tentative",
+      "uses": 1
+    },
+    "triple_store_ingestion_ingest_upload_graph": {
+      "code_fingerprint": "129a90eb49b64ca832cba6c5c253e372ba47c0c46a4b8a9efabf2848f0d8fa32",
+      "label": "upload_graph()",
+      "last": "2026-08-03T14:44:23.672597+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-03T14:44:23.672597+00:00",
+          "outcome": "useful",
+          "q": "Examine the current repository and look at the graphify structure. We need to build a generic cloud-deployed system based on the existing pipeline and frontend, not the Gent-Terneuzen use case, with CSV upload/preview, user RML mapping, named-graph Fuseki ingestion, user SHACL-in validation, user N3 reasoning, existing RDF2TSS assumptions, user SHACL-out validation, and existing RDF2LDES assumptions plus ZIP download."
+        }
+      ],
+      "score": 0.999708538,
+      "source_file": "triple_store_ingestion/ingest.py",
+      "status": "tentative",
+      "uses": 1
+    }
+  },
+  "version": 1
+}

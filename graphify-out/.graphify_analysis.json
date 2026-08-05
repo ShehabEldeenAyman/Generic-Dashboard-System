@@ -1,0 +1,1274 @@
+{
+  "communities": {
+    "0": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_analysis_deep_learning",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_analysis_describe_data",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_analysis_feature_matrix",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_analysis_lag_analysis",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_analysis_machine_learning",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_analysis_matrix_profile",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_analysis_number",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_analysis_prepare_observations",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_analysis_profile",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_analysis_py",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_analysis_sample_indices",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_analysis_series_payload",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_fuseki_cacheentry",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_fuseki_fusekiclient",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_fuseki_fusekiclient_graphs",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_fuseki_fusekiclient_health",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_fuseki_fusekiclient_init",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_fuseki_fusekiclient_observations",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_fuseki_fusekiclient_select",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_fuseki_fusekiclient_sensors",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_fuseki_fusekierror",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_fuseki_iri",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_fuseki_legacy_pair",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_fuseki_normalize_fuseki_observations",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_fuseki_py",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_fuseki_query_url",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_fuseki_sensor_label",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_fuseki_split_values",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_init_py",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_server_analysisrequest",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_server_data_preview",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_server_deeplearningrequest",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_server_dl",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_server_execute",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_server_frame",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_server_graphs",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_server_health",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_server_lag",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_server_machinelearningrequest",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_server_matrixprofilerequest",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_server_ml",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_server_profile",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_server_py",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_server_root",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_server_sensors",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_tests_test_analysis_py",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_tests_test_analysis_synthetic_raw",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_tests_test_analysis_test_legacy_fuseki_graph_is_normalized_to_milli_si_per_centimetre",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_tests_test_analysis_test_legacy_reader_prefers_new_correct_value_after_pipeline_rerun",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_tests_test_analysis_test_machine_learning_returns_predictions",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_tests_test_analysis_test_matrix_profile_returns_motif_and_discord",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_tests_test_analysis_test_prepare_and_lag_analysis_find_shift",
+      "lag_analytics_workspace_analysis_rationale_1",
+      "lag_analytics_workspace_analysis_rationale_30",
+      "lag_analytics_workspace_fuseki_rationale_1",
+      "lag_analytics_workspace_fuseki_rationale_24",
+      "lag_analytics_workspace_fuseki_rationale_51",
+      "lag_analytics_workspace_init",
+      "lag_analytics_workspace_init_rationale_1",
+      "lag_analytics_workspace_server_rationale_1",
+      "ndarray"
+    ],
+    "1": [
+      "basemodel",
+      "fileresponse",
+      "get",
+      "pipeline_playground_server",
+      "pipeline_playground_server_configuration",
+      "pipeline_playground_server_configured_origins",
+      "pipeline_playground_server_create_run",
+      "pipeline_playground_server_download_artifact",
+      "pipeline_playground_server_execute_stage",
+      "pipeline_playground_server_get_run",
+      "pipeline_playground_server_health",
+      "pipeline_playground_server_ingest_stage",
+      "pipeline_playground_server_ingestrequest",
+      "pipeline_playground_server_ldesrequest",
+      "pipeline_playground_server_load_run",
+      "pipeline_playground_server_preview_artifact",
+      "pipeline_playground_server_public_state",
+      "pipeline_playground_server_py_any",
+      "pipeline_playground_server_py_path",
+      "pipeline_playground_server_rationale_1",
+      "pipeline_playground_server_rdf2ldes_stage",
+      "pipeline_playground_server_rdf2tss_stage",
+      "pipeline_playground_server_reason_stage",
+      "pipeline_playground_server_reasonrequest",
+      "pipeline_playground_server_require_stage",
+      "pipeline_playground_server_rml_mapping",
+      "pipeline_playground_server_rmlrequest",
+      "pipeline_playground_server_shacl_in_stage",
+      "pipeline_playground_server_shacl_out_stage",
+      "pipeline_playground_server_shaclrequest",
+      "pipeline_playground_server_source_path",
+      "pipeline_run_store",
+      "pipeline_run_store_py_any",
+      "pipeline_run_store_py_path",
+      "pipeline_run_store_rationale_1",
+      "pipeline_run_store_rationale_37",
+      "pipeline_run_store_runstore",
+      "pipeline_run_store_runstore_add_artifact",
+      "pipeline_run_store_runstore_artifact",
+      "pipeline_run_store_runstore_begin_stage",
+      "pipeline_run_store_runstore_create",
+      "pipeline_run_store_runstore_finish_stage",
+      "pipeline_run_store_runstore_init",
+      "pipeline_run_store_runstore_load",
+      "pipeline_run_store_runstore_normalise_id",
+      "pipeline_run_store_runstore_resolve_relative",
+      "pipeline_run_store_runstore_run_dir",
+      "pipeline_run_store_runstore_save",
+      "pipeline_run_store_utc_now",
+      "post",
+      "stageoperation",
+      "uploadfile"
+    ],
+    "2": [
+      "lag_analytics_workspace_analysis",
+      "lag_analytics_workspace_analysis_deep_learning",
+      "lag_analytics_workspace_analysis_describe_data",
+      "lag_analytics_workspace_analysis_feature_matrix",
+      "lag_analytics_workspace_analysis_lag_analysis",
+      "lag_analytics_workspace_analysis_machine_learning",
+      "lag_analytics_workspace_analysis_matrix_profile",
+      "lag_analytics_workspace_analysis_number",
+      "lag_analytics_workspace_analysis_prepare_observations",
+      "lag_analytics_workspace_analysis_profile",
+      "lag_analytics_workspace_analysis_sample_indices",
+      "lag_analytics_workspace_analysis_series_payload",
+      "lag_analytics_workspace_fuseki",
+      "lag_analytics_workspace_fuseki_cacheentry",
+      "lag_analytics_workspace_fuseki_fusekiclient",
+      "lag_analytics_workspace_fuseki_fusekiclient_graphs",
+      "lag_analytics_workspace_fuseki_fusekiclient_health",
+      "lag_analytics_workspace_fuseki_fusekiclient_init",
+      "lag_analytics_workspace_fuseki_fusekiclient_observations",
+      "lag_analytics_workspace_fuseki_fusekiclient_select",
+      "lag_analytics_workspace_fuseki_fusekiclient_sensors",
+      "lag_analytics_workspace_fuseki_fusekierror",
+      "lag_analytics_workspace_fuseki_iri",
+      "lag_analytics_workspace_fuseki_legacy_pair",
+      "lag_analytics_workspace_fuseki_normalize_fuseki_observations",
+      "lag_analytics_workspace_fuseki_query_url",
+      "lag_analytics_workspace_fuseki_rationale_213",
+      "lag_analytics_workspace_fuseki_sensor_label",
+      "lag_analytics_workspace_fuseki_split_values",
+      "lag_analytics_workspace_server",
+      "lag_analytics_workspace_server_analysisrequest",
+      "lag_analytics_workspace_server_data_preview",
+      "lag_analytics_workspace_server_deeplearningrequest",
+      "lag_analytics_workspace_server_dl",
+      "lag_analytics_workspace_server_execute",
+      "lag_analytics_workspace_server_frame",
+      "lag_analytics_workspace_server_graphs",
+      "lag_analytics_workspace_server_health",
+      "lag_analytics_workspace_server_lag",
+      "lag_analytics_workspace_server_machinelearningrequest",
+      "lag_analytics_workspace_server_matrixprofilerequest",
+      "lag_analytics_workspace_server_ml",
+      "lag_analytics_workspace_server_profile",
+      "lag_analytics_workspace_server_root",
+      "lag_analytics_workspace_server_sensors",
+      "lag_analytics_workspace_tests_test_analysis",
+      "lag_analytics_workspace_tests_test_analysis_synthetic_raw",
+      "lag_analytics_workspace_tests_test_analysis_test_legacy_fuseki_graph_is_normalized_to_milli_si_per_centimetre",
+      "lag_analytics_workspace_tests_test_analysis_test_legacy_reader_prefers_new_correct_value_after_pipeline_rerun",
+      "lag_analytics_workspace_tests_test_analysis_test_machine_learning_returns_predictions",
+      "lag_analytics_workspace_tests_test_analysis_test_matrix_profile_returns_motif_and_discord",
+      "lag_analytics_workspace_tests_test_analysis_test_prepare_and_lag_analysis_find_shift"
+    ],
+    "3": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_main_chronos2forecast_visualization",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_main_comparison_visualization",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_main_ensemble_visualization",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_main_lifespan",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_main_lightgbm_visualization",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_main_plot_sensor_data",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_main_py",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_main_random_forest_visualization",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_main_root",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_main_svr_visualization",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_main_xgboost_visualization",
+      "fastapi",
+      "python_backend_server_chronos2forecast",
+      "python_backend_server_chronos2forecast_chronos2forecast",
+      "python_backend_server_comparison",
+      "python_backend_server_comparison_comparisonforecast",
+      "python_backend_server_ensemble",
+      "python_backend_server_ensemble_ensemble",
+      "python_backend_server_gradientboosting1sensor",
+      "python_backend_server_gradientboosting1sensor_gradientboosting1sensor",
+      "python_backend_server_gradientboostingmultiplesensors",
+      "python_backend_server_gradientboostingmultiplesensors_gradientboostingmultiplesensors",
+      "python_backend_server_lightgbm",
+      "python_backend_server_lightgbm_lightgbm_forecast_bias",
+      "python_backend_server_lightgbm_lightgbm_train",
+      "python_backend_server_main",
+      "python_backend_server_main_chronos2forecast_visualization",
+      "python_backend_server_main_comparison_visualization",
+      "python_backend_server_main_ensemble_visualization",
+      "python_backend_server_main_lifespan",
+      "python_backend_server_main_lightgbm_visualization",
+      "python_backend_server_main_plot_sensor_data",
+      "python_backend_server_main_random_forest_visualization",
+      "python_backend_server_main_root",
+      "python_backend_server_main_svr_visualization",
+      "python_backend_server_main_xgboost_visualization",
+      "python_backend_server_randomforest",
+      "python_backend_server_randomforest_randomforest",
+      "python_backend_server_start_preprocessing",
+      "python_backend_server_start_preprocessing_datapreparation",
+      "python_backend_server_start_preprocessing_featureengineering",
+      "python_backend_server_start_preprocessing_identify_unique_sensors",
+      "python_backend_server_start_preprocessing_prepare_for_chronos",
+      "python_backend_server_start_preprocessing_prepare_for_chronos_no_avg",
+      "python_backend_server_start_preprocessing_reframe_data",
+      "python_backend_server_supportvectormachine",
+      "python_backend_server_supportvectormachine_supportvectormachine",
+      "python_backend_server_xgboost_model",
+      "python_backend_server_xgboost_model_xgboost_forecast_bias",
+      "python_backend_server_xgboost_model_xgboost_train",
+      "request"
+    ],
+    "4": [
+      "buffer",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_dependencies",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_dependencies_buffer",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_dependencies_echarts",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_dependencies_echarts_for_react",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_dependencies_ldes_client",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_dependencies_leaflet",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_dependencies_pola_rs_browser",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_dependencies_process",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_dependencies_pyodide",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_dependencies_react",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_dependencies_react_dom",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_dependencies_react_leaflet",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_dependencies_react_py",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_dependencies_tailwindcss",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_dependencies_tailwindcss_vite",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_dependencies_tensorflow_models_mobilenet",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_dependencies_tensorflow_tfjs",
+      "echarts",
+      "echarts_for_react",
+      "frontend_package_dependencies",
+      "frontend_package_dependencies_buffer",
+      "frontend_package_dependencies_echarts",
+      "frontend_package_dependencies_echarts_for_react",
+      "frontend_package_dependencies_ldes_client",
+      "frontend_package_dependencies_leaflet",
+      "frontend_package_dependencies_pola_rs_browser",
+      "frontend_package_dependencies_process",
+      "frontend_package_dependencies_pyodide",
+      "frontend_package_dependencies_react",
+      "frontend_package_dependencies_react_dom",
+      "frontend_package_dependencies_react_leaflet",
+      "frontend_package_dependencies_react_py",
+      "frontend_package_dependencies_tailwindcss",
+      "frontend_package_dependencies_tailwindcss_vite",
+      "frontend_package_dependencies_tensorflow_models_mobilenet",
+      "frontend_package_dependencies_tensorflow_tfjs",
+      "ldes_client",
+      "leaflet",
+      "pola_rs_browser",
+      "process",
+      "pyodide",
+      "react",
+      "react_dom",
+      "react_leaflet",
+      "react_py",
+      "tailwindcss",
+      "tailwindcss_vite",
+      "tensorflow_models_mobilenet",
+      "tensorflow_tfjs"
+    ],
+    "5": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pipeline_pipeline_core_data_path",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pipeline_pipeline_core_ldes_artifacts",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pipeline_pipeline_core_pipeline_working_directory",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pipeline_pipeline_core_py",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pipeline_pipeline_core_rml_mapping",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pipeline_pipeline_core_run",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pipeline_pipeline_core_setup_environment",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pipeline_pipeline_core_step_1_fetch_data",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pipeline_pipeline_core_step_1_pre_process_waterlink",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pipeline_pipeline_core_step_2_preprocess",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pipeline_pipeline_core_step_2_rml_mapping_waterlink",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pipeline_pipeline_core_step_3_5_automating_alignments",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pipeline_pipeline_core_step_3_rml_mapping",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pipeline_pipeline_core_step_4_ingest_triplestore",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pipeline_pipeline_core_step_5_5_reasoner",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pipeline_pipeline_core_step_5_rdf2tss",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pipeline_pipeline_core_step_6_rdf2ldes",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pipeline_pipeline_core_step_shacl_validate",
+      "pipeline_pipeline_core",
+      "pipeline_pipeline_core_data_path",
+      "pipeline_pipeline_core_ldes_artifacts",
+      "pipeline_pipeline_core_pipeline_working_directory",
+      "pipeline_pipeline_core_rationale_1",
+      "pipeline_pipeline_core_rationale_140",
+      "pipeline_pipeline_core_rationale_159",
+      "pipeline_pipeline_core_rationale_25",
+      "pipeline_pipeline_core_rationale_44",
+      "pipeline_pipeline_core_rationale_95",
+      "pipeline_pipeline_core_rml_mapping",
+      "pipeline_pipeline_core_run",
+      "pipeline_pipeline_core_setup_environment",
+      "pipeline_pipeline_core_step_1_fetch_data",
+      "pipeline_pipeline_core_step_1_pre_process_waterlink",
+      "pipeline_pipeline_core_step_2_preprocess",
+      "pipeline_pipeline_core_step_2_rml_mapping_waterlink",
+      "pipeline_pipeline_core_step_3_5_automating_alignments",
+      "pipeline_pipeline_core_step_3_rml_mapping",
+      "pipeline_pipeline_core_step_4_ingest_triplestore",
+      "pipeline_pipeline_core_step_5_5_reasoner",
+      "pipeline_pipeline_core_step_5_rdf2tss",
+      "pipeline_pipeline_core_step_6_rdf2ldes",
+      "pipeline_pipeline_core_step_shacl_validate",
+      "pipeline_pipeline_waterinfo",
+      "pipeline_pipeline_waterinfo_main",
+      "pipeline_pipeline_waterlink",
+      "pipeline_pipeline_waterlink_main"
+    ],
+    "6": [
+      "pipeline_generic_pipeline",
+      "pipeline_generic_pipeline_commandresult",
+      "pipeline_generic_pipeline_commandresult_log",
+      "pipeline_generic_pipeline_csv_preview",
+      "pipeline_generic_pipeline_eye_command",
+      "pipeline_generic_pipeline_graph_name_to_uri",
+      "pipeline_generic_pipeline_ingest_graph",
+      "pipeline_generic_pipeline_normalise_stream_name",
+      "pipeline_generic_pipeline_parse_turtle",
+      "pipeline_generic_pipeline_pipelineerror",
+      "pipeline_generic_pipeline_pipelineerror_init",
+      "pipeline_generic_pipeline_py_any",
+      "pipeline_generic_pipeline_py_path",
+      "pipeline_generic_pipeline_rationale_1",
+      "pipeline_generic_pipeline_rationale_41",
+      "pipeline_generic_pipeline_run_command",
+      "pipeline_generic_pipeline_run_rdf2ldes",
+      "pipeline_generic_pipeline_run_rdf2tss",
+      "pipeline_generic_pipeline_run_reasoner",
+      "pipeline_generic_pipeline_run_rml_mapping",
+      "pipeline_generic_pipeline_run_shacl_validation",
+      "pipeline_generic_pipeline_safe_filename",
+      "pipeline_generic_pipeline_tool_status",
+      "pipeline_tests_test_generic_pipeline",
+      "pipeline_tests_test_generic_pipeline_test_graph_name_is_converted_to_a_safe_named_graph_uri",
+      "pipeline_tests_test_generic_pipeline_test_rdf2ldes_generates_a_downloadable_zip",
+      "pipeline_tests_test_generic_pipeline_test_shacl_violation_returns_a_report_without_raising",
+      "pipeline_tests_test_generic_pipeline_test_upload_csv_creates_run_and_preview",
+      "pipeline_tests_test_generic_pipeline_test_user_supplied_n3_rules_create_reasoned_rdf",
+      "pipeline_tests_test_generic_pipeline_test_user_supplied_rml_mapping_runs_against_uploaded_filename",
+      "runtimeerror",
+      "shacl_shacl_validate",
+      "shacl_shacl_validate_validate_shacl",
+      "skipif"
+    ],
+    "7": [
+      "automating_aligments_automated_alignments",
+      "automating_aligments_automated_alignments_conversion",
+      "automating_aligments_automated_alignments_convert_qudt_value",
+      "automating_aligments_automated_alignments_main",
+      "automating_aligments_automated_alignments_rationale_1",
+      "automating_aligments_automated_alignments_rationale_27",
+      "automating_aligments_automated_alignments_rationale_50",
+      "automating_aligments_automated_alignments_rationale_55",
+      "automating_aligments_automated_alignments_transform_unit",
+      "automating_aligments_automated_alignments_transform_unit_optimized",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_automating_aligments_automated_alignments_conversion",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_automating_aligments_automated_alignments_convert_qudt_value",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_automating_aligments_automated_alignments_main",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_automating_aligments_automated_alignments_py",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_automating_aligments_automated_alignments_transform_unit",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_automating_aligments_automated_alignments_transform_unit_optimized",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_deprecated_rdf2tss_per_day_v1_createsensorset",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_deprecated_rdf2tss_per_day_v1_createtss",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_deprecated_rdf2tss_per_day_v1_loadgraph",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_deprecated_rdf2tss_per_day_v1_main",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_deprecated_rdf2tss_per_day_v1_py",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_deprecated_rdf2tss_per_day_v1_savegraph",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_tests_test_analysis_test_qudt_conversion_micro_to_milli_si_per_centimetre",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pipeline_pipeline_waterinfo_main",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pipeline_pipeline_waterinfo_py",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pipeline_pipeline_waterlink_main",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pipeline_pipeline_waterlink_py",
+      "lag_analytics_workspace_tests_test_analysis_test_qudt_conversion_micro_to_milli_si_per_centimetre",
+      "uriref"
+    ],
+    "8": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_deprecated_pipeline_main",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_deprecated_pipeline_py",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_deprecated_pipeline_setup_environment",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_deprecated_pipeline_step_1_fetch_data",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_deprecated_pipeline_step_1_pre_process_waterlink",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_deprecated_pipeline_step_2_preprocess",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_deprecated_pipeline_step_2_rml_mapping_waterlink",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_deprecated_pipeline_step_3_rml_mapping",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_deprecated_pipeline_step_4_ingest_virtuoso",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_deprecated_pipeline_step_5_rdf2tss",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_deprecated_pipeline_step_6_ingest_tss_virtuoso",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_deprecated_pipeline_step_7_transform_ldes",
+      "deprecated_pipeline",
+      "deprecated_pipeline_main",
+      "deprecated_pipeline_setup_environment",
+      "deprecated_pipeline_step_1_fetch_data",
+      "deprecated_pipeline_step_1_pre_process_waterlink",
+      "deprecated_pipeline_step_2_preprocess",
+      "deprecated_pipeline_step_2_rml_mapping_waterlink",
+      "deprecated_pipeline_step_3_rml_mapping",
+      "deprecated_pipeline_step_4_ingest_virtuoso",
+      "deprecated_pipeline_step_5_rdf2tss",
+      "deprecated_pipeline_step_6_ingest_tss_virtuoso",
+      "deprecated_pipeline_step_7_transform_ldes",
+      "python_backend_server_constants"
+    ],
+    "9": [
+      "frontend_src_components_datavisualization",
+      "frontend_src_components_datavisualization_datavisualization",
+      "frontend_src_components_datavisualization_getsensordatacache",
+      "frontend_src_components_datavisualization_prefixes",
+      "frontend_src_components_datavisualization_sensordataregistry",
+      "frontend_src_components_edgedeeplearning",
+      "frontend_src_components_edgedeeplearning_buildaverageseries",
+      "frontend_src_components_edgedeeplearning_buildforecasttimestamps",
+      "frontend_src_components_edgedeeplearning_extractsensordata",
+      "frontend_src_components_edgedeeplearning_ldesstate",
+      "frontend_src_components_edgedeeplearning_lstminference",
+      "frontend_src_components_edgedeeplearning_minmaxinverse",
+      "frontend_src_components_edgedeeplearning_minmaxscale",
+      "frontend_src_components_edgedeeplearning_prefixes",
+      "frontend_src_components_edgedeeplearning_prepareinput",
+      "frontend_src_components_edgedeeplearning_target_sensor_ids",
+      "frontend_src_components_ldesclientcard",
+      "frontend_src_components_ldesclientcard_getldesstate",
+      "frontend_src_components_ldesclientcard_ldesclientcard",
+      "frontend_src_components_ldesclientcard_ldesregistry",
+      "frontend_src_components_tensorflowconductivity",
+      "frontend_src_components_tensorflowconductivity_sensor_data",
+      "frontend_src_components_tensorflowconductivity_tensorflowconductivity"
+    ],
+    "10": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_time_series_analysis_timeseriesforecasting_comparison_visualization",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_time_series_analysis_timeseriesforecasting_comparisonforecast",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_time_series_analysis_timeseriesforecasting_datapreparation",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_time_series_analysis_timeseriesforecasting_ensemble",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_time_series_analysis_timeseriesforecasting_ensemble_visualization",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_time_series_analysis_timeseriesforecasting_featureengineering",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_time_series_analysis_timeseriesforecasting_identify_unique_sensors",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_time_series_analysis_timeseriesforecasting_lightgbm_forecast_bias",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_time_series_analysis_timeseriesforecasting_lightgbm_train",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_time_series_analysis_timeseriesforecasting_lightgbm_visualization",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_time_series_analysis_timeseriesforecasting_main",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_time_series_analysis_timeseriesforecasting_plot_sensor_data",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_time_series_analysis_timeseriesforecasting_py",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_time_series_analysis_timeseriesforecasting_reframe_data",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_time_series_analysis_timeseriesforecasting_xgboost_forecast_bias",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_time_series_analysis_timeseriesforecasting_xgboost_train",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_time_series_analysis_timeseriesforecasting_xgboost_visualization"
+    ],
+    "11": [
+      "time_series_analysis_timeseriesforecasting",
+      "time_series_analysis_timeseriesforecasting_comparison_visualization",
+      "time_series_analysis_timeseriesforecasting_comparisonforecast",
+      "time_series_analysis_timeseriesforecasting_datapreparation",
+      "time_series_analysis_timeseriesforecasting_ensemble",
+      "time_series_analysis_timeseriesforecasting_ensemble_visualization",
+      "time_series_analysis_timeseriesforecasting_featureengineering",
+      "time_series_analysis_timeseriesforecasting_identify_unique_sensors",
+      "time_series_analysis_timeseriesforecasting_lightgbm_forecast_bias",
+      "time_series_analysis_timeseriesforecasting_lightgbm_train",
+      "time_series_analysis_timeseriesforecasting_lightgbm_visualization",
+      "time_series_analysis_timeseriesforecasting_main",
+      "time_series_analysis_timeseriesforecasting_plot_sensor_data",
+      "time_series_analysis_timeseriesforecasting_reframe_data",
+      "time_series_analysis_timeseriesforecasting_xgboost_forecast_bias",
+      "time_series_analysis_timeseriesforecasting_xgboost_train",
+      "time_series_analysis_timeseriesforecasting_xgboost_visualization"
+    ],
+    "12": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_rdf2tss_v2_rdf2tss_v2_create_sensor_set",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_rdf2tss_v2_rdf2tss_v2_create_tss",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_rdf2tss_v2_rdf2tss_v2_load_graph",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_rdf2tss_v2_rdf2tss_v2_main",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_rdf2tss_v2_rdf2tss_v2_py",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_rdf2tss_v2_rdf2tss_v2_save_graph",
+      "rdf2tss_v2_rdf2tss_v2",
+      "rdf2tss_v2_rdf2tss_v2_create_sensor_set",
+      "rdf2tss_v2_rdf2tss_v2_create_tss",
+      "rdf2tss_v2_rdf2tss_v2_load_graph",
+      "rdf2tss_v2_rdf2tss_v2_main",
+      "rdf2tss_v2_rdf2tss_v2_rationale_23",
+      "rdf2tss_v2_rdf2tss_v2_rationale_48",
+      "rdf2tss_v2_rdf2tss_v2_rationale_68",
+      "rdf2tss_v2_rdf2tss_v2_save_graph"
+    ],
+    "13": [
+      "frontend_src_app",
+      "frontend_src_app_app",
+      "frontend_src_app_artifactlinks",
+      "frontend_src_app_artifactpreview",
+      "frontend_src_app_codeeditor",
+      "frontend_src_app_completedstatuses",
+      "frontend_src_app_csvpreview",
+      "frontend_src_app_requestjson",
+      "frontend_src_app_stagecard",
+      "frontend_src_app_stagedefinitions",
+      "frontend_src_app_stagefeedback",
+      "frontend_src_app_statuslabel",
+      "frontend_src_app_statuspill",
+      "frontend_src_app_uploadstage",
+      "frontend_src_main"
+    ],
+    "14": [
+      "rdf2ldes_rdftss2ldes",
+      "rdf2ldes_rdftss2ldes_create_base_graph",
+      "rdf2ldes_rdftss2ldes_create_ldes_files",
+      "rdf2ldes_rdftss2ldes_delete_ldes_files",
+      "rdf2ldes_rdftss2ldes_delete_log",
+      "rdf2ldes_rdftss2ldes_divide_data",
+      "rdf2ldes_rdftss2ldes_generate_ldes",
+      "rdf2ldes_rdftss2ldes_load_graph",
+      "rdf2ldes_rdftss2ldes_main",
+      "rdf2ldes_rdftss2ldes_process_graph",
+      "rdf2ldes_rdftss2ldes_rationale_282",
+      "rdf2ldes_rdftss2ldes_rationale_36",
+      "rdf2ldes_rdftss2ldes_set_property",
+      "rdf2ldes_rdftss2ldes_write_log"
+    ],
+    "15": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pre_processing_preprocess_waterlink_build_combined_header",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pre_processing_preprocess_waterlink_clean_result_sheet",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pre_processing_preprocess_waterlink_combine_datetime",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pre_processing_preprocess_waterlink_py",
+      "pre_processing_preprocess_waterlink",
+      "pre_processing_preprocess_waterlink_build_combined_header",
+      "pre_processing_preprocess_waterlink_clean_result_sheet",
+      "pre_processing_preprocess_waterlink_combine_datetime",
+      "pre_processing_preprocess_waterlink_rationale_1",
+      "pre_processing_preprocess_waterlink_rationale_25",
+      "pre_processing_preprocess_waterlink_rationale_60",
+      "pre_processing_preprocess_waterlink_rationale_79"
+    ],
+    "16": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_triple_store_ingestion_ingest_delete_graph",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_triple_store_ingestion_ingest_get_query_url",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_triple_store_ingestion_ingest_py",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_triple_store_ingestion_ingest_upload_graph",
+      "triple_store_ingestion_ingest",
+      "triple_store_ingestion_ingest_delete_graph",
+      "triple_store_ingestion_ingest_get_query_url",
+      "triple_store_ingestion_ingest_rationale_1",
+      "triple_store_ingestion_ingest_rationale_12",
+      "triple_store_ingestion_ingest_rationale_20",
+      "triple_store_ingestion_ingest_rationale_42",
+      "triple_store_ingestion_ingest_upload_graph"
+    ],
+    "17": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_time_series_analysis_lstm_train_main",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_time_series_analysis_lstm_train_py",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_time_series_analysis_train_lstm_build_lstm_autoencoder",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_time_series_analysis_train_lstm_create_sequences",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_time_series_analysis_train_lstm_py",
+      "time_series_analysis_lstm_train",
+      "time_series_analysis_lstm_train_main",
+      "time_series_analysis_train_lstm",
+      "time_series_analysis_train_lstm_build_lstm_autoencoder",
+      "time_series_analysis_train_lstm_create_sequences",
+      "time_series_analysis_train_lstm_rationale_128"
+    ],
+    "18": [
+      "frontend_src_components_mapcard",
+      "frontend_src_components_mapcard_attributestab",
+      "frontend_src_components_mapcard_headstyles",
+      "frontend_src_components_mapcard_innerstyles",
+      "frontend_src_components_mapcard_mapcardbody",
+      "frontend_src_components_mapcard_mapcardhead",
+      "frontend_src_components_mapcard_maptab",
+      "frontend_src_components_mapcard_parameterstab",
+      "frontend_src_components_mapcard_stationstab",
+      "frontend_src_components_mapcard_styles",
+      "frontend_src_components_mapcard_usecasetab"
+    ],
+    "19": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_deprecated_rdf2ldes_ymd_sparql_for_tss_create_base_graph",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_deprecated_rdf2ldes_ymd_sparql_for_tss_create_ldes_files",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_deprecated_rdf2ldes_ymd_sparql_for_tss_delete_ldes_files",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_deprecated_rdf2ldes_ymd_sparql_for_tss_delete_log",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_deprecated_rdf2ldes_ymd_sparql_for_tss_divide_data",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_deprecated_rdf2ldes_ymd_sparql_for_tss_load_graph",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_deprecated_rdf2ldes_ymd_sparql_for_tss_main",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_deprecated_rdf2ldes_ymd_sparql_for_tss_process_graph",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_deprecated_rdf2ldes_ymd_sparql_for_tss_py",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_deprecated_rdf2ldes_ymd_sparql_for_tss_write_log"
+    ],
+    "20": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_json",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_name",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_private",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_scripts",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_scripts_build",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_scripts_dev",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_scripts_lint",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_scripts_preview",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_type",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_version"
+    ],
+    "21": [
+      "deprecated_rdf2ldes_ymd_sparql_for_tss",
+      "deprecated_rdf2ldes_ymd_sparql_for_tss_create_base_graph",
+      "deprecated_rdf2ldes_ymd_sparql_for_tss_create_ldes_files",
+      "deprecated_rdf2ldes_ymd_sparql_for_tss_delete_ldes_files",
+      "deprecated_rdf2ldes_ymd_sparql_for_tss_delete_log",
+      "deprecated_rdf2ldes_ymd_sparql_for_tss_divide_data",
+      "deprecated_rdf2ldes_ymd_sparql_for_tss_load_graph",
+      "deprecated_rdf2ldes_ymd_sparql_for_tss_main",
+      "deprecated_rdf2ldes_ymd_sparql_for_tss_process_graph",
+      "deprecated_rdf2ldes_ymd_sparql_for_tss_write_log"
+    ],
+    "22": [
+      "frontend_package",
+      "frontend_package_name",
+      "frontend_package_private",
+      "frontend_package_scripts",
+      "frontend_package_scripts_build",
+      "frontend_package_scripts_dev",
+      "frontend_package_scripts_lint",
+      "frontend_package_scripts_preview",
+      "frontend_package_type",
+      "frontend_package_version"
+    ],
+    "23": [
+      "frontend_src_components_browsedata",
+      "frontend_src_components_browsedata_browsedatabody",
+      "frontend_src_components_browsedata_browsedatahead",
+      "frontend_src_components_browsedata_browseldesdata",
+      "frontend_src_components_browsedata_browseldestssdata",
+      "frontend_src_components_browsedata_browsettldata",
+      "frontend_src_components_browsedata_headstyles",
+      "frontend_src_components_browsedata_innerstyles",
+      "frontend_src_components_browsedata_tablestyles",
+      "frontend_src_constants"
+    ],
+    "24": [
+      "frontend_src_pages_laganalyticspage",
+      "frontend_src_pages_laganalyticspage_errornotice",
+      "frontend_src_pages_laganalyticspage_forecastchart",
+      "frontend_src_pages_laganalyticspage_laganalyticspage",
+      "frontend_src_pages_laganalyticspage_lagchart",
+      "frontend_src_pages_laganalyticspage_matrixprofilechart",
+      "frontend_src_pages_laganalyticspage_metric",
+      "frontend_src_pages_laganalyticspage_stage",
+      "frontend_src_pages_laganalyticspage_timeserieschart"
+    ],
+    "25": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_devdependencies",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_devdependencies_eslint_plugin_react_hooks",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_devdependencies_eslint_plugin_react_refresh",
+      "eslint_plugin_react_hooks",
+      "eslint_plugin_react_refresh",
+      "frontend_package_devdependencies_eslint_plugin_react_hooks",
+      "frontend_package_devdependencies_eslint_plugin_react_refresh"
+    ],
+    "26": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_devdependencies_eslint_js",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_devdependencies_vite_plugin_node_polyfills",
+      "eslint_js",
+      "frontend_package_devdependencies",
+      "frontend_package_devdependencies_eslint_js",
+      "frontend_package_devdependencies_vite_plugin_node_polyfills",
+      "vite_plugin_node_polyfills"
+    ],
+    "27": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_start_preprocessing_datapreparation",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_start_preprocessing_featureengineering",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_start_preprocessing_identify_unique_sensors",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_start_preprocessing_prepare_for_chronos",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_start_preprocessing_prepare_for_chronos_no_avg",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_start_preprocessing_py",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_start_preprocessing_reframe_data"
+    ],
+    "28": [
+      "deprecated_rdf2tss_per_day_v1",
+      "deprecated_rdf2tss_per_day_v1_createsensorset",
+      "deprecated_rdf2tss_per_day_v1_createtss",
+      "deprecated_rdf2tss_per_day_v1_loadgraph",
+      "deprecated_rdf2tss_per_day_v1_main",
+      "deprecated_rdf2tss_per_day_v1_savegraph"
+    ],
+    "29": [
+      "readme",
+      "readme_deployment_configuration",
+      "readme_generic_semantic_pipeline",
+      "readme_gent_terneuzen_canal",
+      "readme_start_locally",
+      "readme_workflow"
+    ],
+    "30": [
+      "frontend_src_components_chronoscard",
+      "frontend_src_components_chronoscard_chronoscard",
+      "frontend_src_components_chronoscard_graph_items",
+      "frontend_src_components_chronoscard_graphcard",
+      "frontend_src_components_chronoscard_styles"
+    ],
+    "31": [
+      "frontend_src_components_machinelearningcard",
+      "frontend_src_components_machinelearningcard_graph_items",
+      "frontend_src_components_machinelearningcard_graphcard",
+      "frontend_src_components_machinelearningcard_machinelearningcard",
+      "frontend_src_components_machinelearningcard_styles"
+    ],
+    "32": [
+      "frontend_src_pages_usecasepage",
+      "frontend_src_pages_usecasepage_applications",
+      "frontend_src_pages_usecasepage_canalpath",
+      "frontend_src_pages_usecasepage_stations",
+      "frontend_src_pages_usecasepage_usecasepage"
+    ],
+    "33": [
+      "graphify_out_memory_query_20260731_133701_now_using_this_document_provided_can_you_add_new",
+      "graphify_out_memory_query_20260731_133701_now_using_this_document_provided_can_you_add_new_answer",
+      "graphify_out_memory_query_20260731_133701_now_using_this_document_provided_can_you_add_new_outcome",
+      "graphify_out_memory_query_20260731_133701_now_using_this_document_provided_can_you_add_new_q_now_using_this_document_provided_can_you_add_new_subsection_to_the_website_explaining_what_is_the_usecase_and_what_is_the_goal_maybe_add_nice_figure_or_an_interactive_map",
+      "graphify_out_memory_query_20260731_133701_now_using_this_document_provided_can_you_add_new_source_nodes"
+    ],
+    "34": [
+      "graphify_out_memory_query_20260803_111853_examine_waterlink_and_waterinfo_pipelines_you_wil",
+      "graphify_out_memory_query_20260803_111853_examine_waterlink_and_waterinfo_pipelines_you_wil_answer",
+      "graphify_out_memory_query_20260803_111853_examine_waterlink_and_waterinfo_pipelines_you_wil_outcome",
+      "graphify_out_memory_query_20260803_111853_examine_waterlink_and_waterinfo_pipelines_you_wil_q_examine_waterlink_and_waterinfo_pipelines_you_will_see_that_i_have_added_a_new_feature_which_is_rdf2ldes_can_you_integrate_this_new_feature_in_the_frontend_similar_to_all_the_other_features_of_the_pipeline_that_you_integrated_before",
+      "graphify_out_memory_query_20260803_111853_examine_waterlink_and_waterinfo_pipelines_you_wil_source_nodes"
+    ],
+    "35": [
+      "graphify_out_memory_query_20260803_113150_can_you_recheck_the_system_i_tried_using_the_fron",
+      "graphify_out_memory_query_20260803_113150_can_you_recheck_the_system_i_tried_using_the_fron_answer",
+      "graphify_out_memory_query_20260803_113150_can_you_recheck_the_system_i_tried_using_the_fron_outcome",
+      "graphify_out_memory_query_20260803_113150_can_you_recheck_the_system_i_tried_using_the_fron_q_can_you_recheck_the_system_i_tried_using_the_front_end_testing_the_water_link_use_case_i_ran_step_1_just_fine_in_step_2_i_got_attention_needed_name_rml_mapping_is_not_defined",
+      "graphify_out_memory_query_20260803_113150_can_you_recheck_the_system_i_tried_using_the_fron_source_nodes"
+    ],
+    "36": [
+      "graphify_out_memory_query_20260803_122054_user_reported_indusii_target_values_far_higher_tha",
+      "graphify_out_memory_query_20260803_122054_user_reported_indusii_target_values_far_higher_tha_answer",
+      "graphify_out_memory_query_20260803_122054_user_reported_indusii_target_values_far_higher_tha_outcome",
+      "graphify_out_memory_query_20260803_122054_user_reported_indusii_target_values_far_higher_tha_q_user_reported_indusii_target_values_far_higher_than_the_four_waterinfo_sensors_and_asked_to_fix_suspected_unit_conversion_before_analysis",
+      "graphify_out_memory_query_20260803_122054_user_reported_indusii_target_values_far_higher_tha_source_nodes"
+    ],
+    "37": [
+      "graphify_out_memory_query_20260803_144423_examine_the_current_repository_and_look_at_the_gra",
+      "graphify_out_memory_query_20260803_144423_examine_the_current_repository_and_look_at_the_gra_answer",
+      "graphify_out_memory_query_20260803_144423_examine_the_current_repository_and_look_at_the_gra_outcome",
+      "graphify_out_memory_query_20260803_144423_examine_the_current_repository_and_look_at_the_gra_q_examine_the_current_repository_and_look_at_the_graphify_structure_we_need_to_build_a_generic_cloud_deployed_system_based_on_the_existing_pipeline_and_frontend_not_the_gent_terneuzen_use_case_with_csv_upload_preview_user_rml_mapping_named_graph_fuseki_ingestion_user_shacl_in_validation_user_n3_reasoning_existing_rdf2tss_assumptions_user_shacl_out_validation_and_existing_rdf2ldes_assumptions_plus_zip_download",
+      "graphify_out_memory_query_20260803_144423_examine_the_current_repository_and_look_at_the_gra_source_nodes"
+    ],
+    "38": [
+      "lag_analytics_workspace_readme",
+      "lag_analytics_workspace_readme_conductivity_units",
+      "lag_analytics_workspace_readme_fuseki_configuration",
+      "lag_analytics_workspace_readme_lag_analytics_workspace",
+      "lag_analytics_workspace_readme_start"
+    ],
+    "39": [
+      "agents",
+      "agents_codex_repository_context",
+      "agents_instructions_for_codex",
+      "agents_system_architecture_topology"
+    ],
+    "40": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_data_fetch_fetch_fetch_stations",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_data_fetch_fetch_fetch_timeseries",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_data_fetch_fetch_main",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_data_fetch_fetch_py"
+    ],
+    "41": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_data_fetch_test_fetch_stations",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_data_fetch_test_fetch_timeseries",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_data_fetch_test_main",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_data_fetch_test_py"
+    ],
+    "42": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pre_processing_preprocess_main",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pre_processing_preprocess_preprocess",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pre_processing_preprocess_preprocess2",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pre_processing_preprocess_py"
+    ],
+    "43": [
+      "data_fetch_fetch",
+      "data_fetch_fetch_fetch_stations",
+      "data_fetch_fetch_fetch_timeseries",
+      "data_fetch_fetch_main"
+    ],
+    "44": [
+      "data_fetch_test",
+      "data_fetch_test_fetch_stations",
+      "data_fetch_test_fetch_timeseries",
+      "data_fetch_test_main"
+    ],
+    "45": [
+      "frontend_src_components_querycard",
+      "frontend_src_components_querycard_innerstyles",
+      "frontend_src_components_querycard_querycard",
+      "frontend_src_components_querycard_querytemplates"
+    ],
+    "46": [
+      "pre_processing_preprocess",
+      "pre_processing_preprocess_main",
+      "pre_processing_preprocess_preprocess",
+      "pre_processing_preprocess_preprocess2"
+    ],
+    "47": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_devdependencies_eslint",
+      "eslint",
+      "frontend_package_devdependencies_eslint"
+    ],
+    "48": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_devdependencies_globals",
+      "frontend_package_devdependencies_globals",
+      "globals"
+    ],
+    "49": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_devdependencies_types_react",
+      "frontend_package_devdependencies_types_react",
+      "types_react"
+    ],
+    "50": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_devdependencies_types_react_dom",
+      "frontend_package_devdependencies_types_react_dom",
+      "types_react_dom"
+    ],
+    "51": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_devdependencies_vite",
+      "frontend_package_devdependencies_vite",
+      "vite"
+    ],
+    "52": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_frontend_package_devdependencies_vitejs_plugin_react",
+      "frontend_package_devdependencies_vitejs_plugin_react",
+      "vitejs_plugin_react"
+    ],
+    "53": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pre_processing_preprocess2_main",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pre_processing_preprocess2_preprocess",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pre_processing_preprocess2_py"
+    ],
+    "54": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_lightgbm_lightgbm_forecast_bias",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_lightgbm_lightgbm_train",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_lightgbm_py"
+    ],
+    "55": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_xgboost_model_py",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_xgboost_model_xgboost_forecast_bias",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_xgboost_model_xgboost_train"
+    ],
+    "56": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_rml_generator_rml_generator_generate_timeseries_mapping",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_rml_generator_rml_generator_main",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_rml_generator_rml_generator_py"
+    ],
+    "57": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_time_series_analysis_contexual_matrix_profile_identify_unique_sensors",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_time_series_analysis_contexual_matrix_profile_py",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_time_series_analysis_contexual_matrix_profile_reframe_data"
+    ],
+    "58": [
+      "frontend_readme",
+      "frontend_readme_generic_semantic_pipeline_dashboard",
+      "frontend_readme_ldes_webappp_frontend"
+    ],
+    "59": [
+      "frontend_src_components_benchmarkscard",
+      "frontend_src_components_benchmarkscard_benchmarkscardbody",
+      "frontend_src_components_benchmarkscard_benchmarkscardhead"
+    ],
+    "60": [
+      "frontend_src_components_chartcard",
+      "frontend_src_components_chartcard_chartcardbody",
+      "frontend_src_components_chartcard_chartcardhead"
+    ],
+    "61": [
+      "frontend_src_components_chartcomponents_ldeschart",
+      "frontend_src_components_chartcomponents_ldeschart_buttonstyle",
+      "frontend_src_components_chartcomponents_ldeschart_ldeschart"
+    ],
+    "62": [
+      "frontend_src_components_chartcomponents_ldestsschart",
+      "frontend_src_components_chartcomponents_ldestsschart_buttonstyle",
+      "frontend_src_components_chartcomponents_ldestsschart_ldestsschart"
+    ],
+    "63": [
+      "frontend_src_components_chartcomponents_sqlchart",
+      "frontend_src_components_chartcomponents_sqlchart_buttonstyle",
+      "frontend_src_components_chartcomponents_sqlchart_sqlchart"
+    ],
+    "64": [
+      "frontend_src_components_chartcomponents_ttlchart",
+      "frontend_src_components_chartcomponents_ttlchart_buttonstyle",
+      "frontend_src_components_chartcomponents_ttlchart_ttlchart"
+    ],
+    "65": [
+      "pipeline_readme",
+      "pipeline_readme_generic_pipeline_api",
+      "pipeline_readme_pipeline_playground"
+    ],
+    "66": [
+      "pre_processing_preprocess2",
+      "pre_processing_preprocess2_main",
+      "pre_processing_preprocess2_preprocess"
+    ],
+    "67": [
+      "rml_generator_rml_generator",
+      "rml_generator_rml_generator_generate_timeseries_mapping",
+      "rml_generator_rml_generator_main"
+    ],
+    "68": [
+      "time_series_analysis_contexual_matrix_profile",
+      "time_series_analysis_contexual_matrix_profile_identify_unique_sensors",
+      "time_series_analysis_contexual_matrix_profile_reframe_data"
+    ],
+    "69": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_data_fetch_fetch_water_link_fetch_water_link_data",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_data_fetch_fetch_water_link_py"
+    ],
+    "70": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_chronos2forecast_chronos2forecast",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_chronos2forecast_py"
+    ],
+    "71": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_comparison_comparisonforecast",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_comparison_py"
+    ],
+    "72": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_ensemble_ensemble",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_ensemble_py"
+    ],
+    "73": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_gradientboosting1sensor_gradientboosting1sensor",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_gradientboosting1sensor_py"
+    ],
+    "74": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_gradientboostingmultiplesensors_gradientboostingmultiplesensors",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_gradientboostingmultiplesensors_py"
+    ],
+    "75": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_randomforest_py",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_randomforest_randomforest"
+    ],
+    "76": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_supportvectormachine_py",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_supportvectormachine_supportvectormachine"
+    ],
+    "77": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_rml_generator_rml_generator_waterlink_generate_timeseries_mapping",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_rml_generator_rml_generator_waterlink_py"
+    ],
+    "78": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_shacl_shacl_validate_py",
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_shacl_shacl_validate_validate_shacl"
+    ],
+    "79": [
+      "data_fetch_fetch_water_link",
+      "data_fetch_fetch_water_link_fetch_water_link_data"
+    ],
+    "80": [
+      "frontend_src_components_bodycard",
+      "frontend_src_components_bodycard_bodycard"
+    ],
+    "81": [
+      "frontend_src_components_customtensorflowbrowser",
+      "frontend_src_components_customtensorflowbrowser_customtensorflowbrowser"
+    ],
+    "82": [
+      "frontend_src_components_deprecated_pyodidetest",
+      "frontend_src_components_deprecated_pyodidetest_pyodidetest"
+    ],
+    "83": [
+      "frontend_src_components_deprecated_python_worker",
+      "frontend_src_components_deprecated_python_worker_pyodidereadypromise"
+    ],
+    "84": [
+      "frontend_src_components_graphcard",
+      "frontend_src_components_graphcard_graphcard"
+    ],
+    "85": [
+      "frontend_src_components_tensorflowbrowser",
+      "frontend_src_components_tensorflowbrowser_tensorflowbrowser"
+    ],
+    "86": [
+      "rml_generator_rml_generator_waterlink",
+      "rml_generator_rml_generator_waterlink_generate_timeseries_mapping"
+    ],
+    "87": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_data_fetch_init_py"
+    ],
+    "88": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_analysis_py_dataframe"
+    ],
+    "89": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_fuseki_py_dataframe"
+    ],
+    "90": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_fuseki_py_runtimeerror"
+    ],
+    "91": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_server_py_basemodel"
+    ],
+    "92": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_server_py_get"
+    ],
+    "93": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_server_py_post"
+    ],
+    "94": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pipeline_init_py"
+    ],
+    "95": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_constants_py"
+    ],
+    "96": [
+      "c_users_shehab_pc_documents_github_gent_terneuzen_canal_python_backend_server_main_py_get"
+    ],
+    "97": [
+      "data_fetch_init"
+    ],
+    "98": [
+      "frontend_eslint_config"
+    ],
+    "99": [
+      "frontend_vite_config"
+    ],
+    "100": [
+      "pipeline_generic_pipeline_py_runtimeerror"
+    ],
+    "101": [
+      "pipeline_init"
+    ],
+    "102": [
+      "pipeline_playground_server_py_basemodel"
+    ],
+    "103": [
+      "pipeline_playground_server_py_get"
+    ],
+    "104": [
+      "pipeline_playground_server_py_post"
+    ],
+    "105": [
+      "sample_instructions"
+    ]
+  },
+  "cohesion": {
+    "0": 0.07486338797814207,
+    "1": 0.11312217194570136,
+    "2": 0.1085972850678733,
+    "3": 0.05803921568627451,
+    "4": 0.052244897959183675,
+    "5": 0.07922705314009662,
+    "6": 0.1354723707664884,
+    "7": 0.11822660098522167,
+    "8": 0.13333333333333333,
+    "9": 0.1383399209486166,
+    "10": 0.22794117647058823,
+    "11": 0.22794117647058823,
+    "12": 0.22857142857142856,
+    "13": 0.18095238095238095,
+    "14": 0.3076923076923077,
+    "15": 0.2727272727272727,
+    "16": 0.21212121212121213,
+    "17": 0.21818181818181817,
+    "18": 0.18181818181818182,
+    "19": 0.37777777777777777,
+    "20": 0.2,
+    "21": 0.37777777777777777,
+    "22": 0.2,
+    "23": 0.2,
+    "24": 0.2222222222222222,
+    "25": 0.2857142857142857,
+    "26": 0.2857142857142857,
+    "27": 0.2857142857142857,
+    "28": 0.6,
+    "29": 0.3333333333333333,
+    "30": 0.4,
+    "31": 0.4,
+    "32": 0.4,
+    "33": 0.4,
+    "34": 0.4,
+    "35": 0.4,
+    "36": 0.4,
+    "37": 0.4,
+    "38": 0.4,
+    "39": 0.5,
+    "40": 0.6666666666666666,
+    "41": 0.6666666666666666,
+    "42": 0.6666666666666666,
+    "43": 0.6666666666666666,
+    "44": 0.6666666666666666,
+    "45": 0.5,
+    "46": 0.6666666666666666,
+    "47": 0.6666666666666666,
+    "48": 0.6666666666666666,
+    "49": 0.6666666666666666,
+    "50": 0.6666666666666666,
+    "51": 0.6666666666666666,
+    "52": 0.6666666666666666,
+    "53": 1.0,
+    "54": 0.6666666666666666,
+    "55": 0.6666666666666666,
+    "56": 1.0,
+    "57": 0.6666666666666666,
+    "58": 0.6666666666666666,
+    "59": 0.6666666666666666,
+    "60": 0.6666666666666666,
+    "61": 0.6666666666666666,
+    "62": 0.6666666666666666,
+    "63": 0.6666666666666666,
+    "64": 0.6666666666666666,
+    "65": 0.6666666666666666,
+    "66": 1.0,
+    "67": 1.0,
+    "68": 0.6666666666666666,
+    "69": 1.0,
+    "70": 1.0,
+    "71": 1.0,
+    "72": 1.0,
+    "73": 1.0,
+    "74": 1.0,
+    "75": 1.0,
+    "76": 1.0,
+    "77": 1.0,
+    "78": 1.0,
+    "79": 1.0,
+    "80": 1.0,
+    "81": 1.0,
+    "82": 1.0,
+    "83": 1.0,
+    "84": 1.0,
+    "85": 1.0,
+    "86": 1.0,
+    "87": 1.0,
+    "88": 1.0,
+    "89": 1.0,
+    "90": 1.0,
+    "91": 1.0,
+    "92": 1.0,
+    "93": 1.0,
+    "94": 1.0,
+    "95": 1.0,
+    "96": 1.0,
+    "97": 1.0,
+    "98": 1.0,
+    "99": 1.0,
+    "100": 1.0,
+    "101": 1.0,
+    "102": 1.0,
+    "103": 1.0,
+    "104": 1.0,
+    "105": 1.0
+  },
+  "gods": [
+    {
+      "id": "pipeline_run_store_runstore",
+      "label": "RunStore",
+      "degree": 21
+    },
+    {
+      "id": "pipeline_generic_pipeline_pipelineerror",
+      "label": "PipelineError",
+      "degree": 18
+    },
+    {
+      "id": "pipeline_playground_server_execute_stage",
+      "label": "execute_stage()",
+      "degree": 18
+    },
+    {
+      "id": "c_users_shehab_pc_documents_github_gent_terneuzen_canal_time_series_analysis_timeseriesforecasting_main",
+      "label": "main()",
+      "degree": 16
+    },
+    {
+      "id": "time_series_analysis_timeseriesforecasting_main",
+      "label": "main()",
+      "degree": 16
+    },
+    {
+      "id": "pipeline_playground_server_create_run",
+      "label": "create_run()",
+      "degree": 13
+    },
+    {
+      "id": "c_users_shehab_pc_documents_github_gent_terneuzen_canal_lag_analytics_workspace_fuseki_fusekiclient",
+      "label": "FusekiClient",
+      "degree": 12
+    },
+    {
+      "id": "lag_analytics_workspace_fuseki_fusekiclient",
+      "label": "FusekiClient",
+      "degree": 12
+    },
+    {
+      "id": "c_users_shehab_pc_documents_github_gent_terneuzen_canal_pipeline_pipeline_core_setup_environment",
+      "label": "setup_environment()",
+      "degree": 11
+    },
+    {
+      "id": "pipeline_pipeline_core_setup_environment",
+      "label": "setup_environment()",
+      "degree": 11
+    }
+  ],
+  "surprises": [
+    {
+      "source": "test_qudt_conversion_micro_to_milli_si_per_centimetre()",
+      "target": "convert_qudt_value()",
+      "source_files": [
+        "lag_analytics_workspace/tests/test_analysis.py",
+        "automating_aligments/automated_alignments.py"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; peripheral node `test_qudt_conversion_micro_to_milli_si_per_centimetre()` unexpectedly reaches hub `convert_qudt_value()`"
+    },
+    {
+      "source": "test_qudt_conversion_micro_to_milli_si_per_centimetre()",
+      "target": "convert_qudt_value()",
+      "source_files": [
+        "lag_analytics_workspace/tests/test_analysis.py",
+        "automating_aligments/automated_alignments.py"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories; peripheral node `test_qudt_conversion_micro_to_milli_si_per_centimetre()` unexpectedly reaches hub `convert_qudt_value()`"
+    },
+    {
+      "source": "test_legacy_fuseki_graph_is_normalized_to_milli_si_per_centimetre()",
+      "target": "normalize_fuseki_observations()",
+      "source_files": [
+        "lag_analytics_workspace/tests/test_analysis.py",
+        "lag_analytics_workspace/fuseki.py"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; peripheral node `test_legacy_fuseki_graph_is_normalized_to_milli_si_per_centimetre()` unexpectedly reaches hub `normalize_fuseki_observations()`"
+    },
+    {
+      "source": "test_legacy_reader_prefers_new_correct_value_after_pipeline_rerun()",
+      "target": "normalize_fuseki_observations()",
+      "source_files": [
+        "lag_analytics_workspace/tests/test_analysis.py",
+        "lag_analytics_workspace/fuseki.py"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; peripheral node `test_legacy_reader_prefers_new_correct_value_after_pipeline_rerun()` unexpectedly reaches hub `normalize_fuseki_observations()`"
+    },
+    {
+      "source": "test_upload_csv_creates_run_and_preview()",
+      "target": "RunStore",
+      "source_files": [
+        "pipeline/tests/test_generic_pipeline.py",
+        "pipeline/run_store.py"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities; peripheral node `test_upload_csv_creates_run_and_preview()` unexpectedly reaches hub `RunStore`"
+    }
+  ],
+  "tokens": {
+    "input": 0,
+    "output": 0
+  }
+}

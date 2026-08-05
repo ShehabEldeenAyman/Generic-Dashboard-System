@@ -1,0 +1,12 @@
+pywaterinfo
+pandas
+rdflib
+requests
+python-dateutil
+pywaterinfo[cache]
+lightgbm
+xgboost 
+fastapi[standard]
+python-multipart
+pyshacl
+chronos-forecasting

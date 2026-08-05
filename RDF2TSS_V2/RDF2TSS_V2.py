@@ -1,0 +1,196 @@
+import json
+import argparse
+from rdflib import Graph, URIRef, Namespace, BNode, Literal
+from rdflib.namespace import XSD, RDF, RDFS
+import uuid
+
+# --- Configuration & Namespaces ---
+EX = Namespace('http://example.com/attributes/')
+OBS = Namespace('http://example.com/observations/')
+RML = Namespace('http://w3id.org/rml/')
+SOSA = Namespace('http://www.w3.org/ns/sosa/')
+SSN = Namespace('http://www.w3.org/ns/ssn/')
+WATERINFO = Namespace('http://example.com/waterinfo/')
+TSS = Namespace('https://w3id.org/tss#')
+QUDT = Namespace('http://qudt.org/schema/qudt/')
+QUANTITYKIND = Namespace('https://qudt.org/vocab/quantitykind/')
+Unit = Namespace('http://qudt.org/vocab/unit/')
+
+BASE_SNIPPET = Namespace("https://example.org/tss/snippet/")
+SENSOR_READING_ID = Namespace("https://example.org/tss/snippet/reading/")
+
+def load_graph(directory):
+    """Loads a Turtle file into an RDFLib Graph."""
+    graph = Graph()
+    print(f"Started loading graph from {directory}...")
+    graph.parse(directory, format="turtle", publicID="https://example.org/")
+    print("Graph loaded successfully.")
+    return graph
+
+def save_graph(directory, final_graph,overwrite=True):
+    if not overwrite:
+        print(f"Loading existing data from: {directory}")
+        combined_graph = Graph()
+        try:
+            combined_graph.parse(directory, format="turtle")
+        except FileNotFoundError:
+            print("File not found. Creating a new one.")
+        combined_graph += final_graph
+        print(f"Writing updated graph to disk: {directory}")
+        combined_graph.serialize(destination=directory, format="turtle")
+        print("File updated successfully.")
+    else:
+        print(f"Started writing file to disk: {directory}")
+        final_graph.serialize(destination=directory, format="turtle")
+        print("File written successfully.")
+
+def create_sensor_set(graph):
+    """Identifies unique sensors within the graph using a SPARQL query."""
+    sensor_set = set()
+    get_sensor_query = ''' 
+    PREFIX sosa: <http://www.w3.org/ns/sosa/>
+    SELECT DISTINCT ?sensor
+    WHERE {
+      ?s sosa:madeBySensor ?sensor .
+    }
+    '''
+    print('Started identifying unique sensors...')
+    for sensor in graph.query(get_sensor_query):
+        sensor_term = sensor[0]
+        sensor_set.add(sensor_term)
+        print(f'Identified sensor: {sensor_term}')
+
+
+    print(f'{len(sensor_set)} Sensors identified successfully.')
+    return sensor_set
+
+def create_tss(sensor_set, graph,observed_parameter="unknown"):
+    """Transforms sensor observations into the Time Series Snippets (TSS) format."""
+    final_graph = Graph()
+
+    # Bind prefixes for cleaner output
+    prefixes = {
+        'EX': EX, 'obs': OBS, 'rdf': RDF, 'rdfs': RDFS, 
+        'rml': RML, 'sosa': SOSA, 'ssn': SSN, 
+        'waterinfo': WATERINFO, 'xsd': XSD, 'tss': TSS,
+        'qudt': QUDT, 'quantitykind': QUANTITYKIND,
+        'unit': Unit
+    }
+    for prefix, ns in prefixes.items():
+        final_graph.bind(prefix, ns)
+
+    print("Started extracting observations per sensor...")
+
+    for i, sensor in enumerate(sensor_set):
+        print(f"Processing sensor {i+1}/{len(sensor_set)}")
+
+        data_per_sensor_query = """
+        PREFIX sosa: <http://www.w3.org/ns/sosa/>
+        PREFIX ex: <http://example.com/attributes/>
+        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+        PREFIX qudt: <http://qudt.org/schema/qudt/>
+        PREFIX quantitykind: <https://qudt.org/vocab/quantitykind/>
+
+
+        SELECT ?OBSERVATION ?TIME ?READING ?qualityCode ?qualityName ?qualityDesc ?qualityColor ?interpolation ?unit ?quantitykind
+        WHERE {
+            ?OBSERVATION a sosa:Observation ;
+                        sosa:resultTime ?TIME ;
+                        sosa:hasSimpleResult ?READING ;
+                        sosa:madeBySensor ?currentSensor ;
+                        sosa:observedProperty ?quantitykind ;
+                        qudt:hasUnit ?unit ;
+                        .
+                        OPTIONAL { ?OBSERVATION ex:qualityCode ?qualityCode }
+                        OPTIONAL { ?OBSERVATION ex:qualityCodeName ?qualityName }
+                        OPTIONAL { ?OBSERVATION ex:qualityCodeDescription ?qualityDesc }
+                        OPTIONAL { ?OBSERVATION ex:qualityCodeColor ?qualityColor }
+                        OPTIONAL { ?OBSERVATION ex:interpolationType ?interpolation }
+        }
+        ORDER BY ?TIME
+        """
+        
+        results = graph.query(data_per_sensor_query, initBindings={'currentSensor': sensor})
+        results_list = list(results)
+        
+        if not results_list:
+            continue
+
+        sensor_json_array = []
+        for row in results_list:
+            observation_json_object = {
+                "id": str(SENSOR_READING_ID[f"{i}"]),
+                "time": str(row.TIME),
+                "value": float(row.READING),
+                # "interpolationType": str(row.interpolation),
+                # "qualityCode": int(row.qualityCode),
+                # "qualityCodeColor": str(row.qualityColor),
+                # "qualityCodeDescription": str(row.qualityDesc),
+                # "qualityCodeName": str(row.qualityDesc)
+            }
+            sensor_json_array.append(observation_json_object)
+
+        json_output = json.dumps(sensor_json_array, indent=1)
+
+        # Context definition for the TSS literal
+        context_data = {
+            "@context": {
+                "id": "@id",
+                "time": {"@id": str(SOSA.resultTime), "@type": str(XSD.dateTime)},
+                "value": {"@id": str(SOSA.hasSimpleResult), "@type": str(XSD.double)},
+                # "interpolationType": {"@id": str(EX.interpolationType), "@type": str(XSD.string)},
+                # "qualityCode": {"@id": str(EX.qualityCode), "@type": str(XSD.integer)},
+                # "qualityCodeColor": {"@id": str(EX.qualityCodeColor), "@type": str(XSD.string)},
+                # "qualityCodeDescription": {"@id": str(EX.qualityCodeDescription), "@type": str(XSD.string)},
+                # "qualityCodeName": {"@id": str(EX.qualityCodeName), "@type": str(XSD.string)}
+            }
+        }
+        context_data_dump = json.dumps(context_data, indent=1)
+
+        # RDF construction
+        #snippet = URIRef(BASE_SNIPPET[f"{sensor}"])
+        snippet = URIRef(f"{sensor}")
+        template = BNode()
+        #template = BNode(str(uuid.uuid4()).replace('-', ''))
+
+        final_graph.add((snippet, RDF.type, TSS.Snippet))
+        final_graph.add((snippet, TSS["from"], results_list[0].TIME))
+        final_graph.add((snippet, TSS["until"], results_list[-1].TIME))
+        final_graph.add((snippet, TSS.points, Literal(json_output, datatype=RDF.JSON)))
+        final_graph.add((snippet, TSS.about, template))
+        final_graph.add((snippet, TSS.context, Literal(context_data_dump, datatype=RDF.JSON)))
+        final_graph.add((snippet, TSS.pointType , SOSA.Observation))
+        
+        final_graph.add((template, RDF.type, TSS.PointTemplate))
+        final_graph.add((template, SOSA.madeBySensor, sensor))
+        final_graph.add((template, SOSA.observedProperty, results_list[0].quantitykind))
+        final_graph.add((template, QUDT.hasUnit,results_list[0].unit))
+        #final_graph.add((template, SOSA.observedProperty, WATERINFO[f"{observed_parameter}"]))
+
+
+    
+    print("TSS graph creation complete.")
+    return final_graph
+
+def main():
+    # You can easily swap these for argparse if you want to pass paths via CLI
+    input_path = "../data/timeseries.ttl"
+    output_path = "../data/TSSgraph.ttl"
+
+    print("--- Program Started ---")
+    # 1. Load data
+    original_graph = load_graph(input_path)
+    
+    # 2. Extract unique sensors
+    sensor_set = create_sensor_set(original_graph)
+    
+    # 3. Process into TSS format
+    tss_graph = create_tss(sensor_set, original_graph)
+    
+    # 4. Save result
+    save_graph(output_path, tss_graph)
+    
+    print("--- Program Finished Successfully ---")
+
+if __name__ == "__main__":
+    main()
