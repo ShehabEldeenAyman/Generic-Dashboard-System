@@ -97,11 +97,9 @@ def test_upload_xlsx_normalizes_multirow_headers_and_date_time(tmp_path, monkeyp
     workbook = Workbook()
     worksheet = workbook.active
     worksheet.title = "Measurements"
-    worksheet.append([None, None, "Conductivity dokwater + spui ABF"])
-    worksheet.append(
-        ["Datum", "Tijd", "ZHINDS10_WINCC_INDUSS_02_AT9103-B_FEED_CONDUCTIVITY"]
-    )
-    worksheet.append(["eenheid", None, "µs/cm"])
+    worksheet.append([None, None, "Ambient temperature"])
+    worksheet.append(["Date", "Time", "SENSOR_A_TEMPERATURE"])
+    worksheet.append(["unit", None, "degC"])
     worksheet.append([datetime(2025, 1, 1), "00:00:00", 4.679602775605543])
     worksheet.append([datetime(2025, 1, 1), "00:15:00", 4.023384243091742])
     content = BytesIO()
@@ -121,10 +119,7 @@ def test_upload_xlsx_normalizes_multirow_headers_and_date_time(tmp_path, monkeyp
 
     assert response.status_code == 200
     payload = response.json()
-    value_column = (
-        "Conductivity dokwater + spui ABF | "
-        "ZHINDS10_WINCC_INDUSS_02_AT9103-B_FEED_CONDUCTIVITY | µs/cm"
-    )
+    value_column = "Ambient temperature | SENSOR_A_TEMPERATURE | degC"
     assert payload["source"]["preview"]["columns"] == ["DateTime", value_column]
     assert payload["source"]["preview"]["header_row_count"] == 3
     assert payload["source"]["preview"]["data_start_row"] == 4
@@ -535,11 +530,9 @@ def test_normalized_multirow_xlsx_runs_with_user_mapping(tmp_path):
     workbook = Workbook()
     worksheet = workbook.active
     worksheet.title = "Measurements"
-    worksheet.append([None, None, "Conductivity dokwater + spui ABF"])
-    worksheet.append(
-        ["Datum", "Tijd", "ZHINDS10_WINCC_INDUSS_02_AT9103-B_FEED_CONDUCTIVITY"]
-    )
-    worksheet.append(["eenheid", None, "µs/cm"])
+    worksheet.append([None, None, "Ambient temperature"])
+    worksheet.append(["Date", "Time", "SENSOR_A_TEMPERATURE"])
+    worksheet.append(["unit", None, "degC"])
     worksheet.append([datetime(2025, 1, 1), "00:00:00", 4.679602775605543])
     source_xlsx = tmp_path / "data.xlsx"
     source_csv = tmp_path / "data.csv"
@@ -565,12 +558,12 @@ def test_normalized_multirow_xlsx_runs_with_user_mapping(tmp_path):
             rml:referenceFormulation ql:CSV
           ] ;
           rr:subjectMap [
-            rr:template "http://example.com/observations/111111111/{DateTime}" ;
+            rr:template "https://example.org/observations/temperature-1/{DateTime}" ;
             rr:class sosa:Observation
           ] ;
           rr:predicateObjectMap [
             rr:predicate sosa:madeBySensor ;
-            rr:objectMap [ rr:constant <http://example.com/waterlink/111111111> ; rr:termType rr:IRI ]
+            rr:objectMap [ rr:constant <https://example.org/sensors/temperature-1> ; rr:termType rr:IRI ]
           ] ;
           rr:predicateObjectMap [
             rr:predicate sosa:resultTime ;
@@ -579,17 +572,17 @@ def test_normalized_multirow_xlsx_runs_with_user_mapping(tmp_path):
           rr:predicateObjectMap [
             rr:predicate sosa:hasSimpleResult ;
             rr:objectMap [
-              rml:reference "Conductivity dokwater + spui ABF | ZHINDS10_WINCC_INDUSS_02_AT9103-B_FEED_CONDUCTIVITY | µs/cm" ;
+              rml:reference "Ambient temperature | SENSOR_A_TEMPERATURE | degC" ;
               rr:datatype xsd:double
             ]
           ] ;
           rr:predicateObjectMap [
             rr:predicate sosa:observedProperty ;
-            rr:objectMap [ rr:constant quantitykind:ElectricConductivity ; rr:termType rr:IRI ]
+            rr:objectMap [ rr:constant quantitykind:Temperature ; rr:termType rr:IRI ]
           ] ;
           rr:predicateObjectMap [
             rr:predicate qudt:hasUnit ;
-            rr:objectMap [ rr:constant unit:MicroS-PER-CentiM ; rr:termType rr:IRI ]
+            rr:objectMap [ rr:constant unit:DEG_C ; rr:termType rr:IRI ]
           ] .
     """
 
@@ -598,7 +591,7 @@ def test_normalized_multirow_xlsx_runs_with_user_mapping(tmp_path):
     graph = Graph().parse(result["output_path"], format="turtle")
     assert result["rdf_triples"] == 6
     assert (
-        URIRef("http://example.com/observations/111111111/2025-01-01T00%3A00%3A00"),
+        URIRef("https://example.org/observations/temperature-1/2025-01-01T00%3A00%3A00"),
         URIRef("http://www.w3.org/ns/sosa/hasSimpleResult"),
         None,
     ) in graph

@@ -1,13 +1,7 @@
-pywaterinfo
-pandas
-openpyxl
-rdflib
-requests
-python-dateutil
-pywaterinfo[cache]
-lightgbm
-xgboost 
 fastapi[standard]
+openpyxl
+python-dateutil
 python-multipart
 pyshacl
-chronos-forecasting
+rdflib
+requests

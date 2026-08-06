@@ -1,8 +1,6 @@
 import json
-import argparse
 from rdflib import Graph, URIRef, Namespace, BNode, Literal
 from rdflib.namespace import XSD, RDF, RDFS
-import uuid
 
 # --- Configuration & Namespaces ---
 EX = Namespace('http://example.com/attributes/')
@@ -10,7 +8,6 @@ OBS = Namespace('http://example.com/observations/')
 RML = Namespace('http://w3id.org/rml/')
 SOSA = Namespace('http://www.w3.org/ns/sosa/')
 SSN = Namespace('http://www.w3.org/ns/ssn/')
-WATERINFO = Namespace('http://example.com/waterinfo/')
 TSS = Namespace('https://w3id.org/tss#')
 QUDT = Namespace('http://qudt.org/schema/qudt/')
 QUANTITYKIND = Namespace('https://qudt.org/vocab/quantitykind/')
@@ -71,8 +68,8 @@ def create_tss(sensor_set, graph,observed_parameter="unknown"):
     # Bind prefixes for cleaner output
     prefixes = {
         'EX': EX, 'obs': OBS, 'rdf': RDF, 'rdfs': RDFS, 
-        'rml': RML, 'sosa': SOSA, 'ssn': SSN, 
-        'waterinfo': WATERINFO, 'xsd': XSD, 'tss': TSS,
+        'rml': RML, 'sosa': SOSA, 'ssn': SSN,
+        'xsd': XSD, 'tss': TSS,
         'qudt': QUDT, 'quantitykind': QUANTITYKIND,
         'unit': Unit
     }
@@ -151,7 +148,6 @@ def create_tss(sensor_set, graph,observed_parameter="unknown"):
         #snippet = URIRef(BASE_SNIPPET[f"{sensor}"])
         snippet = URIRef(f"{sensor}")
         template = BNode()
-        #template = BNode(str(uuid.uuid4()).replace('-', ''))
 
         final_graph.add((snippet, RDF.type, TSS.Snippet))
         final_graph.add((snippet, TSS["from"], results_list[0].TIME))
@@ -165,7 +161,6 @@ def create_tss(sensor_set, graph,observed_parameter="unknown"):
         final_graph.add((template, SOSA.madeBySensor, sensor))
         final_graph.add((template, SOSA.observedProperty, results_list[0].quantitykind))
         final_graph.add((template, QUDT.hasUnit,results_list[0].unit))
-        #final_graph.add((template, SOSA.observedProperty, WATERINFO[f"{observed_parameter}"]))
 
 
     
