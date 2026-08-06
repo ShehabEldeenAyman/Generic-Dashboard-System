@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-06T08:23:01.997452+00:00",
+  "generated_at": "2026-08-06T08:40:45.318918+00:00",
   "nodes": {
     "c_users_shehab_pc_documents_github_gent_terneuzen_canal_automating_aligments_automated_alignments_transform_unit_optimized": {
       "code_fingerprint": "d8025c14be4bd397311faf51baed5d0c65f73094f57bcfbaf192845163074ecd",
@@ -12,7 +12,7 @@
           "q": "User reported Indusii target values far higher than the four Waterinfo sensors and asked to fix suspected unit conversion before analysis."
         }
       ],
-      "score": 0.936601,
+      "score": 0.936334714,
       "source_file": "automating_aligments/automated_alignments.py",
       "status": "tentative",
       "uses": 1
@@ -28,7 +28,7 @@
           "q": "User reported Indusii target values far higher than the four Waterinfo sensors and asked to fix suspected unit conversion before analysis."
         }
       ],
-      "score": 0.936601,
+      "score": 0.936334714,
       "source_file": "lag_analytics_workspace/analysis.py",
       "status": "tentative",
       "uses": 1
@@ -44,7 +44,7 @@
           "q": "User reported Indusii target values far higher than the four Waterinfo sensors and asked to fix suspected unit conversion before analysis."
         }
       ],
-      "score": 0.936601,
+      "score": 0.936334714,
       "source_file": "lag_analytics_workspace/fuseki.py",
       "status": "tentative",
       "uses": 1
@@ -60,7 +60,7 @@
           "q": "User reported Indusii target values far higher than the four Waterinfo sensors and asked to fix suspected unit conversion before analysis."
         }
       ],
-      "score": 0.936601,
+      "score": 0.936334714,
       "source_file": "lag_analytics_workspace/fuseki.py",
       "status": "tentative",
       "uses": 1
@@ -76,7 +76,7 @@
           "q": "Examine the current repository and look at the graphify structure. We need to build a generic cloud-deployed system based on the existing pipeline and frontend, not the Gent-Terneuzen use case, with CSV upload/preview, user RML mapping, named-graph Fuseki ingestion, user SHACL-in validation, user N3 reasoning, existing RDF2TSS assumptions, user SHACL-out validation, and existing RDF2LDES assumptions plus ZIP download."
         }
       ],
-      "score": 0.938759695,
+      "score": 0.938492795,
       "source_file": "pipeline/pipeline_core.py",
       "status": "tentative",
       "uses": 1
@@ -92,7 +92,7 @@
           "q": "can you recheck the system, I tried using the front end testing the water-link use case. I ran step 1 just fine. in step 2 i got attention needed: name '_rml_mapping' is not defined."
         }
       ],
-      "score": 0.935863928,
+      "score": 0.935597852,
       "source_file": "pipeline/pipeline_core.py",
       "status": "tentative",
       "uses": 1
@@ -108,7 +108,7 @@
           "q": "Examine the current repository and look at the graphify structure. We need to build a generic cloud-deployed system based on the existing pipeline and frontend, not the Gent-Terneuzen use case, with CSV upload/preview, user RML mapping, named-graph Fuseki ingestion, user SHACL-in validation, user N3 reasoning, existing RDF2TSS assumptions, user SHACL-out validation, and existing RDF2LDES assumptions plus ZIP download."
         }
       ],
-      "score": 0.938759695,
+      "score": 0.938492795,
       "source_file": "pipeline/pipeline_core.py",
       "status": "tentative",
       "uses": 1
@@ -129,7 +129,7 @@
           "q": "examine waterlink and waterinfo pipelines, you will see that I have added a new feature which is RDF2LDES. can you integrate this new feature in the frontend similar to all the other features of the pipeline that you integrated before."
         }
       ],
-      "score": 1.874429202,
+      "score": 1.873896282,
       "source_file": "pipeline/pipeline_core.py",
       "status": "preferred",
       "uses": 2
@@ -145,29 +145,13 @@
           "q": "Examine the current repository and look at the graphify structure. We need to build a generic cloud-deployed system based on the existing pipeline and frontend, not the Gent-Terneuzen use case, with CSV upload/preview, user RML mapping, named-graph Fuseki ingestion, user SHACL-in validation, user N3 reasoning, existing RDF2TSS assumptions, user SHACL-out validation, and existing RDF2LDES assumptions plus ZIP download."
         }
       ],
-      "score": 0.938759695,
+      "score": 0.938492795,
       "source_file": "SHACL/SHACL_validate.py",
       "status": "tentative",
       "uses": 1
     },
-    "c_users_shehab_pc_documents_github_gent_terneuzen_canal_triple_store_ingestion_ingest_upload_graph": {
-      "code_fingerprint": "129a90eb49b64ca832cba6c5c253e372ba47c0c46a4b8a9efabf2848f0d8fa32",
-      "label": "upload_graph()",
-      "last": "2026-08-03T14:44:23.672597+00:00",
-      "provenance": [
-        {
-          "date": "2026-08-03T14:44:23.672597+00:00",
-          "outcome": "useful",
-          "q": "Examine the current repository and look at the graphify structure. We need to build a generic cloud-deployed system based on the existing pipeline and frontend, not the Gent-Terneuzen use case, with CSV upload/preview, user RML mapping, named-graph Fuseki ingestion, user SHACL-in validation, user N3 reasoning, existing RDF2TSS assumptions, user SHACL-out validation, and existing RDF2LDES assumptions plus ZIP download."
-        }
-      ],
-      "score": 0.938759695,
-      "source_file": "triple_store_ingestion/ingest.py",
-      "status": "tentative",
-      "uses": 1
-    },
     "frontend_src_app_app": {
-      "code_fingerprint": "70c0faf4dcb1f4565f8ce61f0eed126341d4300d0adf318b44d5c287f5bd3035",
+      "code_fingerprint": "be1d554793bf441e45ef9a932880ba12f920d28ebc4f064804030e722777b8af",
       "label": "App()",
       "last": "2026-08-05T13:01:26.206727+00:00",
       "provenance": [
@@ -192,13 +176,13 @@
           "q": "Now using this document provided, can you add new subsection to the website explaining what is the usecase and what is the goal maybe add nice figure or an interactive map"
         }
       ],
-      "score": 3.730911326,
+      "score": 3.729850588,
       "source_file": "frontend/src/App.jsx",
       "status": "preferred",
       "uses": 4
     },
     "frontend_src_app_uploadstage": {
-      "code_fingerprint": "70c0faf4dcb1f4565f8ce61f0eed126341d4300d0adf318b44d5c287f5bd3035",
+      "code_fingerprint": "be1d554793bf441e45ef9a932880ba12f920d28ebc4f064804030e722777b8af",
       "label": "UploadStage()",
       "last": "2026-08-05T12:47:04.457510+00:00",
       "provenance": [
@@ -208,7 +192,7 @@
           "q": "Can you add a button to clear/delete the uploaded file (csv or xlsx) so user can easily reupload the right file"
         }
       ],
-      "score": 0.981308544,
+      "score": 0.981029548,
       "source_file": "frontend/src/App.jsx",
       "status": "tentative",
       "uses": 1
@@ -224,7 +208,7 @@
           "q": "Now using this document provided, can you add new subsection to the website explaining what is the usecase and what is the goal maybe add nice figure or an interactive map"
         }
       ],
-      "score": 0.874947414,
+      "score": 0.874698657,
       "source_file": "frontend/src/components/MapCard.jsx",
       "status": "tentative",
       "uses": 1
@@ -240,13 +224,13 @@
           "q": "Now using this document provided, can you add new subsection to the website explaining what is the usecase and what is the goal maybe add nice figure or an interactive map"
         }
       ],
-      "score": 0.874947414,
+      "score": 0.874698657,
       "source_file": "frontend/package.json",
       "status": "tentative",
       "uses": 1
     },
     "pipeline_generic_pipeline_csv_preview": {
-      "code_fingerprint": "a6e015172a42ff70bc6fe278450f1ee0dae8ab89a1e3239de3cd8e7255247b56",
+      "code_fingerprint": "947a99b08c67042d71c2eb43a6d94726a4392d4b9acfa1489840ca62af709a4c",
       "label": "csv_preview()",
       "last": "2026-08-05T14:40:55.368141+00:00",
       "provenance": [
@@ -261,13 +245,13 @@
           "q": "i have updated the graphify structure so make sure to check the new one out before doing anything. I have tried to test the system, module 1 data input only supports the upload of csv files, I want it to also support xlsx files as well"
         }
       ],
-      "score": 1.964232903,
+      "score": 1.96367445,
       "source_file": "pipeline/generic_pipeline.py",
       "status": "preferred",
       "uses": 2
     },
     "pipeline_generic_pipeline_run_rdf2ldes": {
-      "code_fingerprint": "a6e015172a42ff70bc6fe278450f1ee0dae8ab89a1e3239de3cd8e7255247b56",
+      "code_fingerprint": "947a99b08c67042d71c2eb43a6d94726a4392d4b9acfa1489840ca62af709a4c",
       "label": "run_rdf2ldes()",
       "last": "2026-08-03T15:25:41.021512+00:00",
       "provenance": [
@@ -277,13 +261,13 @@
           "q": "Make the dashboard generic and remove Gent-Terneuzen traces from the active UI while implementing the eight-stage uploaded-data pipeline."
         }
       ],
-      "score": 0.939381817,
+      "score": 0.939114741,
       "source_file": "pipeline/generic_pipeline.py",
       "status": "tentative",
       "uses": 1
     },
     "pipeline_generic_pipeline_run_rdf2tss": {
-      "code_fingerprint": "a6e015172a42ff70bc6fe278450f1ee0dae8ab89a1e3239de3cd8e7255247b56",
+      "code_fingerprint": "947a99b08c67042d71c2eb43a6d94726a4392d4b9acfa1489840ca62af709a4c",
       "label": "run_rdf2tss()",
       "last": "2026-08-03T15:25:41.021512+00:00",
       "provenance": [
@@ -293,13 +277,13 @@
           "q": "Make the dashboard generic and remove Gent-Terneuzen traces from the active UI while implementing the eight-stage uploaded-data pipeline."
         }
       ],
-      "score": 0.939381817,
+      "score": 0.939114741,
       "source_file": "pipeline/generic_pipeline.py",
       "status": "tentative",
       "uses": 1
     },
     "pipeline_generic_pipeline_run_reasoner": {
-      "code_fingerprint": "a6e015172a42ff70bc6fe278450f1ee0dae8ab89a1e3239de3cd8e7255247b56",
+      "code_fingerprint": "947a99b08c67042d71c2eb43a6d94726a4392d4b9acfa1489840ca62af709a4c",
       "label": "run_reasoner()",
       "last": "2026-08-03T15:25:41.021512+00:00",
       "provenance": [
@@ -309,13 +293,13 @@
           "q": "Make the dashboard generic and remove Gent-Terneuzen traces from the active UI while implementing the eight-stage uploaded-data pipeline."
         }
       ],
-      "score": 0.939381817,
+      "score": 0.939114741,
       "source_file": "pipeline/generic_pipeline.py",
       "status": "tentative",
       "uses": 1
     },
     "pipeline_generic_pipeline_run_rml_mapping": {
-      "code_fingerprint": "a6e015172a42ff70bc6fe278450f1ee0dae8ab89a1e3239de3cd8e7255247b56",
+      "code_fingerprint": "947a99b08c67042d71c2eb43a6d94726a4392d4b9acfa1489840ca62af709a4c",
       "label": "run_rml_mapping()",
       "last": "2026-08-05T14:40:55.368141+00:00",
       "provenance": [
@@ -340,13 +324,13 @@
           "q": "Make the dashboard generic and remove Gent-Terneuzen traces from the active UI while implementing the eight-stage uploaded-data pipeline."
         }
       ],
-      "score": 3.885762162,
+      "score": 3.884657398,
       "source_file": "pipeline/generic_pipeline.py",
       "status": "preferred",
       "uses": 4
     },
     "pipeline_generic_pipeline_run_shacl_validation": {
-      "code_fingerprint": "a6e015172a42ff70bc6fe278450f1ee0dae8ab89a1e3239de3cd8e7255247b56",
+      "code_fingerprint": "947a99b08c67042d71c2eb43a6d94726a4392d4b9acfa1489840ca62af709a4c",
       "label": "run_shacl_validation()",
       "last": "2026-08-03T15:25:41.021512+00:00",
       "provenance": [
@@ -356,13 +340,13 @@
           "q": "Make the dashboard generic and remove Gent-Terneuzen traces from the active UI while implementing the eight-stage uploaded-data pipeline."
         }
       ],
-      "score": 0.939381817,
+      "score": 0.939114741,
       "source_file": "pipeline/generic_pipeline.py",
       "status": "tentative",
       "uses": 1
     },
     "pipeline_generic_pipeline_safe_filename": {
-      "code_fingerprint": "a6e015172a42ff70bc6fe278450f1ee0dae8ab89a1e3239de3cd8e7255247b56",
+      "code_fingerprint": "947a99b08c67042d71c2eb43a6d94726a4392d4b9acfa1489840ca62af709a4c",
       "label": "safe_filename()",
       "last": "2026-08-05T14:40:55.368141+00:00",
       "provenance": [
@@ -372,13 +356,13 @@
           "q": "The supplied RML mapping fails for waterinfo.csv with: Exception in thread main java.lang.Error: Cannot find data.csv"
         }
       ],
-      "score": 0.983102746,
+      "score": 0.98282324,
       "source_file": "pipeline/generic_pipeline.py",
       "status": "tentative",
       "uses": 1
     },
     "pipeline_generic_pipeline_tabular_preview": {
-      "code_fingerprint": "a6e015172a42ff70bc6fe278450f1ee0dae8ab89a1e3239de3cd8e7255247b56",
+      "code_fingerprint": "947a99b08c67042d71c2eb43a6d94726a4392d4b9acfa1489840ca62af709a4c",
       "label": "tabular_preview()",
       "last": "2026-08-05T12:35:44.614612+00:00",
       "provenance": [
@@ -388,13 +372,13 @@
           "q": "i have updated the graphify structure so make sure to check the new one out before doing anything. I have tried to test the system, module 1 data input only supports the upload of csv files, I want it to also support xlsx files as well"
         }
       ],
-      "score": 0.981130156,
+      "score": 0.980851211,
       "source_file": "pipeline/generic_pipeline.py",
       "status": "tentative",
       "uses": 1
     },
     "pipeline_generic_pipeline_xlsx_preview": {
-      "code_fingerprint": "a6e015172a42ff70bc6fe278450f1ee0dae8ab89a1e3239de3cd8e7255247b56",
+      "code_fingerprint": "947a99b08c67042d71c2eb43a6d94726a4392d4b9acfa1489840ca62af709a4c",
       "label": "xlsx_preview()",
       "last": "2026-08-05T13:14:39.241836+00:00",
       "provenance": [
@@ -414,13 +398,13 @@
           "q": "i have updated the graphify structure so make sure to check the new one out before doing anything. I have tried to test the system, module 1 data input only supports the upload of csv files, I want it to also support xlsx files as well"
         }
       ],
-      "score": 2.944407755,
+      "score": 2.943570628,
       "source_file": "pipeline/generic_pipeline.py",
       "status": "preferred",
       "uses": 3
     },
     "pipeline_generic_pipeline_xlsx_table_plan": {
-      "code_fingerprint": "a6e015172a42ff70bc6fe278450f1ee0dae8ab89a1e3239de3cd8e7255247b56",
+      "code_fingerprint": "947a99b08c67042d71c2eb43a6d94726a4392d4b9acfa1489840ca62af709a4c",
       "label": "_xlsx_table_plan()",
       "last": "2026-08-05T13:14:39.241836+00:00",
       "provenance": [
@@ -430,13 +414,13 @@
           "q": "these mappings below on the file attached created an rdf file with zero triples. why is that? fix it"
         }
       ],
-      "score": 0.981742888,
+      "score": 0.981463768,
       "source_file": "pipeline/generic_pipeline.py",
       "status": "tentative",
       "uses": 1
     },
     "pipeline_generic_pipeline_xlsx_to_csv": {
-      "code_fingerprint": "a6e015172a42ff70bc6fe278450f1ee0dae8ab89a1e3239de3cd8e7255247b56",
+      "code_fingerprint": "947a99b08c67042d71c2eb43a6d94726a4392d4b9acfa1489840ca62af709a4c",
       "label": "xlsx_to_csv()",
       "last": "2026-08-05T13:14:39.241836+00:00",
       "provenance": [
@@ -456,13 +440,13 @@
           "q": "i have updated the graphify structure so make sure to check the new one out before doing anything. I have tried to test the system, module 1 data input only supports the upload of csv files, I want it to also support xlsx files as well"
         }
       ],
-      "score": 2.944407755,
+      "score": 2.943570628,
       "source_file": "pipeline/generic_pipeline.py",
       "status": "preferred",
       "uses": 3
     },
     "pipeline_generic_pipeline_xlsxtableplan": {
-      "code_fingerprint": "a6e015172a42ff70bc6fe278450f1ee0dae8ab89a1e3239de3cd8e7255247b56",
+      "code_fingerprint": "947a99b08c67042d71c2eb43a6d94726a4392d4b9acfa1489840ca62af709a4c",
       "label": "XlsxTablePlan",
       "last": "2026-08-05T13:14:39.241836+00:00",
       "provenance": [
@@ -472,13 +456,13 @@
           "q": "these mappings below on the file attached created an rdf file with zero triples. why is that? fix it"
         }
       ],
-      "score": 0.981742888,
+      "score": 0.981463768,
       "source_file": "pipeline/generic_pipeline.py",
       "status": "tentative",
       "uses": 1
     },
     "pipeline_playground_server_create_run": {
-      "code_fingerprint": "9ef82165e51053b734ec518ba4ff098673673b4c4a74f1c51eb0412f84231c49",
+      "code_fingerprint": "1ad60b3eb30ae3010588e96c386f81a032be0f40377ccbab9784b3df251f2c22",
       "label": "create_run()",
       "last": "2026-08-05T14:40:55.368141+00:00",
       "provenance": [
@@ -503,13 +487,13 @@
           "q": "Make the dashboard generic and remove Gent-Terneuzen traces from the active UI while implementing the eight-stage uploaded-data pipeline."
         }
       ],
-      "score": 3.88514943,
+      "score": 3.88404484,
       "source_file": "pipeline/playground_server.py",
       "status": "preferred",
       "uses": 4
     },
     "pipeline_playground_server_delete_run": {
-      "code_fingerprint": "9ef82165e51053b734ec518ba4ff098673673b4c4a74f1c51eb0412f84231c49",
+      "code_fingerprint": "1ad60b3eb30ae3010588e96c386f81a032be0f40377ccbab9784b3df251f2c22",
       "label": "delete_run()",
       "last": "2026-08-05T12:47:04.457510+00:00",
       "provenance": [
@@ -519,13 +503,13 @@
           "q": "Can you add a button to clear/delete the uploaded file (csv or xlsx) so user can easily reupload the right file"
         }
       ],
-      "score": 0.981308544,
+      "score": 0.981029548,
       "source_file": "pipeline/playground_server.py",
       "status": "tentative",
       "uses": 1
     },
     "pipeline_playground_server_download_artifact": {
-      "code_fingerprint": "9ef82165e51053b734ec518ba4ff098673673b4c4a74f1c51eb0412f84231c49",
+      "code_fingerprint": "1ad60b3eb30ae3010588e96c386f81a032be0f40377ccbab9784b3df251f2c22",
       "label": "download_artifact()",
       "last": "2026-08-03T15:25:41.021512+00:00",
       "provenance": [
@@ -535,13 +519,13 @@
           "q": "Make the dashboard generic and remove Gent-Terneuzen traces from the active UI while implementing the eight-stage uploaded-data pipeline."
         }
       ],
-      "score": 0.939381817,
+      "score": 0.939114741,
       "source_file": "pipeline/playground_server.py",
       "status": "tentative",
       "uses": 1
     },
     "pipeline_playground_server_source_path": {
-      "code_fingerprint": "9ef82165e51053b734ec518ba4ff098673673b4c4a74f1c51eb0412f84231c49",
+      "code_fingerprint": "1ad60b3eb30ae3010588e96c386f81a032be0f40377ccbab9784b3df251f2c22",
       "label": "source_path()",
       "last": "2026-08-05T14:40:55.368141+00:00",
       "provenance": [
@@ -551,7 +535,7 @@
           "q": "The supplied RML mapping fails for waterinfo.csv with: Exception in thread main java.lang.Error: Cannot find data.csv"
         }
       ],
-      "score": 0.983102746,
+      "score": 0.98282324,
       "source_file": "pipeline/playground_server.py",
       "status": "tentative",
       "uses": 1
@@ -572,7 +556,7 @@
           "q": "Make the dashboard generic and remove Gent-Terneuzen traces from the active UI while implementing the eight-stage uploaded-data pipeline."
         }
       ],
-      "score": 1.920690362,
+      "score": 1.920144289,
       "source_file": "pipeline/run_store.py",
       "status": "preferred",
       "uses": 2
@@ -588,13 +572,13 @@
           "q": "Can you add a button to clear/delete the uploaded file (csv or xlsx) so user can easily reupload the right file"
         }
       ],
-      "score": 0.981308544,
+      "score": 0.981029548,
       "source_file": "pipeline/run_store.py",
       "status": "tentative",
       "uses": 1
     },
     "pipeline_tests_test_generic_pipeline_test_delete_run_removes_uploaded_file_and_artifacts": {
-      "code_fingerprint": "0aaf89453bfebd8deca493d47ea4b62d33e97dcf51cedb092f5d25199e1f2c3d",
+      "code_fingerprint": "c34a8b9dbc14bdc3da4f466eb17f78c386fd93ba350ffef3649367f3b1dd5c06",
       "label": "test_delete_run_removes_uploaded_file_and_artifacts()",
       "last": "2026-08-05T12:47:04.457510+00:00",
       "provenance": [
@@ -604,13 +588,13 @@
           "q": "Can you add a button to clear/delete the uploaded file (csv or xlsx) so user can easily reupload the right file"
         }
       ],
-      "score": 0.981308544,
+      "score": 0.981029548,
       "source_file": "pipeline/tests/test_generic_pipeline.py",
       "status": "tentative",
       "uses": 1
     },
     "pipeline_tests_test_generic_pipeline_test_normalized_multirow_xlsx_runs_with_user_mapping": {
-      "code_fingerprint": "0aaf89453bfebd8deca493d47ea4b62d33e97dcf51cedb092f5d25199e1f2c3d",
+      "code_fingerprint": "c34a8b9dbc14bdc3da4f466eb17f78c386fd93ba350ffef3649367f3b1dd5c06",
       "label": "test_normalized_multirow_xlsx_runs_with_user_mapping()",
       "last": "2026-08-05T13:14:39.241836+00:00",
       "provenance": [
@@ -620,13 +604,13 @@
           "q": "these mappings below on the file attached created an rdf file with zero triples. why is that? fix it"
         }
       ],
-      "score": 0.981742888,
+      "score": 0.981463768,
       "source_file": "pipeline/tests/test_generic_pipeline.py",
       "status": "tentative",
       "uses": 1
     },
     "pipeline_tests_test_generic_pipeline_test_upload_xlsx_creates_preview_and_rml_csv_source": {
-      "code_fingerprint": "0aaf89453bfebd8deca493d47ea4b62d33e97dcf51cedb092f5d25199e1f2c3d",
+      "code_fingerprint": "c34a8b9dbc14bdc3da4f466eb17f78c386fd93ba350ffef3649367f3b1dd5c06",
       "label": "test_upload_xlsx_creates_preview_and_rml_csv_source()",
       "last": "2026-08-05T12:35:44.614612+00:00",
       "provenance": [
@@ -636,8 +620,24 @@
           "q": "i have updated the graphify structure so make sure to check the new one out before doing anything. I have tried to test the system, module 1 data input only supports the upload of csv files, I want it to also support xlsx files as well"
         }
       ],
-      "score": 0.981130156,
+      "score": 0.980851211,
       "source_file": "pipeline/tests/test_generic_pipeline.py",
+      "status": "tentative",
+      "uses": 1
+    },
+    "triple_store_ingestion_ingest_upload_graph": {
+      "code_fingerprint": "1a22b3be978d904d923ceb29d783e24f6756e9f167cd0697e74ab22a3340a2a2",
+      "label": "upload_graph()",
+      "last": "2026-08-03T14:44:23.672597+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-03T14:44:23.672597+00:00",
+          "outcome": "useful",
+          "q": "Examine the current repository and look at the graphify structure. We need to build a generic cloud-deployed system based on the existing pipeline and frontend, not the Gent-Terneuzen use case, with CSV upload/preview, user RML mapping, named-graph Fuseki ingestion, user SHACL-in validation, user N3 reasoning, existing RDF2TSS assumptions, user SHACL-out validation, and existing RDF2LDES assumptions plus ZIP download."
+        }
+      ],
+      "score": 0.938492795,
+      "source_file": "triple_store_ingestion/ingest.py",
       "status": "tentative",
       "uses": 1
     }

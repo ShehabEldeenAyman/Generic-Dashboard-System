@@ -225,7 +225,7 @@ def test_ingest_graph_aborts_when_named_graph_cannot_be_cleared(tmp_path, monkey
     assert upload_called is False
 
 
-def test_fuseki_query_uses_run_graph_as_default_dataset(monkeypatch):
+def test_fuseki_query_leaves_named_graph_selection_to_query(monkeypatch):
     captured = {}
 
     class Response:
@@ -251,12 +251,18 @@ def test_fuseki_query_uses_run_graph_as_default_dataset(monkeypatch):
 
     monkeypatch.setattr(fuseki_ingest.requests, "post", post)
 
-    result = fuseki_ingest.query_graph(
-        "SELECT ?subject WHERE { ?subject ?predicate ?object }",
-        "https://example.org/graphs/items",
-    )
+    query = """
+        SELECT ?subject
+        WHERE {
+          GRAPH <https://example.org/graphs/items> {
+            ?subject ?predicate ?object
+          }
+        }
+    """
+    result = fuseki_ingest.query_graph(query)
 
-    assert captured["data"]["default-graph-uri"] == "https://example.org/graphs/items"
+    assert captured["data"] == {"query": query}
+    assert "default-graph-uri" not in captured["data"]
     assert result["type"] == "select"
     assert result["variables"] == ["subject"]
     assert result["rows"][0]["subject"]["value"] == "https://example.org/item"

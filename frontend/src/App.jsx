@@ -17,7 +17,9 @@ const stageDefinitions = [
 
 const defaultSparqlQuery = `SELECT ?subject ?predicate ?object
 WHERE {
-  ?subject ?predicate ?object .
+  GRAPH <https://example.org/graphs/your-graph> {
+    ?subject ?predicate ?object .
+  }
 }
 LIMIT 100`
 
@@ -178,16 +180,16 @@ function SparqlWorkspace({ run, enabled }) {
   return <article className={`pipeline-stage query-workspace ${status || (enabled ? 'ready' : 'locked')}`} id="sparql-workspace">
     <div className="stage-index">Q</div>
     <div className="stage-main">
-      <div className="stage-title-row"><div><p className="eyebrow">SPARQL workspace</p><h2>Query the ingested graph</h2><p className="stage-description">Run a read-only SPARQL query against the named graph created by this pipeline run.</p></div><StatusPill status={status} enabled={enabled} /></div>
+      <div className="stage-title-row"><div><p className="eyebrow">SPARQL workspace</p><h2>Query Fuseki</h2><p className="stage-description">Run a read-only SPARQL query and select each target named graph explicitly in the query.</p></div><StatusPill status={status} enabled={enabled} /></div>
       <div className="stage-controls">
-        <div className="inline-tip"><strong>Default graph</strong><code>{run?.graph?.uri || 'Ingest a graph first'}</code><span>The selected named graph is exposed as the query&apos;s default dataset.</span></div>
-        <CodeEditor id="sparql-editor" label="SPARQL query" value={query} onChange={setQuery} rows={9} placeholder="SELECT ?subject ?predicate ?object WHERE { ?subject ?predicate ?object } LIMIT 100" />
+        <div className="inline-tip"><strong>Available graph IRI</strong><code>{run?.graph?.uri || 'Ingest a graph first'}</code><span>No default graph is selected automatically. Add a GRAPH &lt;IRI&gt; clause to your query.</span></div>
+        <CodeEditor id="sparql-editor" label="SPARQL query" value={query} onChange={setQuery} rows={10} placeholder="SELECT ?subject ?predicate ?object WHERE { GRAPH <https://example.org/graphs/your-graph> { ?subject ?predicate ?object } } LIMIT 100" />
       </div>
       <div className="stage-actions"><button className="run-button" disabled={!enabled || busy || !query.trim()} onClick={executeQuery}>{busy ? <><i className="spinner" />Querying</> : 'Run SPARQL query'}</button>{!enabled && <span>Ingest a named graph to unlock querying.</span>}</div>
       {error && <div className="query-message error"><strong>Query failed</strong><span>{error}</span></div>}
       {result?.type === 'ask' && <div className="query-message success"><strong>ASK result</strong><span>{result.boolean ? 'true' : 'false'}</span></div>}
       {result?.type === 'select' && <div className="query-results">
-        <div className="query-summary"><strong>{result.row_count.toLocaleString()} result row{result.row_count === 1 ? '' : 's'}</strong><span>{result.truncated ? 'Results were capped by the server.' : `Queried ${result.graph_uri}`}</span></div>
+        <div className="query-summary"><strong>{result.row_count.toLocaleString()} result row{result.row_count === 1 ? '' : 's'}</strong><span>{result.truncated ? 'Results were capped by the server.' : 'Fuseki query completed.'}</span></div>
         <div className="table-shell"><table><thead><tr>{variables.map((variable) => <th key={variable}>?{variable}</th>)}</tr></thead><tbody>{result.rows.length ? result.rows.map((row, rowIndex) => <tr key={rowIndex}>{variables.map((variable) => { const term = row[variable]; return <td key={variable} title={term?.value || ''}>{term ? <><span>{term.value}</span><small>{term.type}{term.datatype ? ` · ${term.datatype}` : ''}{term['xml:lang'] ? ` · ${term['xml:lang']}` : ''}</small></> : <em>unbound</em>}</td> })}</tr>) : <tr><td colSpan={Math.max(variables.length, 1)}><em>No matching rows.</em></td></tr>}</tbody></table></div>
       </div>}
       {result?.type === 'graph' && <div className="query-results"><div className="query-summary"><strong>Graph result</strong><span>{result.content_type}{result.truncated ? ' · preview truncated' : ''}</span></div><pre className="source-preview">{result.text}</pre></div>}

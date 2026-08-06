@@ -534,7 +534,7 @@ def run_sparql_query(query: str, graph_uri: str) -> dict[str, Any]:
     if not graph_uri:
         raise PipelineError("The run does not have an ingested named graph yet.")
     try:
-        return ingest.query_graph(query_text, graph_uri)
+        return ingest.query_graph(query_text)
     except ingest.FusekiError as error:
         raise PipelineError(str(error)) from error
 

@@ -62,12 +62,12 @@ def delete_graph(graph_uri):
     return False
 
 
-def query_graph(query, graph_uri):
-    """Run a read-only SPARQL query with one named graph as the default dataset."""
+def query_graph(query):
+    """Run a read-only SPARQL query without overriding Fuseki's query dataset."""
     try:
         response = requests.post(
             get_query_url(),
-            data={"query": query, "default-graph-uri": graph_uri},
+            data={"query": query},
             headers={
                 "Accept": (
                     "application/sparql-results+json, "
@@ -91,7 +91,7 @@ def query_graph(query, graph_uri):
             raise FusekiError("Fuseki returned invalid SPARQL JSON.") from error
 
         if "boolean" in payload:
-            return {"type": "ask", "boolean": bool(payload["boolean"]), "graph_uri": graph_uri}
+            return {"type": "ask", "boolean": bool(payload["boolean"])}
 
         bindings = payload.get("results", {}).get("bindings")
         if not isinstance(bindings, list):
@@ -104,7 +104,6 @@ def query_graph(query, graph_uri):
             "rows": rows,
             "row_count": len(rows),
             "truncated": len(bindings) > len(rows),
-            "graph_uri": graph_uri,
         }
 
     text = response.text
@@ -113,5 +112,4 @@ def query_graph(query, graph_uri):
         "content_type": content_type or "text/plain",
         "text": text[:MAX_GRAPH_RESULT_CHARACTERS],
         "truncated": len(text) > MAX_GRAPH_RESULT_CHARACTERS,
-        "graph_uri": graph_uri,
     }
