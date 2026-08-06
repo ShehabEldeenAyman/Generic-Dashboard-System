@@ -13,15 +13,15 @@ from pathlib import Path
 from dateutil.relativedelta import relativedelta
 
 # --- Config ---
-input_path = "./sources/Mol_Sluis_Dessel_data_prettified.ttl"
-base_path = "./LDES"
+input_path = "../test-data/mapped.ttl"
+base_path = "./LDES-output-NoTSS"
 
 # --- Namespaces ---
 SOSA = Namespace("http://www.w3.org/ns/sosa/")
 EX = Namespace("http://example.com/ns#") 
 XSD = Namespace("http://www.w3.org/2001/XMLSchema#")
 
-directory = "LDES/"
+directory = base_path
 AS = Namespace("https://www.w3.org/ns/activitystreams#")
 LDES = Namespace("https://w3id.org/ldes#")
 TREE = Namespace("https://w3id.org/tree#")
@@ -127,7 +127,7 @@ def divide_data(observations):
         metadata_graph.add((eventstream_uri, RDF.type, LDES.EventStream))
         metadata_graph.add((eventstream_uri, LDES.timestampPath, SOSA.resultTime))
 
-        metadata_graph.add((eventstream_uri, TREE.view, URIRef(os.path.join(base_uri, f"LDES/{year}/{month:02d}/{day:02d}/{day:02d}.trig"))))
+        metadata_graph.add((eventstream_uri, TREE.view, URIRef(os.path.join(base_uri, f"{base_path}/{year}/{month:02d}/{day:02d}/{day:02d}.trig"))))
         #store = ConjunctiveGraph()
 
         #ran_once = False
@@ -166,7 +166,7 @@ def divide_data(observations):
         #     f.write(temp_graph.serialize(format="nt"))
 
 #RDF2LDES##############################################################################################
-directory = "LDES/"
+#directory = "LDES/"
 AS = Namespace("https://www.w3.org/ns/activitystreams#")
 LDES = Namespace("https://w3id.org/ldes#")
 TREE = Namespace("https://w3id.org/tree#")

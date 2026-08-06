@@ -1,0 +1,94 @@
+Current folder: LDES-output-NoTSS 
+Current folder length: 1 
+Last part of directory LDES-output-NoTSS 
+  Subfolder: LDES-output-NoTSS/2025
+Subfolder: 2025 
+path parts: 2 
+ Writing to file: LDES-output-NoTSS/LDES-output-NoTSS.trig 
+----------------------------------------
+Current folder: LDES-output-NoTSS/2025 
+Current folder length: 2 
+Last part of directory 2025 
+  Subfolder: LDES-output-NoTSS/2025/01
+Subfolder: 01 
+path parts: 3 
+ Writing to file: LDES-output-NoTSS/2025/2025.trig 
+----------------------------------------
+Current folder: LDES-output-NoTSS/2025/01 
+Current folder length: 3 
+Last part of directory 01 
+  Subfolder: LDES-output-NoTSS/2025/01/01
+  Subfolder: LDES-output-NoTSS/2025/01/02
+  Subfolder: LDES-output-NoTSS/2025/01/03
+  Subfolder: LDES-output-NoTSS/2025/01/04
+  Subfolder: LDES-output-NoTSS/2025/01/05
+  Subfolder: LDES-output-NoTSS/2025/01/06
+  Subfolder: LDES-output-NoTSS/2025/01/07
+  Subfolder: LDES-output-NoTSS/2025/01/09
+  Subfolder: LDES-output-NoTSS/2025/01/10
+  Subfolder: LDES-output-NoTSS/2025/01/11
+  Subfolder: LDES-output-NoTSS/2025/01/12
+  Subfolder: LDES-output-NoTSS/2025/01/13
+Subfolder: 01 
+Subfolder: 02 
+Subfolder: 03 
+Subfolder: 04 
+Subfolder: 05 
+Subfolder: 06 
+Subfolder: 07 
+Subfolder: 09 
+Subfolder: 10 
+Subfolder: 11 
+Subfolder: 12 
+Subfolder: 13 
+path parts: 4 
+ Writing to file: LDES-output-NoTSS/2025/01/01.trig 
+----------------------------------------
+Current folder: LDES-output-NoTSS/2025/01/01 
+Current folder length: 4 
+Last part of directory 01 
+----------------------------------------
+Current folder: LDES-output-NoTSS/2025/01/02 
+Current folder length: 4 
+Last part of directory 02 
+----------------------------------------
+Current folder: LDES-output-NoTSS/2025/01/03 
+Current folder length: 4 
+Last part of directory 03 
+----------------------------------------
+Current folder: LDES-output-NoTSS/2025/01/04 
+Current folder length: 4 
+Last part of directory 04 
+----------------------------------------
+Current folder: LDES-output-NoTSS/2025/01/05 
+Current folder length: 4 
+Last part of directory 05 
+----------------------------------------
+Current folder: LDES-output-NoTSS/2025/01/06 
+Current folder length: 4 
+Last part of directory 06 
+----------------------------------------
+Current folder: LDES-output-NoTSS/2025/01/07 
+Current folder length: 4 
+Last part of directory 07 
+----------------------------------------
+Current folder: LDES-output-NoTSS/2025/01/09 
+Current folder length: 4 
+Last part of directory 09 
+----------------------------------------
+Current folder: LDES-output-NoTSS/2025/01/10 
+Current folder length: 4 
+Last part of directory 10 
+----------------------------------------
+Current folder: LDES-output-NoTSS/2025/01/11 
+Current folder length: 4 
+Last part of directory 11 
+----------------------------------------
+Current folder: LDES-output-NoTSS/2025/01/12 
+Current folder length: 4 
+Last part of directory 12 
+----------------------------------------
+Current folder: LDES-output-NoTSS/2025/01/13 
+Current folder length: 4 
+Last part of directory 13 
+----------------------------------------
