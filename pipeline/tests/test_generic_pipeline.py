@@ -304,6 +304,101 @@ def test_sparql_api_queries_the_graph_saved_for_the_run(tmp_path, monkeypatch):
     }
 
 
+def test_optional_validation_does_not_invalidate_downstream_results(tmp_path):
+    run_store = RunStore(tmp_path / "runs")
+    state = run_store.create("items.csv", "items.csv")
+    state["stages"] = {
+        stage: {"status": "success", "artifacts": []}
+        for stage in (
+            "upload",
+            "rml",
+            "ingest",
+            "shacl_in",
+            "reason",
+            "rdf2tss",
+            "shacl_out",
+            "rdf2ldes",
+        )
+    }
+    run_store.save(state)
+
+    state = run_store.begin_stage(state, "shacl_in")
+
+    assert state["stages"]["shacl_in"]["status"] == "running"
+    assert state["stages"]["reason"]["status"] == "success"
+    assert state["stages"]["rdf2tss"]["status"] == "success"
+    assert state["stages"]["rdf2ldes"]["status"] == "success"
+
+
+def test_rdf2tss_api_uses_mapped_rdf_when_reasoning_is_skipped(tmp_path, monkeypatch):
+    run_store = RunStore(tmp_path / "runs")
+    monkeypatch.setattr(playground_server, "RUN_STORE", run_store)
+    state = run_store.create("items.csv", "items.csv")
+    state["stages"]["rml"] = {"status": "success"}
+    run_store.save(state)
+    directory = run_store.run_dir(state["id"])
+    mapped_path = directory / "mapped.ttl"
+    mapped_path.write_text("<urn:item> <urn:value> 1 .", encoding="utf-8")
+    captured = {}
+
+    def run_rdf2tss(run_directory, data_path):
+        captured["data_path"] = data_path
+        output_path = run_directory / "timeseries.ttl"
+        output_path.write_text("<urn:series> <urn:value> 1 .", encoding="utf-8")
+        return {"output_path": output_path, "sensor_count": 1, "tss_triples": 1}
+
+    monkeypatch.setattr(generic_pipeline, "run_rdf2tss", run_rdf2tss)
+    client = TestClient(playground_server.app)
+
+    response = client.post(f"/api/runs/{state['id']}/stages/rdf2tss")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["stages"]["rdf2tss"]["status"] == "success"
+    assert payload["stages"]["rdf2tss"]["details"]["input_rdf"] == "mapped.ttl"
+    assert captured["data_path"] == mapped_path
+
+
+def test_rdf2ldes_api_does_not_require_shacl_out(tmp_path, monkeypatch):
+    run_store = RunStore(tmp_path / "runs")
+    monkeypatch.setattr(playground_server, "RUN_STORE", run_store)
+    state = run_store.create("items.csv", "items.csv")
+    state["stages"]["rdf2tss"] = {"status": "success"}
+    run_store.save(state)
+    directory = run_store.run_dir(state["id"])
+    tss_path = directory / "timeseries.ttl"
+    tss_path.write_text("<urn:series> <urn:value> 1 .", encoding="utf-8")
+    captured = {}
+
+    def run_rdf2ldes(run_directory, input_path, stream_name, base_url):
+        captured["input_path"] = input_path
+        output_directory = run_directory / "ldes" / stream_name
+        output_directory.mkdir(parents=True)
+        zip_path = run_directory / f"{stream_name}.zip"
+        zip_path.write_bytes(b"zip")
+        return {
+            "output_directory": output_directory,
+            "zip_path": zip_path,
+            "stream_name": stream_name,
+            "base_url": base_url,
+            "trig_file_count": 0,
+            "fragment_count": 0,
+            "index_count": 0,
+        }
+
+    monkeypatch.setattr(generic_pipeline, "run_rdf2ldes", run_rdf2ldes)
+    client = TestClient(playground_server.app)
+
+    response = client.post(
+        f"/api/runs/{state['id']}/stages/rdf2ldes",
+        json={"stream_name": "items", "base_url": "https://example.org/ldes/"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["stages"]["rdf2ldes"]["status"] == "success"
+    assert captured["input_path"] == tss_path
+
+
 def test_shacl_violation_returns_a_report_without_raising(tmp_path):
     data_path = tmp_path / "mapped.ttl"
     data_path.write_text(

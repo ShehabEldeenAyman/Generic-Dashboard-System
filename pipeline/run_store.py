@@ -29,6 +29,17 @@ STAGE_ORDER = (
     "rdf2ldes",
 )
 
+STAGE_INVALIDATIONS = {
+    "upload": set(STAGE_ORDER),
+    "rml": set(STAGE_ORDER[1:]),
+    "ingest": {"ingest"},
+    "shacl_in": {"shacl_in"},
+    "reason": {"reason", "rdf2tss", "shacl_out", "rdf2ldes"},
+    "rdf2tss": {"rdf2tss", "shacl_out", "rdf2ldes"},
+    "shacl_out": {"shacl_out"},
+    "rdf2ldes": {"rdf2ldes"},
+}
+
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -114,8 +125,7 @@ class RunStore:
     def begin_stage(self, state: dict[str, Any], stage: str) -> dict[str, Any]:
         if stage not in STAGE_ORDER:
             raise KeyError(f"Unknown stage: {stage}")
-        stage_index = STAGE_ORDER.index(stage)
-        invalidated = set(STAGE_ORDER[stage_index:])
+        invalidated = STAGE_INVALIDATIONS[stage]
         if "ingest" in invalidated:
             state["graph"] = None
         state["stages"] = {

@@ -349,7 +349,7 @@ def shacl_in_stage(run_id: str, request: ShaclRequest) -> dict[str, Any]:
             ],
         }
 
-    return execute_stage(run_id, "shacl_in", "ingest", operation)
+    return execute_stage(run_id, "shacl_in", "rml", operation)
 
 
 @app.post("/api/runs/{run_id}/stages/reason")
@@ -367,23 +367,29 @@ def reason_stage(run_id: str, request: ReasonRequest) -> dict[str, Any]:
             ],
         }
 
-    return execute_stage(run_id, "reason", "shacl_in", operation)
+    return execute_stage(run_id, "reason", "rml", operation)
 
 
 @app.post("/api/runs/{run_id}/stages/rdf2tss")
 def rdf2tss_stage(run_id: str) -> dict[str, Any]:
-    def operation(_state: dict[str, Any], directory: Path) -> dict[str, Any]:
-        result = pipeline.run_rdf2tss(directory, directory / "reasoned.ttl")
+    def operation(state: dict[str, Any], directory: Path) -> dict[str, Any]:
+        reason_status = (state.get("stages", {}).get("reason") or {}).get("status")
+        reasoned_path = directory / "reasoned.ttl"
+        use_reasoned_rdf = reason_status == "success" and reasoned_path.is_file()
+        input_path = reasoned_path if use_reasoned_rdf else directory / "mapped.ttl"
+        input_label = "reasoned RDF" if use_reasoned_rdf else "mapped RDF"
+        result = pipeline.run_rdf2tss(directory, input_path)
         return {
-            "message": f"Created TSS data for {result['sensor_count']:,} sensors.",
+            "message": f"Created TSS data for {result['sensor_count']:,} sensors from {input_label}.",
             "sensor_count": result["sensor_count"],
             "tss_triples": result["tss_triples"],
+            "input_rdf": input_path.name,
             "artifacts": [
                 {"path": result["output_path"], "name": "TSS RDF", "kind": "ttl"}
             ],
         }
 
-    return execute_stage(run_id, "rdf2tss", "reason", operation)
+    return execute_stage(run_id, "rdf2tss", "rml", operation)
 
 
 @app.post("/api/runs/{run_id}/stages/shacl-out")
@@ -435,7 +441,7 @@ def rdf2ldes_stage(run_id: str, request: LdesRequest) -> dict[str, Any]:
             "artifacts": artifacts,
         }
 
-    return execute_stage(run_id, "rdf2ldes", "shacl_out", operation)
+    return execute_stage(run_id, "rdf2ldes", "rdf2tss", operation)
 
 
 @app.get("/api/runs/{run_id}/artifacts/{artifact_id}")

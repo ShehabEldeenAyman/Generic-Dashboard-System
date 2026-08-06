@@ -4,35 +4,35 @@
 - cluster-only mode — file stats not available
 
 ## Summary
-- 635 nodes · 943 edges · 87 communities (58 shown, 29 thin omitted)
-- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 31 edges (avg confidence: 0.71)
+- 639 nodes · 958 edges · 87 communities (58 shown, 29 thin omitted)
+- Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 35 edges (avg confidence: 0.67)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `55cccdeb`
+- Built from commit: `0eed4ede`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- generic_pipeline.py
-- server.py
 - playground_server.py
-- URIRef
+- server.py
+- generic_pipeline.py
 - dependencies
 - devDependencies
+- URIRef
 - pipeline_core.py
 - EdgeDeepLearning.jsx
-- RunStore
 - main
 - App.jsx
-- ingest.py
 - main.py
+- ingest.py
 - pipeline.py
 - MapCard.jsx
 - RDF2LDES_YMD_SPARQL_FOR_TSS.py
 - BrowseData.jsx
 - main
 - clean_result_sheet
+- main
 - main
 - Q: Now using this document provided, can you add new subsection to the website explaining what is the usecase and what is the goal maybe add nice figure or an interactive map
 - Q: examine waterlink and waterinfo pipelines, you will see that I have added a new feature which is RDF2LDES. can you integrate this new feature in the frontend similar to all the other features of the pipeline that you integrated before.
@@ -75,27 +75,27 @@
 - RuntimeError
 
 ## God Nodes (most connected - your core abstractions)
-1. `PipelineError` - 23 edges
-2. `main()` - 16 edges
-3. `RunStore` - 14 edges
-4. `execute_stage()` - 14 edges
+1. `RunStore` - 31 edges
+2. `PipelineError` - 21 edges
+3. `execute_stage()` - 18 edges
+4. `main()` - 16 edges
 5. `_xlsx_table_plan()` - 13 edges
 6. `FusekiClient` - 11 edges
 7. `setup_environment()` - 11 edges
-8. `generate_ldes()` - 9 edges
-9. `main()` - 9 edges
-10. `AnalysisRequest` - 9 edges
+8. `create_run()` - 10 edges
+9. `generate_ldes()` - 9 edges
+10. `main()` - 9 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `test_qudt_conversion_micro_to_milli_si_per_centimetre()` --calls--> `convert_qudt_value()`  [INFERRED]
   lag_analytics_workspace/tests/test_analysis.py → automating_aligments/automated_alignments.py
-- `test_ingest_graph_aborts_when_named_graph_cannot_be_cleared()` --indirect_call--> `upload_graph()`  [INFERRED]
-  pipeline/tests/test_generic_pipeline.py → triple_store_ingestion/ingest.py
 - `test_legacy_fuseki_graph_is_normalized_to_milli_si_per_centimetre()` --calls--> `normalize_fuseki_observations()`  [INFERRED]
   lag_analytics_workspace/tests/test_analysis.py → lag_analytics_workspace/fuseki.py
 - `test_legacy_reader_prefers_new_correct_value_after_pipeline_rerun()` --calls--> `normalize_fuseki_observations()`  [INFERRED]
   lag_analytics_workspace/tests/test_analysis.py → lag_analytics_workspace/fuseki.py
 - `test_machine_learning_returns_predictions()` --calls--> `prepare_observations()`  [INFERRED]
+  lag_analytics_workspace/tests/test_analysis.py → lag_analytics_workspace/analysis.py
+- `test_matrix_profile_returns_motif_and_discord()` --calls--> `prepare_observations()`  [INFERRED]
   lag_analytics_workspace/tests/test_analysis.py → lag_analytics_workspace/analysis.py
 
 ## Import Cycles
@@ -103,29 +103,29 @@
 
 ## Communities (87 total, 29 thin omitted)
 
-### Community 0 - "generic_pipeline.py"
-Cohesion: 0.08
-Nodes (50): Any, date, Path, _cell_text(), _combined_datetime(), CommandResult, csv_preview(), _date_part() (+42 more)
+### Community 0 - "playground_server.py"
+Cohesion: 0.06
+Nodes (57): BaseModel, delete, FileResponse, get, configuration(), create_run(), delete_run(), download_artifact() (+49 more)
 
 ### Community 1 - "server.py"
 Cohesion: 0.07
 Nodes (49): deep_learning(), describe_data(), _feature_matrix(), lag_analysis(), machine_learning(), matrix_profile(), _number(), prepare_observations() (+41 more)
 
-### Community 2 - "playground_server.py"
+### Community 2 - "generic_pipeline.py"
 Cohesion: 0.13
-Nodes (37): BaseModel, delete, FileResponse, get, configuration(), create_run(), delete_run(), download_artifact() (+29 more)
+Nodes (42): Any, date, Path, _cell_text(), _combined_datetime(), CommandResult, csv_preview(), _date_part() (+34 more)
 
-### Community 3 - "URIRef"
-Cohesion: 0.10
-Nodes (31): _conversion(), convert_qudt_value(), main(), Normalize observation values between QUDT units., Convert via the common SI reference represented by QUDT metadata., Compatibility entry point using the corrected batch implementation., Convert every SOSA observation to NEW_UNIT and serialize once.      Previous cod, transform_unit() (+23 more)
-
-### Community 4 - "dependencies"
+### Community 3 - "dependencies"
 Cohesion: 0.06
 Nodes (33): buffer, dependencies, buffer, echarts, echarts-for-react, ldes-client, leaflet, @pola-rs/browser (+25 more)
 
-### Community 5 - "devDependencies"
+### Community 4 - "devDependencies"
 Cohesion: 0.06
 Nodes (30): devDependencies, eslint, @eslint/js, eslint-plugin-react-hooks, eslint-plugin-react-refresh, globals, @types/react, @types/react-dom (+22 more)
+
+### Community 5 - "URIRef"
+Cohesion: 0.12
+Nodes (26): _conversion(), convert_qudt_value(), main(), Normalize observation values between QUDT units., Convert via the common SI reference represented by QUDT metadata., Compatibility entry point using the corrected batch implementation., Convert every SOSA observation to NEW_UNIT and serialize once.      Previous cod, transform_unit() (+18 more)
 
 ### Community 6 - "pipeline_core.py"
 Cohesion: 0.14
@@ -135,49 +135,49 @@ Nodes (23): data_path(), ldes_artifacts(), pipeline_working_directory(), Reusabl
 Cohesion: 0.14
 Nodes (18): DataVisualization(), getSensorDataCache(), PREFIXES, sensorDataRegistry, buildAverageSeries(), buildForecastTimestamps(), extractSensorData(), ldesState (+10 more)
 
-### Community 8 - "RunStore"
-Cohesion: 0.24
-Nodes (7): Any, Path, Run-scoped state and artifact storage for the generic semantic pipeline.  The de, Persist pipeline metadata next to isolated run artifacts., Delete one UUID-scoped run directory and every artifact it owns., RunStore, utc_now()
-
-### Community 9 - "main"
+### Community 8 - "main"
 Cohesion: 0.23
 Nodes (16): comparison_visualization(), comparisonforecast(), datapreparation(), ensemble(), ensemble_visualization(), featureengineering(), identify_unique_sensors(), lightGBM_forecast_bias() (+8 more)
 
-### Community 10 - "App.jsx"
-Cohesion: 0.17
-Nodes (7): App(), ArtifactPreview(), completedStatuses, requestJson(), stageDefinitions, statusLabel(), StatusPill()
+### Community 9 - "App.jsx"
+Cohesion: 0.15
+Nodes (8): App(), ArtifactPreview(), completedStatuses, requestJson(), stageDefinitions, stagePrerequisites, statusLabel(), StatusPill()
 
-### Community 11 - "ingest.py"
-Cohesion: 0.16
-Nodes (13): test_ingest_graph_aborts_when_named_graph_cannot_be_cleared(), delete_graph(), FusekiError, get_query_url(), RuntimeError, query_graph(), Apache Jena Fuseki graph-store client used by the pipeline., Raised when Fuseki cannot complete a graph or query operation. (+5 more)
-
-### Community 12 - "main.py"
+### Community 10 - "main.py"
 Cohesion: 0.26
 Nodes (11): chronos2forecast_visualization(), comparison_visualization(), ensemble_visualization(), lifespan(), lightGBM_visualization(), plot_sensor_data(), random_forest_visualization(), SVR_visualization() (+3 more)
 
-### Community 13 - "pipeline.py"
+### Community 11 - "ingest.py"
+Cohesion: 0.18
+Nodes (12): delete_graph(), FusekiError, get_query_url(), RuntimeError, query_graph(), Apache Jena Fuseki graph-store client used by the pipeline., Raised when Fuseki cannot complete a graph or query operation., Resolve Fuseki's read-only SPARQL query endpoint from the data endpoint. (+4 more)
+
+### Community 12 - "pipeline.py"
 Cohesion: 0.29
 Nodes (9): main(), setup_environment(), step_1_fetch_data(), step_1_pre_process_waterlink(), step_2_preprocess(), step_2_rml_mapping_waterlink(), step_3_rml_mapping(), step_4_ingest_virtuoso() (+1 more)
 
-### Community 14 - "MapCard.jsx"
+### Community 13 - "MapCard.jsx"
 Cohesion: 0.18
 Nodes (3): headStyles, innerStyles, styles
 
-### Community 15 - "RDF2LDES_YMD_SPARQL_FOR_TSS.py"
+### Community 14 - "RDF2LDES_YMD_SPARQL_FOR_TSS.py"
 Cohesion: 0.38
 Nodes (9): create_base_graph(), create_ldes_files(), delete_ldes_files(), delete_log(), divide_data(), load_graph(), main(), process_graph() (+1 more)
 
-### Community 16 - "BrowseData.jsx"
+### Community 15 - "BrowseData.jsx"
 Cohesion: 0.20
 Nodes (3): headStyles, innerStyles, tableStyles
 
-### Community 17 - "main"
+### Community 16 - "main"
 Cohesion: 0.33
 Nodes (8): create_sensor_set(), create_tss(), load_graph(), main(), Loads a Turtle file into an RDFLib Graph., Identifies unique sensors within the graph using a SPARQL query., Transforms sensor observations into the Time Series Snippets (TSS) format., save_graph()
 
-### Community 19 - "clean_result_sheet"
+### Community 18 - "clean_result_sheet"
 Cohesion: 0.32
 Nodes (7): build_combined_header(), clean_result_sheet(), combine_datetime(), Cleans the 'result' tab of data.xlsx.  Assumed raw layout (1-indexed rows/cols, Combine a date value and a time value into a single ISO-8601 string,     e.g. ', Combine the description / attribute name / unit of measure (rows 1, 2, 3)     i, Reads `sheet_name` from `input_path`, merges the Datum/Tijd columns into     a
+
+### Community 20 - "main"
+Cohesion: 0.60
+Nodes (5): CreateSensorSet(), CreateTSS(), LoadGraph(), main(), SaveGraph()
 
 ### Community 21 - "main"
 Cohesion: 0.40
@@ -224,36 +224,36 @@ Cohesion: 0.50
 Nodes (3): Codex Repository Context, Instructions for Codex, System Architecture & Topology
 
 ## Knowledge Gaps
-- **91 isolated node(s):** `name`, `private`, `version`, `type`, `dev` (+86 more)
+- **92 isolated node(s):** `name`, `private`, `version`, `type`, `dev` (+87 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **29 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Work-memory lessons
 
 **Preferred sources** — corroborated by past sessions; start here.
-- `run_rml_mapping()` (4× useful, score=3.884657398) _(code changed — re-verify)_
-- `create_run()` (4× useful, score=3.88404484)
-- `App()` (4× useful, score=3.729850588) _(code changed — re-verify)_
-- `xlsx_preview()` (3× useful, score=2.943570628) _(code changed — re-verify)_
-- `xlsx_to_csv()` (3× useful, score=2.943570628) _(code changed — re-verify)_
-- `csv_preview()` (2× useful, score=1.96367445) _(code changed — re-verify)_
-- `RunStore` (2× useful, score=1.920144289)
-- `step_6_RDF2LDES()` (2× useful, score=1.873896282)
+- `run_rml_mapping()` (4× useful, score=3.883294589)
+- `create_run()` (4× useful, score=3.882682246) _(code changed — re-verify)_
+- `App()` (4× useful, score=3.728542088) _(code changed — re-verify)_
+- `xlsx_preview()` (3× useful, score=2.942537969)
+- `xlsx_to_csv()` (3× useful, score=2.942537969)
+- `csv_preview()` (2× useful, score=1.962985557)
+- `RunStore` (2× useful, score=1.919470667) _(code changed — re-verify)_
+- `step_6_RDF2LDES()` (2× useful, score=1.873238884)
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `_iri()` connect `server.py` to `URIRef`?**
-  _High betweenness centrality (0.055) - this node is a cross-community bridge._
-- **Why does `test_ingest_graph_aborts_when_named_graph_cannot_be_cleared()` connect `ingest.py` to `generic_pipeline.py`?**
-  _High betweenness centrality (0.016) - this node is a cross-community bridge._
+  _High betweenness centrality (0.051) - this node is a cross-community bridge._
+- **Why does `create_ldes_files()` connect `RDF2LDES_YMD_SPARQL_FOR_TSS.py` to `URIRef`?**
+  _High betweenness centrality (0.011) - this node is a cross-community bridge._
+- **Are the 6 inferred relationships involving `RunStore` (e.g. with `IngestRequest` and `LdesRequest`) actually correct?**
+  _`RunStore` has 6 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `name`, `private`, `version` to the rest of the system?**
-  _91 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `generic_pipeline.py` be split into smaller, more focused modules?**
-  _Cohesion score 0.08469945355191257 - nodes in this community are weakly interconnected._
+  _92 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `playground_server.py` be split into smaller, more focused modules?**
+  _Cohesion score 0.06491398896462187 - nodes in this community are weakly interconnected._
 - **Should `server.py` be split into smaller, more focused modules?**
   _Cohesion score 0.07486338797814207 - nodes in this community are weakly interconnected._
-- **Should `playground_server.py` be split into smaller, more focused modules?**
-  _Cohesion score 0.13360323886639677 - nodes in this community are weakly interconnected._
-- **Should `URIRef` be split into smaller, more focused modules?**
-  _Cohesion score 0.09841269841269841 - nodes in this community are weakly interconnected._
+- **Should `generic_pipeline.py` be split into smaller, more focused modules?**
+  _Cohesion score 0.12828282828282828 - nodes in this community are weakly interconnected._

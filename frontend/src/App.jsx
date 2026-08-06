@@ -8,12 +8,23 @@ const stageDefinitions = [
   { id: 'upload', title: 'Upload tabular data', eyebrow: 'Data input', description: 'Upload a CSV file or Excel workbook and inspect a parsed preview before processing begins.' },
   { id: 'rml', title: 'Map data to RDF', eyebrow: 'RML mapping', description: 'Paste your RML mapping and run RMLMapper against the prepared CSV source.' },
   { id: 'ingest', title: 'Ingest into Fuseki', eyebrow: 'Triple store', description: 'Clear and replace the named graph with the mapped RDF.' },
-  { id: 'shacl_in', title: 'Validate mapped RDF', eyebrow: 'SHACL in', description: 'Run your input shape without stopping the pipeline when violations are found.' },
-  { id: 'reason', title: 'Apply semantic rules', eyebrow: 'N3 reasoner', description: 'Run user-provided N3 rules and materialise the inferred RDF.' },
+  { id: 'shacl_in', title: 'Validate mapped RDF', eyebrow: 'SHACL in · Optional', description: 'Optionally run your input shape without stopping the pipeline when violations are found.' },
+  { id: 'reason', title: 'Apply semantic rules', eyebrow: 'N3 reasoner · Optional', description: 'Optionally run user-provided N3 rules and materialise inferred RDF.' },
   { id: 'rdf2tss', title: 'Create TSS data', eyebrow: 'RDF2TSS', description: 'Transform compatible RDF observations with the existing RDF2TSS queries.' },
-  { id: 'shacl_out', title: 'Validate TSS output', eyebrow: 'SHACL out', description: 'Check the generated TSS graph against your output shape.' },
+  { id: 'shacl_out', title: 'Validate TSS output', eyebrow: 'SHACL out · Optional', description: 'Optionally check the generated TSS graph against your output shape.' },
   { id: 'rdf2ldes', title: 'Generate and download LDES', eyebrow: 'RDF2LDES', description: 'Build the existing TREE/LDES hierarchy and download the complete folder as ZIP.' },
 ]
+
+const stagePrerequisites = {
+  upload: [],
+  rml: ['upload'],
+  ingest: ['rml'],
+  shacl_in: ['rml'],
+  reason: ['rml'],
+  rdf2tss: ['rml'],
+  shacl_out: ['rdf2tss'],
+  rdf2ldes: ['rdf2tss'],
+}
 
 const defaultSparqlQuery = `SELECT ?subject ?predicate ?object
 WHERE {
@@ -84,7 +95,7 @@ function StageCard({ number, definition, result, enabled, busy, artifacts, onRun
     <div className="stage-main">
       <div className="stage-title-row"><div><p className="eyebrow">{definition.eyebrow}</p><h2>{definition.title}</h2><p className="stage-description">{definition.description}</p></div><StatusPill status={result?.status} enabled={enabled} /></div>
       <div className="stage-controls">{children}</div>
-      <div className="stage-actions"><button className="run-button" disabled={!enabled || busy} onClick={onRun}>{busy ? <><i className="spinner" />Running</> : actionLabel}</button>{!enabled && <span>Complete the preceding stage to unlock this action.</span>}</div>
+      <div className="stage-actions"><button className="run-button" disabled={!enabled || busy} onClick={onRun}>{busy ? <><i className="spinner" />Running</> : actionLabel}</button>{!enabled && <span>Complete the required input stage to unlock this action.</span>}</div>
       <StageFeedback result={result} artifacts={artifacts} onPreview={onPreview} />
     </div>
   </article>
@@ -218,6 +229,7 @@ function App() {
   const artifactMap = useMemo(() => new Map((run?.artifacts || []).map((artifact) => [artifact.id, artifact])), [run])
   const artifactsFor = (stage) => (run?.stages?.[stage]?.artifacts || []).map((id) => artifactMap.get(id)).filter(Boolean)
   const stageDone = (stage) => completedStatuses.has(run?.stages?.[stage]?.status)
+  const stageEnabled = (stage) => (stagePrerequisites[stage] || []).every(stageDone)
 
   async function upload() {
     if (!file) return
@@ -257,7 +269,7 @@ function App() {
     <aside className="pipeline-nav">
       <div className="brand"><span>S</span><div><strong>Semantic Studio</strong><small>Generic RDF pipeline</small></div></div>
       <div className="run-progress"><div><span>Pipeline progress</span><strong>{completed}/{stageDefinitions.length}</strong></div><div className="progress-track"><i style={{ width: `${completed / stageDefinitions.length * 100}%` }} /></div>{run ? <small>Run {run.id.slice(0, 8)}</small> : <small>No active run</small>}</div>
-      <nav>{stageDefinitions.map((stage, index) => { const status = run?.stages?.[stage.id]?.status; const enabled = index === 0 || stageDone(stageDefinitions[index - 1].id); return <a key={stage.id} href={`#stage-${stage.id}`} className={status || ''}><span>{String(index + 1).padStart(2, '0')}</span><div><strong>{stage.title}</strong><small>{statusLabel(status, enabled)}</small></div></a> })}</nav>
+      <nav>{stageDefinitions.map((stage, index) => { const status = run?.stages?.[stage.id]?.status; const enabled = stageEnabled(stage.id); return <a key={stage.id} href={`#stage-${stage.id}`} className={status || ''}><span>{String(index + 1).padStart(2, '0')}</span><div><strong>{stage.title}</strong><small>{statusLabel(status, enabled)}</small></div></a> })}</nav>
       <div className="service-card"><span className={config?.fuseki?.connected ? 'online' : 'offline'}><i />{config?.fuseki?.connected ? 'Fuseki connected' : 'Fuseki unavailable'}</span><small>{config?.storage === 'run-scoped' ? 'Isolated run storage' : 'Checking services'}</small></div>
     </aside>
 
@@ -269,35 +281,35 @@ function App() {
       <section className="pipeline-list">
         <UploadStage run={run} file={file} setFile={setFile} busy={busy === 'upload'} deleting={busy === 'delete'} onUpload={upload} onDelete={deleteUploadedFile} onPreview={setPreviewArtifact} />
 
-        <StageCard number={2} definition={stageDefinitions[1]} result={run?.stages?.rml} enabled={stageDone('upload')} busy={busy === 'rml'} artifacts={artifactsFor('rml')} onPreview={setPreviewArtifact} onRun={() => execute('rml', { mapping })} actionLabel="Run RML mapping">
+        <StageCard number={2} definition={stageDefinitions[1]} result={run?.stages?.rml} enabled={stageEnabled('rml')} busy={busy === 'rml'} artifacts={artifactsFor('rml')} onPreview={setPreviewArtifact} onRun={() => execute('rml', { mapping })} actionLabel="Run RML mapping">
           <div className="inline-tip"><strong>RML source name</strong><code>{run?.source?.mapping_source_filename || 'Upload data first'}</code><span>Use this exact prepared CSV filename as the mapping&apos;s logical source.</span></div>
           <CodeEditor id="rml-editor" label="RML mapping (Turtle)" value={mapping} onChange={setMapping} placeholder={'@prefix rml: <http://w3id.org/rml/> .\n\n# Paste your complete RML mapping here.'} />
         </StageCard>
 
-        <StageCard number={3} definition={stageDefinitions[2]} result={run?.stages?.ingest} enabled={stageDone('rml')} busy={busy === 'ingest'} artifacts={artifactsFor('ingest')} onPreview={setPreviewArtifact} onRun={() => execute('ingest', { graph_name: graphName })} actionLabel="Ingest graph">
+        <StageCard number={3} definition={stageDefinitions[2]} result={run?.stages?.ingest} enabled={stageEnabled('ingest')} busy={busy === 'ingest'} artifacts={artifactsFor('ingest')} onPreview={setPreviewArtifact} onRun={() => execute('ingest', { graph_name: graphName })} actionLabel="Ingest graph">
           <div className="form-field"><label htmlFor="graph-name">Named graph</label><input id="graph-name" value={graphName} onChange={(event) => setGraphName(event.target.value)} placeholder="products-2026 or https://example.org/graphs/products" /><small>Enter a short name or a complete graph IRI.</small></div>
           <div className="inline-tip"><strong>Replacement policy</strong><span>The named graph is cleared before every ingestion, then replaced with this run&apos;s mapped RDF.</span></div>
         </StageCard>
 
         <SparqlWorkspace run={run} enabled={stageDone('ingest')} />
 
-        <StageCard number={4} definition={stageDefinitions[3]} result={run?.stages?.shacl_in} enabled={stageDone('ingest')} busy={busy === 'shacl-in'} artifacts={artifactsFor('shacl_in')} onPreview={setPreviewArtifact} onRun={() => execute('shacl-in', { shapes: shaclIn })} actionLabel="Validate mapped RDF">
+        <StageCard number={4} definition={stageDefinitions[3]} result={run?.stages?.shacl_in} enabled={stageEnabled('shacl_in')} busy={busy === 'shacl-in'} artifacts={artifactsFor('shacl_in')} onPreview={setPreviewArtifact} onRun={() => execute('shacl-in', { shapes: shaclIn })} actionLabel="Validate mapped RDF">
           <CodeEditor id="shacl-in-editor" label="Input SHACL shape (Turtle)" value={shaclIn} onChange={setShaclIn} placeholder={'@prefix sh: <http://www.w3.org/ns/shacl#> .\n\n# Paste the shape for the mapped RDF here.'} />
         </StageCard>
 
-        <StageCard number={5} definition={stageDefinitions[4]} result={run?.stages?.reason} enabled={stageDone('shacl_in')} busy={busy === 'reason'} artifacts={artifactsFor('reason')} onPreview={setPreviewArtifact} onRun={() => execute('reason', { rules })} actionLabel="Run N3 reasoner">
+        <StageCard number={5} definition={stageDefinitions[4]} result={run?.stages?.reason} enabled={stageEnabled('reason')} busy={busy === 'reason'} artifacts={artifactsFor('reason')} onPreview={setPreviewArtifact} onRun={() => execute('reason', { rules })} actionLabel="Run N3 reasoner">
           <CodeEditor id="n3-editor" label="N3 rules" value={rules} onChange={setRules} placeholder={'@prefix : <https://example.org/> .\n\n# Paste your N3 rules here.'} />
         </StageCard>
 
-        <StageCard number={6} definition={stageDefinitions[5]} result={run?.stages?.rdf2tss} enabled={stageDone('reason')} busy={busy === 'rdf2tss'} artifacts={artifactsFor('rdf2tss')} onPreview={setPreviewArtifact} onRun={() => execute('rdf2tss')} actionLabel="Transform RDF to TSS">
-          <div className="assumption-card"><span>Current compatibility contract</span><p>This stage intentionally retains the existing SPARQL queries. The reasoned RDF must contain the SOSA sensor, time, value, observed-property, and QUDT unit structure those queries expect.</p></div>
+        <StageCard number={6} definition={stageDefinitions[5]} result={run?.stages?.rdf2tss} enabled={stageEnabled('rdf2tss')} busy={busy === 'rdf2tss'} artifacts={artifactsFor('rdf2tss')} onPreview={setPreviewArtifact} onRun={() => execute('rdf2tss')} actionLabel="Transform RDF to TSS">
+          <div className="assumption-card"><span>Current compatibility contract</span><p>This stage uses reasoned RDF when Stage 5 completed successfully; otherwise it uses the mapped RDF directly. The selected input must contain the SOSA sensor, time, value, observed-property, and QUDT unit structure expected by the existing queries.</p></div>
         </StageCard>
 
-        <StageCard number={7} definition={stageDefinitions[6]} result={run?.stages?.shacl_out} enabled={stageDone('rdf2tss')} busy={busy === 'shacl-out'} artifacts={artifactsFor('shacl_out')} onPreview={setPreviewArtifact} onRun={() => execute('shacl-out', { shapes: shaclOut })} actionLabel="Validate TSS output">
+        <StageCard number={7} definition={stageDefinitions[6]} result={run?.stages?.shacl_out} enabled={stageEnabled('shacl_out')} busy={busy === 'shacl-out'} artifacts={artifactsFor('shacl_out')} onPreview={setPreviewArtifact} onRun={() => execute('shacl-out', { shapes: shaclOut })} actionLabel="Validate TSS output">
           <CodeEditor id="shacl-out-editor" label="Output SHACL shape (Turtle)" value={shaclOut} onChange={setShaclOut} placeholder={'@prefix sh: <http://www.w3.org/ns/shacl#> .\n\n# Paste the shape for the generated TSS graph here.'} />
         </StageCard>
 
-        <StageCard number={8} definition={stageDefinitions[7]} result={run?.stages?.rdf2ldes} enabled={stageDone('shacl_out')} busy={busy === 'rdf2ldes'} artifacts={artifactsFor('rdf2ldes')} onPreview={setPreviewArtifact} onRun={() => execute('rdf2ldes', { stream_name: streamName, base_url: baseUrl })} actionLabel="Generate LDES and ZIP">
+        <StageCard number={8} definition={stageDefinitions[7]} result={run?.stages?.rdf2ldes} enabled={stageEnabled('rdf2ldes')} busy={busy === 'rdf2ldes'} artifacts={artifactsFor('rdf2ldes')} onPreview={setPreviewArtifact} onRun={() => execute('rdf2ldes', { stream_name: streamName, base_url: baseUrl })} actionLabel="Generate LDES and ZIP">
           <div className="two-column"><div className="form-field"><label htmlFor="stream-name">Stream name</label><input id="stream-name" value={streamName} onChange={(event) => setStreamName(event.target.value)} placeholder="dataset" /></div><div className="form-field"><label htmlFor="base-url">Public base URL</label><input id="base-url" value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} placeholder="https://example.org/ldes/" /></div></div>
           <div className="assumption-card"><span>Current compatibility contract</span><p>RDF2LDES retains the existing TSS query and date-based TREE partitioning. The generated directory is packaged automatically after completion.</p></div>
         </StageCard>
