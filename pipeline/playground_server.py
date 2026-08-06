@@ -9,10 +9,10 @@ from copy import deepcopy
 import mimetypes
 import os
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Literal
 
 import requests
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel, Field
@@ -69,6 +69,7 @@ class ReasonRequest(BaseModel):
 class LdesRequest(BaseModel):
     stream_name: str = Field(default="dataset", min_length=1, max_length=200)
     base_url: str | None = Field(default=None, max_length=2_000)
+    source: Literal["rdf", "tss"] = "tss"
 
 
 def load_run(run_id: str) -> dict[str, Any]:
@@ -303,6 +304,24 @@ def rml_mapping(run_id: str, request: RmlRequest) -> dict[str, Any]:
     return execute_stage(run_id, "rml", "upload", operation)
 
 
+@app.get("/api/runs/{run_id}/rdf-preview")
+def mapped_rdf_preview(
+    run_id: str,
+    offset: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=100),
+) -> dict[str, Any]:
+    state = load_run(run_id)
+    require_stage(state, "rml")
+    try:
+        return pipeline.rdf_instance_preview(
+            RUN_STORE.run_dir(run_id) / "mapped.ttl",
+            offset=offset,
+            limit=limit,
+        )
+    except pipeline.PipelineError as error:
+        raise HTTPException(400, str(error)) from error
+
+
 @app.post("/api/runs/{run_id}/stages/ingest")
 def ingest_stage(run_id: str, request: IngestRequest) -> dict[str, Any]:
     def operation(_state: dict[str, Any], directory: Path) -> dict[str, Any]:
@@ -417,11 +436,14 @@ def shacl_out_stage(run_id: str, request: ShaclRequest) -> dict[str, Any]:
 @app.post("/api/runs/{run_id}/stages/rdf2ldes")
 def rdf2ldes_stage(run_id: str, request: LdesRequest) -> dict[str, Any]:
     def operation(_state: dict[str, Any], directory: Path) -> dict[str, Any]:
+        source_path = directory / ("mapped.ttl" if request.source == "rdf" else "timeseries.ttl")
+        source_label = "mapped RDF" if request.source == "rdf" else "TSS RDF"
         result = pipeline.run_rdf2ldes(
             directory,
-            directory / "timeseries.ttl",
+            source_path,
             request.stream_name,
             request.base_url,
+            source_kind=request.source,
         )
         root_indexes = sorted(
             path for path in result["output_directory"].glob("*.trig") if path.is_file()
@@ -432,16 +454,19 @@ def rdf2ldes_stage(run_id: str, request: LdesRequest) -> dict[str, Any]:
         if root_indexes:
             artifacts.append({"path": root_indexes[0], "name": "LDES root index", "kind": "trig"})
         return {
-            "message": f"Generated {result['trig_file_count']:,} LDES files and packaged them as ZIP.",
+            "message": f"Generated {result['trig_file_count']:,} LDES files from {source_label} and packaged them as ZIP.",
             "stream_name": result["stream_name"],
             "base_url": result["base_url"],
+            "source": request.source,
+            "source_file": result["source_file"],
             "trig_file_count": result["trig_file_count"],
             "fragment_count": result["fragment_count"],
             "index_count": result["index_count"],
             "artifacts": artifacts,
         }
 
-    return execute_stage(run_id, "rdf2ldes", "rdf2tss", operation)
+    prerequisite = "rml" if request.source == "rdf" else "rdf2tss"
+    return execute_stage(run_id, "rdf2ldes", prerequisite, operation)
 
 
 @app.get("/api/runs/{run_id}/artifacts/{artifact_id}")

@@ -1,8 +1,8 @@
 {
   "RDF2LDES/RDFTSS2LDES.py": {
-    "mtime": 1785769710.9682586,
-    "ast_hash": "dfe17d91d0beba8c2a700de51ce4391a",
-    "semantic_hash": "dfe17d91d0beba8c2a700de51ce4391a"
+    "mtime": 1786008260.0138192,
+    "ast_hash": "cf59a7bb1269103f8b0e68f18c200eb9",
+    "semantic_hash": ""
   },
   "RDF2TSS_V2/RDF2TSS_V2.py": {
     "mtime": 1785139926.2974668,
@@ -65,9 +65,9 @@
     "semantic_hash": "1aa34e1c37a5ba7a38d6ba7d95b3040e"
   },
   "frontend/src/App.jsx": {
-    "mtime": 1786007122.6835885,
-    "ast_hash": "c3a7fc5b93327c207e3f15c2cb00f7cc",
-    "semantic_hash": "c3a7fc5b93327c207e3f15c2cb00f7cc"
+    "mtime": 1786008335.2835877,
+    "ast_hash": "2e03cecba6028e8c81b86ae710da48b0",
+    "semantic_hash": ""
   },
   "frontend/src/components/BenchmarksCard.jsx": {
     "mtime": 1785139926.37701,
@@ -460,9 +460,9 @@
     "semantic_hash": ""
   },
   "pipeline/playground_server.py": {
-    "mtime": 1786007122.6794589,
-    "ast_hash": "6aafc45d8d05774c9724d3b03e9261ac",
-    "semantic_hash": "6aafc45d8d05774c9724d3b03e9261ac"
+    "mtime": 1786008260.0176897,
+    "ast_hash": "b4ac89a71fdfee70e64746634df08aca",
+    "semantic_hash": ""
   },
   "frontend/src/pages/UseCasePage.jsx": {
     "mtime": 1785504637.6539633,
@@ -530,9 +530,9 @@
     "semantic_hash": ""
   },
   "pipeline/generic_pipeline.py": {
-    "mtime": 1786005959.3289738,
-    "ast_hash": "df827cca3e022434b154dc304a2e59ee",
-    "semantic_hash": "df827cca3e022434b154dc304a2e59ee"
+    "mtime": 1786008260.0119784,
+    "ast_hash": "e243fdbdd934066896184e274c86017b",
+    "semantic_hash": ""
   },
   "pipeline/run_store.py": {
     "mtime": 1786007122.6751645,
@@ -540,9 +540,9 @@
     "semantic_hash": "888a8570ae37f5c490f2e4bd986b50c7"
   },
   "pipeline/tests/test_generic_pipeline.py": {
-    "mtime": 1786007155.495095,
-    "ast_hash": "b32260d0df82981a1ee3d679af4b2852",
-    "semantic_hash": "b32260d0df82981a1ee3d679af4b2852"
+    "mtime": 1786008469.7252018,
+    "ast_hash": "e0893d24e5cc0adae81f2f312366e1a6",
+    "semantic_hash": ""
   },
   "graphify-out/memory/query_20260803_122054_user_reported_indusii_target_values_far_higher_tha.md": {
     "mtime": 1785759654.8035157,
@@ -562,6 +562,41 @@
   "graphify-out/memory/query_20260805_123544_i_have_updated_the_graphify_structure_so_make_sure.md": {
     "mtime": 1785933344.6156259,
     "ast_hash": "6bac9210a7e88e1a1df48c12d454a027",
+    "semantic_hash": ""
+  },
+  "graphify-out/memory/query_20260805_124704_can_you_add_a_button_to_clear_delete_the_uploaded.md": {
+    "mtime": 1785934024.4585083,
+    "ast_hash": "c3fdce768695c87dbb9863a47238cdb3",
+    "semantic_hash": ""
+  },
+  "graphify-out/memory/query_20260805_130126_i_am_still_trying_to_test_the_system__if_i_test_th.md": {
+    "mtime": 1785934886.206727,
+    "ast_hash": "13fad7146fc67d5fe9edd7cf88620d7e",
+    "semantic_hash": ""
+  },
+  "graphify-out/memory/query_20260805_131439_these_mappings_below_on_the_file_attached_created.md": {
+    "mtime": 1785935679.242836,
+    "ast_hash": "4b109e9c17a02f7de551f29351510bc4",
+    "semantic_hash": ""
+  },
+  "graphify-out/memory/query_20260805_144055_the_supplied_rml_mapping_fails_for_waterinfo_csv_w.md": {
+    "mtime": 1785940855.3691418,
+    "ast_hash": "97178688b981562c7b01380108d74eb3",
+    "semantic_hash": ""
+  },
+  "graphify-out/memory/query_20260806_083249_add_a_sparql_query_form_for_the_ingested_fuseki_gr.md": {
+    "mtime": 1786005169.4658368,
+    "ast_hash": "f7ff918aa2e49606074a4698d4ead9f8",
+    "semantic_hash": ""
+  },
+  "graphify-out/memory/query_20260806_084854_remove_the_default_graph_constraint_from_sparql_qu.md": {
+    "mtime": 1786006134.4599738,
+    "ast_hash": "97f23c3056c613e7baf73480c89e8b66",
+    "semantic_hash": ""
+  },
+  "graphify-out/memory/query_20260806_090837_allow_optional_pipeline_steps_so_n3_reasoning_and.md": {
+    "mtime": 1786007317.1336975,
+    "ast_hash": "15e2406d75fc60e59241274181cbf33b",
     "semantic_hash": ""
   }
 }

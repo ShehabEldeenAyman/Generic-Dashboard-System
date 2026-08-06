@@ -370,8 +370,8 @@ def test_rdf2ldes_api_does_not_require_shacl_out(tmp_path, monkeypatch):
     tss_path.write_text("<urn:series> <urn:value> 1 .", encoding="utf-8")
     captured = {}
 
-    def run_rdf2ldes(run_directory, input_path, stream_name, base_url):
-        captured["input_path"] = input_path
+    def run_rdf2ldes(run_directory, input_path, stream_name, base_url, *, source_kind):
+        captured.update({"input_path": input_path, "source_kind": source_kind})
         output_directory = run_directory / "ldes" / stream_name
         output_directory.mkdir(parents=True)
         zip_path = run_directory / f"{stream_name}.zip"
@@ -384,6 +384,7 @@ def test_rdf2ldes_api_does_not_require_shacl_out(tmp_path, monkeypatch):
             "trig_file_count": 0,
             "fragment_count": 0,
             "index_count": 0,
+            "source_file": input_path.name,
         }
 
     monkeypatch.setattr(generic_pipeline, "run_rdf2ldes", run_rdf2ldes)
@@ -397,6 +398,82 @@ def test_rdf2ldes_api_does_not_require_shacl_out(tmp_path, monkeypatch):
     assert response.status_code == 200
     assert response.json()["stages"]["rdf2ldes"]["status"] == "success"
     assert captured["input_path"] == tss_path
+    assert captured["source_kind"] == "tss"
+
+
+def test_rdf2ldes_api_can_use_mapped_rdf_without_tss_stage(tmp_path, monkeypatch):
+    run_store = RunStore(tmp_path / "runs")
+    monkeypatch.setattr(playground_server, "RUN_STORE", run_store)
+    state = run_store.create("items.csv", "items.csv")
+    state["stages"]["rml"] = {"status": "success"}
+    run_store.save(state)
+    directory = run_store.run_dir(state["id"])
+    mapped_path = directory / "mapped.ttl"
+    mapped_path.write_text("<urn:item> <urn:value> 1 .", encoding="utf-8")
+    captured = {}
+
+    def run_rdf2ldes(run_directory, input_path, stream_name, base_url, *, source_kind):
+        captured.update({"input_path": input_path, "source_kind": source_kind})
+        output_directory = run_directory / "ldes" / stream_name
+        output_directory.mkdir(parents=True)
+        zip_path = run_directory / f"{stream_name}.zip"
+        zip_path.write_bytes(b"zip")
+        return {
+            "output_directory": output_directory,
+            "zip_path": zip_path,
+            "stream_name": stream_name,
+            "base_url": base_url,
+            "trig_file_count": 1,
+            "fragment_count": 1,
+            "index_count": 0,
+            "source_file": input_path.name,
+        }
+
+    monkeypatch.setattr(generic_pipeline, "run_rdf2ldes", run_rdf2ldes)
+    client = TestClient(playground_server.app)
+
+    response = client.post(
+        f"/api/runs/{state['id']}/stages/rdf2ldes",
+        json={
+            "stream_name": "items",
+            "base_url": "https://example.org/ldes/",
+            "source": "rdf",
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()["stages"]["rdf2ldes"]
+    assert payload["status"] == "success"
+    assert payload["details"]["source"] == "rdf"
+    assert captured == {"input_path": mapped_path, "source_kind": "rdf"}
+
+
+def test_mapped_rdf_preview_paginates_by_subject(tmp_path, monkeypatch):
+    run_store = RunStore(tmp_path / "runs")
+    monkeypatch.setattr(playground_server, "RUN_STORE", run_store)
+    state = run_store.create("items.csv", "items.csv")
+    state["stages"]["rml"] = {"status": "success"}
+    run_store.save(state)
+    mapped_path = run_store.run_dir(state["id"]) / "mapped.ttl"
+    graph = Graph()
+    predicate = URIRef("https://example.org/value")
+    for index in range(205):
+        graph.add((URIRef(f"https://example.org/item/{index:03d}"), predicate, URIRef(f"urn:value:{index}")))
+    graph.serialize(destination=mapped_path, format="turtle")
+    client = TestClient(playground_server.app)
+
+    first = client.get(f"/api/runs/{state['id']}/rdf-preview?offset=0&limit=100")
+    last = client.get(f"/api/runs/{state['id']}/rdf-preview?offset=200&limit=100")
+
+    assert first.status_code == 200
+    assert first.json()["returned_instances"] == 100
+    assert first.json()["total_instances"] == 205
+    assert first.json()["has_previous"] is False
+    assert first.json()["has_next"] is True
+    assert last.json()["returned_instances"] == 5
+    assert last.json()["has_previous"] is True
+    assert last.json()["has_next"] is False
+    assert "item/204" in last.json()["text"]
 
 
 def test_shacl_violation_returns_a_report_without_raising(tmp_path):
@@ -583,3 +660,40 @@ def test_rdf2ldes_generates_a_downloadable_zip(tmp_path):
     assert result["trig_file_count"] >= 4
     assert result["fragment_count"] == 1
     assert any(path.name == "readings.trig" for path in Path(result["output_directory"]).rglob("*.trig"))
+
+
+@pytest.mark.skipif(
+    not generic_pipeline.RML_MAPPER_JAR.is_file() or not shutil.which("java"),
+    reason="RMLMapper and Java are required for the sample integration test.",
+)
+def test_supplied_sample_generates_ldes_from_mapped_rdf_and_tss(tmp_path):
+    repository = Path(__file__).resolve().parents[2]
+    workbook_path = repository / "test-data" / "sample.xlsx"
+    mapping_path = repository / "test-data" / "rml.ttl.txt"
+    preview = generic_pipeline.xlsx_preview(workbook_path)
+    csv_path = generic_pipeline.xlsx_to_csv(workbook_path, tmp_path / "sample.csv", preview)
+    mapping = mapping_path.read_text(encoding="utf-8").replace("data.csv", "sample.csv")
+
+    mapped = generic_pipeline.run_rml_mapping(tmp_path, csv_path, mapping)
+    tss = generic_pipeline.run_rdf2tss(tmp_path, mapped["output_path"])
+    from_rdf = generic_pipeline.run_rdf2ldes(
+        tmp_path,
+        mapped["output_path"],
+        "sample-rdf",
+        "https://example.org/ldes/",
+        source_kind="rdf",
+    )
+    from_tss = generic_pipeline.run_rdf2ldes(
+        tmp_path,
+        tss["output_path"],
+        "sample-tss",
+        "https://example.org/ldes/",
+        source_kind="tss",
+    )
+
+    assert mapped["rdf_triples"] > 0
+    assert tss["tss_triples"] > 0
+    assert from_rdf["fragment_count"] > 0
+    assert from_tss["fragment_count"] > 0
+    assert from_rdf["zip_path"].stat().st_size > 0
+    assert from_tss["zip_path"].stat().st_size > 0

@@ -424,6 +424,49 @@ def parse_turtle(text: str, *, label: str) -> int:
     return len(graph)
 
 
+def rdf_instance_preview(
+    rdf_path: str | Path,
+    *,
+    offset: int = 0,
+    limit: int = 100,
+) -> dict[str, Any]:
+    """Return a deterministic Turtle page grouped by RDF subject.
+
+    A subject is treated as one RDF instance. Keeping pagination subject-based
+    avoids splitting one instance's predicate/object statements across pages.
+    """
+    source = Path(rdf_path)
+    if not source.is_file():
+        raise PipelineError("The mapped RDF artifact is missing.")
+    try:
+        graph = Graph().parse(source, format="turtle")
+    except Exception as error:
+        raise PipelineError(f"The mapped RDF could not be previewed: {error}") from error
+
+    subjects = sorted(set(graph.subjects()), key=lambda term: (term.__class__.__name__, term.n3()))
+    total_instances = len(subjects)
+    bounded_offset = min(max(offset, 0), total_instances)
+    page_subjects = subjects[bounded_offset : bounded_offset + limit]
+    page_graph = Graph()
+    for prefix, namespace in graph.namespaces():
+        page_graph.bind(prefix, namespace)
+    for subject in page_subjects:
+        for predicate, obj in graph.predicate_objects(subject):
+            page_graph.add((subject, predicate, obj))
+
+    returned = len(page_subjects)
+    return {
+        "text": page_graph.serialize(format="turtle") if returned else "",
+        "offset": bounded_offset,
+        "limit": limit,
+        "returned_instances": returned,
+        "total_instances": total_instances,
+        "total_triples": len(graph),
+        "has_previous": bounded_offset > 0,
+        "has_next": bounded_offset + returned < total_instances,
+    }
+
+
 def run_rml_mapping(
     run_directory: Path,
     source_csv: Path,
@@ -624,9 +667,11 @@ def normalise_stream_name(value: str) -> str:
 
 def run_rdf2ldes(
     run_directory: Path,
-    tss_path: Path,
+    source_path: Path,
     stream_name: str,
     base_url: str | None = None,
+    *,
+    source_kind: str = "tss",
 ) -> dict[str, Any]:
     safe_name = normalise_stream_name(stream_name)
     public_base = (base_url or DEFAULT_LDES_BASE).strip()
@@ -640,10 +685,11 @@ def run_rdf2ldes(
     try:
         with LDES_LOCK:
             RDFTSS2LDES.generate_ldes(
-                source_ttl=tss_path,
+                source_ttl=source_path,
                 output_directory=output_directory,
                 stream_name=safe_name,
                 base_url=public_base,
+                source_kind=source_kind,
             )
     except Exception as error:
         raise PipelineError(f"RDF2LDES could not generate the stream: {error}") from error
@@ -661,6 +707,8 @@ def run_rdf2ldes(
         "zip_path": zip_path,
         "stream_name": safe_name,
         "base_url": public_base,
+        "source_kind": source_kind,
+        "source_file": source_path.name,
         "trig_file_count": len(trig_files),
         "fragment_count": sum(path.name == "readings.trig" for path in trig_files),
         "index_count": sum(path.name != "readings.trig" for path in trig_files),

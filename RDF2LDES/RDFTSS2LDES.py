@@ -278,13 +278,36 @@ def delete_log():
         log_path.unlink()
 
 
-def generate_ldes(source_ttl, output_directory, stream_name, base_url="https://example.org/ldes/"):
-    """Generate the existing TREE/LDES folder structure for one isolated run."""
+def generate_ldes(
+    source_ttl,
+    output_directory,
+    stream_name,
+    base_url="https://example.org/ldes/",
+    source_kind="tss",
+):
+    """Generate one TREE/LDES hierarchy from mapped observation RDF or TSS RDF."""
     output_directory = Path(output_directory).resolve()
     output_directory.mkdir(parents=True, exist_ok=True)
     set_property(stream_name, output_directory, output_directory, base_url)
     original_graph = load_graph(str(source_ttl))
+    if source_kind == "rdf":
+        # Reuse the existing observation-to-TSS contract in memory. The user can
+        # therefore create LDES directly from mapped SOSA RDF without first
+        # running or persisting Stage 6.
+        from RDF2TSS_V2 import RDF2TSS_V2
+
+        sensor_set = RDF2TSS_V2.create_sensor_set(original_graph)
+        if not sensor_set:
+            raise ValueError(
+                "No SOSA sensors were found in the mapped RDF. "
+                "LDES generation expects sosa:madeBySensor observations."
+            )
+        original_graph = RDF2TSS_V2.create_tss(sensor_set, original_graph)
+    elif source_kind != "tss":
+        raise ValueError("LDES source_kind must be either 'rdf' or 'tss'.")
     result = process_graph(original_graph)
+    if not result:
+        raise ValueError("The selected source did not produce any TSS snippets for LDES generation.")
     divide_data(result)
     delete_log()
     delete_ldes_files()

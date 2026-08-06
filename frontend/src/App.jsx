@@ -23,7 +23,7 @@ const stagePrerequisites = {
   reason: ['rml'],
   rdf2tss: ['rml'],
   shacl_out: ['rdf2tss'],
-  rdf2ldes: ['rdf2tss'],
+  rdf2ldes: [],
 }
 
 const defaultSparqlQuery = `SELECT ?subject ?predicate ?object
@@ -75,7 +75,10 @@ function ArtifactLinks({ artifacts, onPreview }) {
   return <div className="artifact-list">
     {artifacts.map((artifact) => artifact.kind === 'zip'
       ? <a className="artifact-button download" key={artifact.id} href={`${API}${artifact.download_url}`}><span>ZIP</span>{artifact.name}<b>Download</b></a>
-      : <button className="artifact-button" key={artifact.id} onClick={() => onPreview(artifact)}><span>{artifact.kind.toUpperCase()}</span>{artifact.name}<b>Preview</b></button>)}
+      : <div className="artifact-entry" key={artifact.id}>
+        <button className="artifact-button" onClick={() => onPreview(artifact)}><span>{artifact.kind.toUpperCase()}</span>{artifact.name}<b>Preview</b></button>
+        <a className="artifact-direct-download" href={`${API}${artifact.download_url}`}>Download</a>
+      </div>)}
   </div>
 }
 
@@ -109,6 +112,52 @@ function DataPreview({ source }) {
     <div className="table-shell"><table><thead><tr>{preview.columns.map((column) => <th key={column}>{column}</th>)}</tr></thead><tbody>{preview.rows.map((row, index) => <tr key={index}>{preview.columns.map((column) => <td key={column} title={row[column]}>{row[column] || <em>empty</em>}</td>)}</tr>)}</tbody></table></div>
     <p className="preview-caption">Showing the first {preview.preview_row_count} parsed rows.</p>
   </div>
+}
+
+function RdfPreview({ run, artifact }) {
+  const [offset, setOffset] = useState(0)
+  const [page, setPage] = useState(null)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const mappingComplete = completedStatuses.has(run?.stages?.rml?.status)
+
+  useEffect(() => {
+    setOffset(0)
+    setPage(null)
+    setError('')
+  }, [run?.id, run?.stages?.rml?.completed_at])
+
+  useEffect(() => {
+    if (!run || !mappingComplete) return undefined
+    let active = true
+    setLoading(true)
+    setError('')
+    requestJson(`/api/runs/${run.id}/rdf-preview?offset=${offset}&limit=100`)
+      .then((value) => active && setPage(value))
+      .catch((reason) => active && setError(reason.message))
+      .finally(() => active && setLoading(false))
+    return () => { active = false }
+  }, [run, mappingComplete, offset])
+
+  if (!mappingComplete) return null
+  const first = page?.returned_instances ? page.offset + 1 : 0
+  const last = page?.offset + (page?.returned_instances || 0)
+  return <article className="pipeline-stage rdf-preview-card success" id="mapped-rdf-preview">
+    <div className="stage-index">RDF</div>
+    <div className="stage-main">
+      <div className="stage-title-row"><div><p className="eyebrow">Mapped output</p><h2>Preview transformed RDF</h2><p className="stage-description">Browse the mapped Turtle by RDF subject before ingesting it into Fuseki. Each page contains at most 100 instances.</p></div><StatusPill status="success" /></div>
+      <div className="rdf-preview-toolbar">
+        <div><strong>{page ? `${page.total_instances.toLocaleString()} RDF instances` : 'Loading RDF instances'}</strong>{page && <span>{page.total_triples.toLocaleString()} triples total</span>}</div>
+        {artifact && <a className="artifact-button download" href={`${API}${artifact.download_url}`}><span>TTL</span>Mapped RDF<b>Download</b></a>}
+      </div>
+      {loading && <div className="drawer-loading"><i className="spinner" />Loading RDF page</div>}
+      {error && <div className="query-message error"><strong>Preview failed</strong><span>{error}</span></div>}
+      {!loading && !error && page && <>
+        <pre className="source-preview rdf-page">{page.text || 'No RDF instances were produced.'}</pre>
+        <div className="rdf-pagination"><button className="secondary-button" disabled={!page.has_previous} onClick={() => setOffset(Math.max(0, page.offset - page.limit))}>Previous 100</button><span>Instances {first.toLocaleString()}–{last.toLocaleString()} of {page.total_instances.toLocaleString()}</span><button className="secondary-button" disabled={!page.has_next} onClick={() => setOffset(page.offset + page.returned_instances)}>Next 100</button></div>
+      </>}
+    </div>
+  </article>
 }
 
 function ArtifactPreview({ artifact, onClose }) {
@@ -222,6 +271,7 @@ function App() {
   const [shaclOut, setShaclOut] = useState('')
   const [streamName, setStreamName] = useState('dataset')
   const [baseUrl, setBaseUrl] = useState('https://example.org/ldes/')
+  const [ldesSource, setLdesSource] = useState('tss')
 
   useEffect(() => { requestJson('/api/config').then(setConfig).catch((reason) => setError(reason.message)) }, [])
 
@@ -229,7 +279,9 @@ function App() {
   const artifactMap = useMemo(() => new Map((run?.artifacts || []).map((artifact) => [artifact.id, artifact])), [run])
   const artifactsFor = (stage) => (run?.stages?.[stage]?.artifacts || []).map((id) => artifactMap.get(id)).filter(Boolean)
   const stageDone = (stage) => completedStatuses.has(run?.stages?.[stage]?.status)
-  const stageEnabled = (stage) => (stagePrerequisites[stage] || []).every(stageDone)
+  const stageEnabled = (stage) => stage === 'rdf2ldes'
+    ? stageDone(ldesSource === 'rdf' ? 'rml' : 'rdf2tss')
+    : (stagePrerequisites[stage] || []).every(stageDone)
 
   async function upload() {
     if (!file) return
@@ -252,7 +304,7 @@ function App() {
   }
 
   function resetRun() {
-    setRun(null); setFile(null); setMapping(''); setGraphName(''); setShaclIn(''); setRules(''); setShaclOut(''); setStreamName('dataset'); setError(''); setPreviewArtifact(null)
+    setRun(null); setFile(null); setMapping(''); setGraphName(''); setShaclIn(''); setRules(''); setShaclOut(''); setStreamName('dataset'); setLdesSource('tss'); setError(''); setPreviewArtifact(null)
   }
 
   async function deleteUploadedFile() {
@@ -286,6 +338,8 @@ function App() {
           <CodeEditor id="rml-editor" label="RML mapping (Turtle)" value={mapping} onChange={setMapping} placeholder={'@prefix rml: <http://w3id.org/rml/> .\n\n# Paste your complete RML mapping here.'} />
         </StageCard>
 
+        <RdfPreview run={run} artifact={artifactsFor('rml').find((artifact) => artifact.name === 'Mapped RDF')} />
+
         <StageCard number={3} definition={stageDefinitions[2]} result={run?.stages?.ingest} enabled={stageEnabled('ingest')} busy={busy === 'ingest'} artifacts={artifactsFor('ingest')} onPreview={setPreviewArtifact} onRun={() => execute('ingest', { graph_name: graphName })} actionLabel="Ingest graph">
           <div className="form-field"><label htmlFor="graph-name">Named graph</label><input id="graph-name" value={graphName} onChange={(event) => setGraphName(event.target.value)} placeholder="products-2026 or https://example.org/graphs/products" /><small>Enter a short name or a complete graph IRI.</small></div>
           <div className="inline-tip"><strong>Replacement policy</strong><span>The named graph is cleared before every ingestion, then replaced with this run&apos;s mapped RDF.</span></div>
@@ -309,9 +363,10 @@ function App() {
           <CodeEditor id="shacl-out-editor" label="Output SHACL shape (Turtle)" value={shaclOut} onChange={setShaclOut} placeholder={'@prefix sh: <http://www.w3.org/ns/shacl#> .\n\n# Paste the shape for the generated TSS graph here.'} />
         </StageCard>
 
-        <StageCard number={8} definition={stageDefinitions[7]} result={run?.stages?.rdf2ldes} enabled={stageEnabled('rdf2ldes')} busy={busy === 'rdf2ldes'} artifacts={artifactsFor('rdf2ldes')} onPreview={setPreviewArtifact} onRun={() => execute('rdf2ldes', { stream_name: streamName, base_url: baseUrl })} actionLabel="Generate LDES and ZIP">
+        <StageCard number={8} definition={stageDefinitions[7]} result={run?.stages?.rdf2ldes} enabled={stageEnabled('rdf2ldes')} busy={busy === 'rdf2ldes'} artifacts={artifactsFor('rdf2ldes')} onPreview={setPreviewArtifact} onRun={() => execute('rdf2ldes', { stream_name: streamName, base_url: baseUrl, source: ldesSource })} actionLabel="Generate LDES and ZIP">
+          <fieldset className="source-selector"><legend>LDES source</legend><label className={ldesSource === 'rdf' ? 'selected' : ''}><input type="radio" name="ldes-source" value="rdf" checked={ldesSource === 'rdf'} onChange={(event) => setLdesSource(event.target.value)} /><span><strong>Mapped RDF</strong><small>Use the original RDF produced by Stage 2.</small></span></label><label className={ldesSource === 'tss' ? 'selected' : ''}><input type="radio" name="ldes-source" value="tss" checked={ldesSource === 'tss'} onChange={(event) => setLdesSource(event.target.value)} /><span><strong>TSS RDF</strong><small>Use the TSS file produced by Stage 6.</small></span></label></fieldset>
           <div className="two-column"><div className="form-field"><label htmlFor="stream-name">Stream name</label><input id="stream-name" value={streamName} onChange={(event) => setStreamName(event.target.value)} placeholder="dataset" /></div><div className="form-field"><label htmlFor="base-url">Public base URL</label><input id="base-url" value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} placeholder="https://example.org/ldes/" /></div></div>
-          <div className="assumption-card"><span>Current compatibility contract</span><p>RDF2LDES retains the existing TSS query and date-based TREE partitioning. The generated directory is packaged automatically after completion.</p></div>
+          <div className="assumption-card"><span>Selected input</span><p>{ldesSource === 'rdf' ? 'Mapped SOSA observations will be converted in memory for the existing date-based TREE partitioning; Stage 6 is not required.' : 'The generated TSS snippets will be partitioned directly into the date-based TREE hierarchy.'} The complete directory is packaged automatically after completion.</p></div>
         </StageCard>
       </section>
     </main>
