@@ -140,6 +140,19 @@ button { cursor: pointer; }
 .table-shell td { color: #52676c; background: #fff; }.table-shell tbody tr:nth-child(even) td { background: #fafbfb; }.table-shell em { color: #a1acad; font-style: normal; }
 .preview-caption { margin: 0; padding: 8px 12px; color: #849194; background: #f8faf9; font-size: .59rem; }
 
+.query-workspace { border-color: #cbdedb; }
+.query-workspace .stage-index { color: #21745f; background: #eef8f5; }
+.query-results { margin-top: 18px; overflow: hidden; border: 1px solid #d6e2e0; border-radius: 10px; background: #fff; }
+.query-summary { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 11px 13px; border-bottom: 1px solid #dfe8e6; background: #f3f8f6; }
+.query-summary strong { color: #31534d; font-size: .72rem; }.query-summary span { overflow: hidden; color: #7b8c89; font-size: .61rem; text-overflow: ellipsis; white-space: nowrap; }
+.query-results .table-shell { max-height: 430px; }
+.query-results td > span, .query-results td > small { display: block; }
+.query-results td > span { overflow: hidden; text-overflow: ellipsis; }.query-results td > small { margin-top: 3px; overflow: hidden; color: #91a09d; font-size: .52rem; text-overflow: ellipsis; }
+.query-results .source-preview { max-height: 430px; margin: 0; border-radius: 0; }
+.query-message { display: flex; align-items: center; gap: 10px; margin-top: 17px; padding: 12px 14px; border: 1px solid #d4e4df; border-radius: 8px; color: #45645d; background: #f2faf7; font-size: .7rem; }
+.query-message strong { flex: 0 0 auto; }.query-message span { min-width: 0; overflow-wrap: anywhere; }
+.query-message.error { border-color: #efc8c1; color: #8d3c33; background: #fff2ef; }
+
 .stage-feedback { margin-top: 18px; padding: 13px 14px; border: 1px solid #dce5e4; border-radius: 9px; background: #f7faf9; }
 .stage-feedback.success { border-color: #cae8df; background: #f1faf7; }.stage-feedback.nonconformant { border-color: #eed7b1; background: #fff9ef; }.stage-feedback.error { border-color: #efcdc7; background: #fff6f4; }
 .stage-feedback > div:first-child { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }

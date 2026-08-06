@@ -1,29 +1,31 @@
-# Graph Report - .  (2026-08-05)
+# Graph Report - .  (2026-08-06)
 
 ## Corpus Check
 - cluster-only mode — file stats not available
 
 ## Summary
-- 620 nodes · 940 edges · 84 communities (57 shown, 27 thin omitted)
-- Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 34 edges (avg confidence: 0.68)
+- 633 nodes · 942 edges · 86 communities (59 shown, 27 thin omitted)
+- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 30 edges (avg confidence: 0.71)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `28f33963`
+- Built from commit: `95c3c550`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- playground_server.py
-- server.py
 - generic_pipeline.py
-- URIRef
+- server.py
+- playground_server.py
 - dependencies
 - devDependencies
+- URIRef
 - pipeline_core.py
 - EdgeDeepLearning.jsx
+- RunStore
 - main
 - App.jsx
+- ingest.py
 - main.py
 - pipeline.py
 - MapCard.jsx
@@ -31,7 +33,7 @@
 - BrowseData.jsx
 - main
 - clean_result_sheet
-- ingest.py
+- main
 - main
 - Q: Now using this document provided, can you add new subsection to the website explaining what is the usecase and what is the goal maybe add nice figure or an interactive map
 - Q: examine waterlink and waterinfo pipelines, you will see that I have added a new feature which is RDF2LDES. can you integrate this new feature in the frontend similar to all the other features of the pipeline that you integrated before.
@@ -66,63 +68,63 @@
 - get
 - post
 - get
-- RuntimeError
 - BaseModel
 - get
 - post
+- RuntimeError
 
 ## God Nodes (most connected - your core abstractions)
-1. `RunStore` - 26 edges
-2. `PipelineError` - 22 edges
-3. `execute_stage()` - 18 edges
-4. `main()` - 16 edges
-5. `create_run()` - 14 edges
-6. `_xlsx_table_plan()` - 13 edges
-7. `FusekiClient` - 11 edges
-8. `setup_environment()` - 11 edges
-9. `generate_ldes()` - 9 edges
-10. `main()` - 9 edges
+1. `PipelineError` - 23 edges
+2. `main()` - 16 edges
+3. `RunStore` - 14 edges
+4. `execute_stage()` - 14 edges
+5. `_xlsx_table_plan()` - 13 edges
+6. `FusekiClient` - 11 edges
+7. `setup_environment()` - 11 edges
+8. `generate_ldes()` - 9 edges
+9. `main()` - 9 edges
+10. `AnalysisRequest` - 9 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `test_qudt_conversion_micro_to_milli_si_per_centimetre()` --calls--> `convert_qudt_value()`  [INFERRED]
   lag_analytics_workspace/tests/test_analysis.py → automating_aligments/automated_alignments.py
+- `test_ingest_graph_aborts_when_named_graph_cannot_be_cleared()` --indirect_call--> `upload_graph()`  [INFERRED]
+  pipeline/tests/test_generic_pipeline.py → triple_store_ingestion/ingest.py
 - `test_legacy_fuseki_graph_is_normalized_to_milli_si_per_centimetre()` --calls--> `normalize_fuseki_observations()`  [INFERRED]
   lag_analytics_workspace/tests/test_analysis.py → lag_analytics_workspace/fuseki.py
 - `test_legacy_reader_prefers_new_correct_value_after_pipeline_rerun()` --calls--> `normalize_fuseki_observations()`  [INFERRED]
   lag_analytics_workspace/tests/test_analysis.py → lag_analytics_workspace/fuseki.py
-- `test_shacl_violation_returns_a_report_without_raising()` --calls--> `run_shacl_validation()`  [EXTRACTED]
-  pipeline/tests/test_generic_pipeline.py → pipeline/generic_pipeline.py
-- `test_rdf2ldes_generates_a_downloadable_zip()` --calls--> `run_rdf2ldes()`  [EXTRACTED]
-  pipeline/tests/test_generic_pipeline.py → pipeline/generic_pipeline.py
+- `test_machine_learning_returns_predictions()` --calls--> `prepare_observations()`  [INFERRED]
+  lag_analytics_workspace/tests/test_analysis.py → lag_analytics_workspace/analysis.py
 
 ## Import Cycles
 - None detected.
 
-## Communities (84 total, 27 thin omitted)
+## Communities (86 total, 27 thin omitted)
 
-### Community 0 - "playground_server.py"
+### Community 0 - "generic_pipeline.py"
 Cohesion: 0.08
-Nodes (50): BaseModel, delete, FileResponse, get, configuration(), create_run(), delete_run(), download_artifact() (+42 more)
+Nodes (52): date, _cell_text(), _combined_datetime(), CommandResult, csv_preview(), _date_part(), eye_command(), graph_name_to_uri() (+44 more)
 
 ### Community 1 - "server.py"
 Cohesion: 0.07
 Nodes (49): deep_learning(), describe_data(), _feature_matrix(), lag_analysis(), machine_learning(), matrix_profile(), _number(), prepare_observations() (+41 more)
 
-### Community 2 - "generic_pipeline.py"
-Cohesion: 0.12
-Nodes (45): date, _cell_text(), _combined_datetime(), CommandResult, csv_preview(), _date_part(), eye_command(), graph_name_to_uri() (+37 more)
+### Community 2 - "playground_server.py"
+Cohesion: 0.14
+Nodes (35): BaseModel, delete, FileResponse, get, configuration(), delete_run(), download_artifact(), execute_stage() (+27 more)
 
-### Community 3 - "URIRef"
-Cohesion: 0.10
-Nodes (31): _conversion(), convert_qudt_value(), main(), Normalize observation values between QUDT units., Convert via the common SI reference represented by QUDT metadata., Compatibility entry point using the corrected batch implementation., Convert every SOSA observation to NEW_UNIT and serialize once.      Previous cod, transform_unit() (+23 more)
-
-### Community 4 - "dependencies"
+### Community 3 - "dependencies"
 Cohesion: 0.06
 Nodes (33): buffer, dependencies, buffer, echarts, echarts-for-react, ldes-client, leaflet, @pola-rs/browser (+25 more)
 
-### Community 5 - "devDependencies"
+### Community 4 - "devDependencies"
 Cohesion: 0.06
 Nodes (30): devDependencies, eslint, @eslint/js, eslint-plugin-react-hooks, eslint-plugin-react-refresh, globals, @types/react, @types/react-dom (+22 more)
+
+### Community 5 - "URIRef"
+Cohesion: 0.12
+Nodes (26): _conversion(), convert_qudt_value(), main(), Normalize observation values between QUDT units., Convert via the common SI reference represented by QUDT metadata., Compatibility entry point using the corrected batch implementation., Convert every SOSA observation to NEW_UNIT and serialize once.      Previous cod, transform_unit() (+18 more)
 
 ### Community 6 - "pipeline_core.py"
 Cohesion: 0.14
@@ -132,87 +134,95 @@ Nodes (23): data_path(), ldes_artifacts(), pipeline_working_directory(), Reusabl
 Cohesion: 0.14
 Nodes (18): DataVisualization(), getSensorDataCache(), PREFIXES, sensorDataRegistry, buildAverageSeries(), buildForecastTimestamps(), extractSensorData(), ldesState (+10 more)
 
-### Community 8 - "main"
+### Community 8 - "RunStore"
+Cohesion: 0.24
+Nodes (7): Any, Path, Run-scoped state and artifact storage for the generic semantic pipeline.  The de, Persist pipeline metadata next to isolated run artifacts., Delete one UUID-scoped run directory and every artifact it owns., RunStore, utc_now()
+
+### Community 9 - "main"
 Cohesion: 0.23
 Nodes (16): comparison_visualization(), comparisonforecast(), datapreparation(), ensemble(), ensemble_visualization(), featureengineering(), identify_unique_sensors(), lightGBM_forecast_bias() (+8 more)
 
-### Community 9 - "App.jsx"
-Cohesion: 0.18
+### Community 10 - "App.jsx"
+Cohesion: 0.17
 Nodes (7): App(), ArtifactPreview(), completedStatuses, requestJson(), stageDefinitions, statusLabel(), StatusPill()
 
-### Community 10 - "main.py"
+### Community 11 - "ingest.py"
+Cohesion: 0.16
+Nodes (13): test_ingest_graph_aborts_when_named_graph_cannot_be_cleared(), delete_graph(), FusekiError, get_query_url(), RuntimeError, query_graph(), Apache Jena Fuseki graph-store client used by the pipeline., Raised when Fuseki cannot complete a graph or query operation. (+5 more)
+
+### Community 12 - "main.py"
 Cohesion: 0.26
 Nodes (11): chronos2forecast_visualization(), comparison_visualization(), ensemble_visualization(), lifespan(), lightGBM_visualization(), plot_sensor_data(), random_forest_visualization(), SVR_visualization() (+3 more)
 
-### Community 11 - "pipeline.py"
+### Community 13 - "pipeline.py"
 Cohesion: 0.29
 Nodes (9): main(), setup_environment(), step_1_fetch_data(), step_1_pre_process_waterlink(), step_2_preprocess(), step_2_rml_mapping_waterlink(), step_3_rml_mapping(), step_4_ingest_virtuoso() (+1 more)
 
-### Community 12 - "MapCard.jsx"
+### Community 14 - "MapCard.jsx"
 Cohesion: 0.18
 Nodes (3): headStyles, innerStyles, styles
 
-### Community 13 - "RDF2LDES_YMD_SPARQL_FOR_TSS.py"
+### Community 15 - "RDF2LDES_YMD_SPARQL_FOR_TSS.py"
 Cohesion: 0.38
 Nodes (9): create_base_graph(), create_ldes_files(), delete_ldes_files(), delete_log(), divide_data(), load_graph(), main(), process_graph() (+1 more)
 
-### Community 14 - "BrowseData.jsx"
+### Community 16 - "BrowseData.jsx"
 Cohesion: 0.20
 Nodes (3): headStyles, innerStyles, tableStyles
 
-### Community 15 - "main"
+### Community 17 - "main"
 Cohesion: 0.33
 Nodes (8): create_sensor_set(), create_tss(), load_graph(), main(), Loads a Turtle file into an RDFLib Graph., Identifies unique sensors within the graph using a SPARQL query., Transforms sensor observations into the Time Series Snippets (TSS) format., save_graph()
 
-### Community 17 - "clean_result_sheet"
+### Community 19 - "clean_result_sheet"
 Cohesion: 0.32
 Nodes (7): build_combined_header(), clean_result_sheet(), combine_datetime(), Cleans the 'result' tab of data.xlsx.  Assumed raw layout (1-indexed rows/cols, Combine a date value and a time value into a single ISO-8601 string,     e.g. ', Combine the description / attribute name / unit of measure (rows 1, 2, 3)     i, Reads `sheet_name` from `input_path`, merges the Datum/Tijd columns into     a
 
-### Community 18 - "ingest.py"
-Cohesion: 0.25
-Nodes (7): delete_graph(), get_query_url(), Apache Jena Fuseki graph-store client used by the pipeline., Resolve Fuseki's read-only SPARQL query endpoint from the data endpoint., Upload a Turtle file into a named graph and report an actionable result., Remove a named graph from Fuseki's Graph Store Protocol endpoint., upload_graph()
+### Community 21 - "main"
+Cohesion: 0.60
+Nodes (5): CreateSensorSet(), CreateTSS(), LoadGraph(), main(), SaveGraph()
 
-### Community 20 - "main"
+### Community 22 - "main"
 Cohesion: 0.40
 Nodes (4): main(), build_lstm_autoencoder(), create_sequences(), dataset : (n_samples, 1) scaled array     Returns       X : (samples, time_ste
 
-### Community 21 - "Q: Now using this document provided, can you add new subsection to the website explaining what is the usecase and what is the goal maybe add nice figure or an interactive map"
+### Community 23 - "Q: Now using this document provided, can you add new subsection to the website explaining what is the usecase and what is the goal maybe add nice figure or an interactive map"
 Cohesion: 0.40
 Nodes (4): Answer, Outcome, Q: Now using this document provided, can you add new subsection to the website explaining what is the usecase and what is the goal maybe add nice figure or an interactive map, Source Nodes
 
-### Community 22 - "Q: examine waterlink and waterinfo pipelines, you will see that I have added a new feature which is RDF2LDES. can you integrate this new feature in the frontend similar to all the other features of the pipeline that you integrated before."
+### Community 24 - "Q: examine waterlink and waterinfo pipelines, you will see that I have added a new feature which is RDF2LDES. can you integrate this new feature in the frontend similar to all the other features of the pipeline that you integrated before."
 Cohesion: 0.40
 Nodes (4): Answer, Outcome, Q: examine waterlink and waterinfo pipelines, you will see that I have added a new feature which is RDF2LDES. can you integrate this new feature in the frontend similar to all the other features of the pipeline that you integrated before., Source Nodes
 
-### Community 23 - "Q: can you recheck the system, I tried using the front end testing the water-link use case. I ran step 1 just fine. in step 2 i got attention needed: name '_rml_mapping' is not defined."
+### Community 25 - "Q: can you recheck the system, I tried using the front end testing the water-link use case. I ran step 1 just fine. in step 2 i got attention needed: name '_rml_mapping' is not defined."
 Cohesion: 0.40
 Nodes (4): Answer, Outcome, Q: can you recheck the system, I tried using the front end testing the water-link use case. I ran step 1 just fine. in step 2 i got attention needed: name '_rml_mapping' is not defined., Source Nodes
 
-### Community 26 - "UseCasePage.jsx"
+### Community 28 - "UseCasePage.jsx"
 Cohesion: 0.40
 Nodes (3): applications, canalPath, stations
 
-### Community 27 - "Q: User reported Indusii target values far higher than the four Waterinfo sensors and asked to fix suspected unit conversion before analysis."
+### Community 29 - "Q: User reported Indusii target values far higher than the four Waterinfo sensors and asked to fix suspected unit conversion before analysis."
 Cohesion: 0.40
 Nodes (4): Answer, Outcome, Q: User reported Indusii target values far higher than the four Waterinfo sensors and asked to fix suspected unit conversion before analysis., Source Nodes
 
-### Community 28 - "Q: Examine the current repository and look at the graphify structure. We need to build a generic cloud-deployed system based on the existing pipeline and frontend, not the Gent-Terneuzen use case, with CSV upload/preview, user RML mapping, named-graph Fuseki ingestion, user SHACL-in validation, user N3 reasoning, existing RDF2TSS assumptions, user SHACL-out validation, and existing RDF2LDES assumptions plus ZIP download."
+### Community 30 - "Q: Examine the current repository and look at the graphify structure. We need to build a generic cloud-deployed system based on the existing pipeline and frontend, not the Gent-Terneuzen use case, with CSV upload/preview, user RML mapping, named-graph Fuseki ingestion, user SHACL-in validation, user N3 reasoning, existing RDF2TSS assumptions, user SHACL-out validation, and existing RDF2LDES assumptions plus ZIP download."
 Cohesion: 0.40
 Nodes (4): Answer, Outcome, Q: Examine the current repository and look at the graphify structure. We need to build a generic cloud-deployed system based on the existing pipeline and frontend, not the Gent-Terneuzen use case, with CSV upload/preview, user RML mapping, named-graph Fuseki ingestion, user SHACL-in validation, user N3 reasoning, existing RDF2TSS assumptions, user SHACL-out validation, and existing RDF2LDES assumptions plus ZIP download., Source Nodes
 
-### Community 29 - "Q: Make the dashboard generic and remove Gent-Terneuzen traces from the active UI while implementing the eight-stage uploaded-data pipeline."
+### Community 31 - "Q: Make the dashboard generic and remove Gent-Terneuzen traces from the active UI while implementing the eight-stage uploaded-data pipeline."
 Cohesion: 0.40
 Nodes (4): Answer, Outcome, Q: Make the dashboard generic and remove Gent-Terneuzen traces from the active UI while implementing the eight-stage uploaded-data pipeline., Source Nodes
 
-### Community 30 - "Q: i have updated the graphify structure so make sure to check the new one out before doing anything. I have tried to test the system, module 1 data input only supports the upload of csv files, I want it to also support xlsx files as well"
+### Community 32 - "Q: i have updated the graphify structure so make sure to check the new one out before doing anything. I have tried to test the system, module 1 data input only supports the upload of csv files, I want it to also support xlsx files as well"
 Cohesion: 0.40
 Nodes (4): Answer, Outcome, Q: i have updated the graphify structure so make sure to check the new one out before doing anything. I have tried to test the system, module 1 data input only supports the upload of csv files, I want it to also support xlsx files as well, Source Nodes
 
-### Community 31 - "Lag analytics workspace"
+### Community 33 - "Lag analytics workspace"
 Cohesion: 0.40
 Nodes (4): Conductivity units, Fuseki configuration, Lag analytics workspace, Start
 
-### Community 32 - "Codex Repository Context"
+### Community 34 - "Codex Repository Context"
 Cohesion: 0.50
 Nodes (3): Codex Repository Context, Instructions for Codex, System Architecture & Topology
 
@@ -224,28 +234,29 @@ Nodes (3): Codex Repository Context, Instructions for Codex, System Architecture
 ## Work-memory lessons
 
 **Preferred sources** — corroborated by past sessions; start here.
-- `App()` (4× useful, score=3.800753128)
-- `create_run()` (3× useful, score=2.956372331)
-- `xlsx_preview()` (2× useful, score=1.999405502) _(code changed — re-verify)_
-- `xlsx_to_csv()` (2× useful, score=1.999405502) _(code changed — re-verify)_
-- `run_rml_mapping()` (2× useful, score=1.956875643) _(code changed — re-verify)_
-- `RunStore` (2× useful, score=1.956645244)
-- `step_6_RDF2LDES()` (2× useful, score=1.909518086)
+- `run_rml_mapping()` (4× useful, score=3.885762162) _(code changed — re-verify)_
+- `create_run()` (4× useful, score=3.88514943) _(code changed — re-verify)_
+- `App()` (4× useful, score=3.730911326) _(code changed — re-verify)_
+- `xlsx_preview()` (3× useful, score=2.944407755) _(code changed — re-verify)_
+- `xlsx_to_csv()` (3× useful, score=2.944407755) _(code changed — re-verify)_
+- `csv_preview()` (2× useful, score=1.964232903) _(code changed — re-verify)_
+- `RunStore` (2× useful, score=1.920690362)
+- `step_6_RDF2LDES()` (2× useful, score=1.874429202)
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `_iri()` connect `server.py` to `URIRef`?**
-  _High betweenness centrality (0.052) - this node is a cross-community bridge._
-- **Why does `create_ldes_files()` connect `RDF2LDES_YMD_SPARQL_FOR_TSS.py` to `URIRef`?**
-  _High betweenness centrality (0.011) - this node is a cross-community bridge._
-- **Are the 5 inferred relationships involving `RunStore` (e.g. with `IngestRequest` and `LdesRequest`) actually correct?**
-  _`RunStore` has 5 INFERRED edges - model-reasoned connections that need verification._
+  _High betweenness centrality (0.055) - this node is a cross-community bridge._
+- **Why does `test_ingest_graph_aborts_when_named_graph_cannot_be_cleared()` connect `ingest.py` to `generic_pipeline.py`?**
+  _High betweenness centrality (0.016) - this node is a cross-community bridge._
 - **What connects `name`, `private`, `version` to the rest of the system?**
   _91 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `playground_server.py` be split into smaller, more focused modules?**
-  _Cohesion score 0.08065268065268065 - nodes in this community are weakly interconnected._
+- **Should `generic_pipeline.py` be split into smaller, more focused modules?**
+  _Cohesion score 0.08141321044546851 - nodes in this community are weakly interconnected._
 - **Should `server.py` be split into smaller, more focused modules?**
   _Cohesion score 0.07486338797814207 - nodes in this community are weakly interconnected._
-- **Should `generic_pipeline.py` be split into smaller, more focused modules?**
-  _Cohesion score 0.11702127659574468 - nodes in this community are weakly interconnected._
+- **Should `playground_server.py` be split into smaller, more focused modules?**
+  _Cohesion score 0.14114114114114115 - nodes in this community are weakly interconnected._
+- **Should `dependencies` be split into smaller, more focused modules?**
+  _Cohesion score 0.06060606060606061 - nodes in this community are weakly interconnected._

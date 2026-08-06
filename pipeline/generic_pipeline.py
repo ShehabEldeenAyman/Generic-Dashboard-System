@@ -516,11 +516,27 @@ def eye_command(*arguments: str) -> list[str]:
 
 def ingest_graph(rdf_path: Path, graph_name: str) -> dict[str, Any]:
     graph_uri = graph_name_to_uri(graph_name)
+    if not ingest.delete_graph(graph_uri):
+        raise PipelineError(
+            f"Fuseki could not clear the named graph {graph_uri}. No data was uploaded."
+        )
     if not ingest.upload_graph(str(rdf_path), graph_uri):
         raise PipelineError(
             "Fuseki ingestion failed. Check FUSEKI_DATA_URL, the dataset name, and the Fuseki logs."
         )
-    return {"graph_uri": graph_uri}
+    return {"graph_uri": graph_uri, "graph_cleared": True}
+
+
+def run_sparql_query(query: str, graph_uri: str) -> dict[str, Any]:
+    query_text = query.strip()
+    if not query_text:
+        raise PipelineError("Enter a SPARQL query before running it.")
+    if not graph_uri:
+        raise PipelineError("The run does not have an ingested named graph yet.")
+    try:
+        return ingest.query_graph(query_text, graph_uri)
+    except ingest.FusekiError as error:
+        raise PipelineError(str(error)) from error
 
 
 def run_shacl_validation(

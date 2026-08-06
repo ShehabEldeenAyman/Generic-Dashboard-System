@@ -11,6 +11,7 @@ from rdflib import Graph, URIRef
 from pipeline import generic_pipeline
 from pipeline import playground_server
 from pipeline.run_store import RunStore
+from triple_store_ingestion import ingest as fuseki_ingest
 
 
 def test_upload_csv_creates_run_and_preview(tmp_path, monkeypatch):
@@ -180,6 +181,121 @@ def test_graph_name_is_converted_to_a_safe_named_graph_uri():
     assert generic_pipeline.graph_name_to_uri("https://data.example/graphs/items") == (
         "https://data.example/graphs/items"
     )
+
+
+def test_ingest_graph_clears_named_graph_before_upload(tmp_path, monkeypatch):
+    rdf_path = tmp_path / "mapped.ttl"
+    rdf_path.write_text("<https://example.org/s> <https://example.org/p> <https://example.org/o> .")
+    calls = []
+
+    monkeypatch.setattr(
+        generic_pipeline.ingest,
+        "delete_graph",
+        lambda graph_uri: calls.append(("clear", graph_uri)) or True,
+    )
+    monkeypatch.setattr(
+        generic_pipeline.ingest,
+        "upload_graph",
+        lambda path, graph_uri: calls.append(("upload", graph_uri, path)) or True,
+    )
+
+    result = generic_pipeline.ingest_graph(rdf_path, "replacement graph")
+
+    graph_uri = "https://example.org/graphs/replacement%20graph"
+    assert calls == [("clear", graph_uri), ("upload", graph_uri, str(rdf_path))]
+    assert result == {"graph_uri": graph_uri, "graph_cleared": True}
+
+
+def test_ingest_graph_aborts_when_named_graph_cannot_be_cleared(tmp_path, monkeypatch):
+    rdf_path = tmp_path / "mapped.ttl"
+    rdf_path.write_text("<https://example.org/s> <https://example.org/p> <https://example.org/o> .")
+    upload_called = False
+
+    monkeypatch.setattr(generic_pipeline.ingest, "delete_graph", lambda _graph_uri: False)
+
+    def upload_graph(_path, _graph_uri):
+        nonlocal upload_called
+        upload_called = True
+        return True
+
+    monkeypatch.setattr(generic_pipeline.ingest, "upload_graph", upload_graph)
+
+    with pytest.raises(generic_pipeline.PipelineError, match="No data was uploaded"):
+        generic_pipeline.ingest_graph(rdf_path, "replacement graph")
+    assert upload_called is False
+
+
+def test_fuseki_query_uses_run_graph_as_default_dataset(monkeypatch):
+    captured = {}
+
+    class Response:
+        ok = True
+        status_code = 200
+        text = ""
+        headers = {"Content-Type": "application/sparql-results+json; charset=utf-8"}
+
+        @staticmethod
+        def json():
+            return {
+                "head": {"vars": ["subject"]},
+                "results": {
+                    "bindings": [
+                        {"subject": {"type": "uri", "value": "https://example.org/item"}}
+                    ]
+                },
+            }
+
+    def post(url, **kwargs):
+        captured.update({"url": url, **kwargs})
+        return Response()
+
+    monkeypatch.setattr(fuseki_ingest.requests, "post", post)
+
+    result = fuseki_ingest.query_graph(
+        "SELECT ?subject WHERE { ?subject ?predicate ?object }",
+        "https://example.org/graphs/items",
+    )
+
+    assert captured["data"]["default-graph-uri"] == "https://example.org/graphs/items"
+    assert result["type"] == "select"
+    assert result["variables"] == ["subject"]
+    assert result["rows"][0]["subject"]["value"] == "https://example.org/item"
+
+
+def test_sparql_api_queries_the_graph_saved_for_the_run(tmp_path, monkeypatch):
+    run_store = RunStore(tmp_path / "runs")
+    monkeypatch.setattr(playground_server, "RUN_STORE", run_store)
+    state = run_store.create("items.csv", "items.csv")
+    state["stages"]["ingest"] = {"status": "success"}
+    state["graph"] = {
+        "name": "items",
+        "uri": "https://example.org/graphs/items",
+    }
+    run_store.save(state)
+    captured = {}
+
+    def run_query(query, graph_uri):
+        captured.update({"query": query, "graph_uri": graph_uri})
+        return {
+            "type": "ask",
+            "boolean": True,
+            "graph_uri": graph_uri,
+        }
+
+    monkeypatch.setattr(generic_pipeline, "run_sparql_query", run_query)
+    client = TestClient(playground_server.app)
+
+    response = client.post(
+        f"/api/runs/{state['id']}/sparql",
+        json={"query": "ASK { ?subject ?predicate ?object }"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["boolean"] is True
+    assert captured == {
+        "query": "ASK { ?subject ?predicate ?object }",
+        "graph_uri": "https://example.org/graphs/items",
+    }
 
 
 def test_shacl_violation_returns_a_report_without_raising(tmp_path):

@@ -54,6 +54,10 @@ class IngestRequest(BaseModel):
     graph_name: str = Field(min_length=1, max_length=2_000)
 
 
+class SparqlRequest(BaseModel):
+    query: str = Field(min_length=1, max_length=2_000_000)
+
+
 class ShaclRequest(BaseModel):
     shapes: str = Field(min_length=1, max_length=2_000_000)
 
@@ -304,14 +308,26 @@ def ingest_stage(run_id: str, request: IngestRequest) -> dict[str, Any]:
     def operation(_state: dict[str, Any], directory: Path) -> dict[str, Any]:
         result = pipeline.ingest_graph(directory / "mapped.ttl", request.graph_name)
         return {
-            "message": f"Ingested the mapped RDF into {result['graph_uri']}.",
+            "message": f"Cleared and ingested the mapped RDF into {result['graph_uri']}.",
             "graph_uri": result["graph_uri"],
+            "graph_cleared": result["graph_cleared"],
             "state_updates": {
                 "graph": {"name": request.graph_name, "uri": result["graph_uri"]}
             },
         }
 
     return execute_stage(run_id, "ingest", "rml", operation)
+
+
+@app.post("/api/runs/{run_id}/sparql")
+def sparql_query(run_id: str, request: SparqlRequest) -> dict[str, Any]:
+    state = load_run(run_id)
+    require_stage(state, "ingest")
+    graph_uri = (state.get("graph") or {}).get("uri", "")
+    try:
+        return pipeline.run_sparql_query(request.query, graph_uri)
+    except pipeline.PipelineError as error:
+        raise HTTPException(400, str(error)) from error
 
 
 @app.post("/api/runs/{run_id}/stages/shacl-in")

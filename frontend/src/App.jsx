@@ -7,13 +7,19 @@ const completedStatuses = new Set(['success', 'nonconformant'])
 const stageDefinitions = [
   { id: 'upload', title: 'Upload tabular data', eyebrow: 'Data input', description: 'Upload a CSV file or Excel workbook and inspect a parsed preview before processing begins.' },
   { id: 'rml', title: 'Map data to RDF', eyebrow: 'RML mapping', description: 'Paste your RML mapping and run RMLMapper against the prepared CSV source.' },
-  { id: 'ingest', title: 'Ingest into Fuseki', eyebrow: 'Triple store', description: 'Publish the mapped RDF into the named graph you choose.' },
+  { id: 'ingest', title: 'Ingest into Fuseki', eyebrow: 'Triple store', description: 'Clear and replace the named graph with the mapped RDF.' },
   { id: 'shacl_in', title: 'Validate mapped RDF', eyebrow: 'SHACL in', description: 'Run your input shape without stopping the pipeline when violations are found.' },
   { id: 'reason', title: 'Apply semantic rules', eyebrow: 'N3 reasoner', description: 'Run user-provided N3 rules and materialise the inferred RDF.' },
   { id: 'rdf2tss', title: 'Create TSS data', eyebrow: 'RDF2TSS', description: 'Transform compatible RDF observations with the existing RDF2TSS queries.' },
   { id: 'shacl_out', title: 'Validate TSS output', eyebrow: 'SHACL out', description: 'Check the generated TSS graph against your output shape.' },
   { id: 'rdf2ldes', title: 'Generate and download LDES', eyebrow: 'RDF2LDES', description: 'Build the existing TREE/LDES hierarchy and download the complete folder as ZIP.' },
 ]
+
+const defaultSparqlQuery = `SELECT ?subject ?predicate ?object
+WHERE {
+  ?subject ?predicate ?object .
+}
+LIMIT 100`
 
 const requestJson = async (path, options = {}) => {
   const response = await fetch(`${API}${path}`, options)
@@ -140,6 +146,55 @@ function UploadStage({ run, file, setFile, busy, deleting, onUpload, onDelete, o
   </article>
 }
 
+function SparqlWorkspace({ run, enabled }) {
+  const [query, setQuery] = useState(defaultSparqlQuery)
+  const [result, setResult] = useState(null)
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  useEffect(() => {
+    setResult(null)
+    setError('')
+  }, [run?.id, run?.graph?.uri])
+
+  async function executeQuery() {
+    if (!run || !query.trim()) return
+    setBusy(true); setError(''); setResult(null)
+    try {
+      setResult(await requestJson(`/api/runs/${run.id}/sparql`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query }),
+      }))
+    } catch (reason) {
+      setError(reason.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const status = error ? 'error' : result ? 'success' : null
+  const variables = result?.variables || []
+  return <article className={`pipeline-stage query-workspace ${status || (enabled ? 'ready' : 'locked')}`} id="sparql-workspace">
+    <div className="stage-index">Q</div>
+    <div className="stage-main">
+      <div className="stage-title-row"><div><p className="eyebrow">SPARQL workspace</p><h2>Query the ingested graph</h2><p className="stage-description">Run a read-only SPARQL query against the named graph created by this pipeline run.</p></div><StatusPill status={status} enabled={enabled} /></div>
+      <div className="stage-controls">
+        <div className="inline-tip"><strong>Default graph</strong><code>{run?.graph?.uri || 'Ingest a graph first'}</code><span>The selected named graph is exposed as the query&apos;s default dataset.</span></div>
+        <CodeEditor id="sparql-editor" label="SPARQL query" value={query} onChange={setQuery} rows={9} placeholder="SELECT ?subject ?predicate ?object WHERE { ?subject ?predicate ?object } LIMIT 100" />
+      </div>
+      <div className="stage-actions"><button className="run-button" disabled={!enabled || busy || !query.trim()} onClick={executeQuery}>{busy ? <><i className="spinner" />Querying</> : 'Run SPARQL query'}</button>{!enabled && <span>Ingest a named graph to unlock querying.</span>}</div>
+      {error && <div className="query-message error"><strong>Query failed</strong><span>{error}</span></div>}
+      {result?.type === 'ask' && <div className="query-message success"><strong>ASK result</strong><span>{result.boolean ? 'true' : 'false'}</span></div>}
+      {result?.type === 'select' && <div className="query-results">
+        <div className="query-summary"><strong>{result.row_count.toLocaleString()} result row{result.row_count === 1 ? '' : 's'}</strong><span>{result.truncated ? 'Results were capped by the server.' : `Queried ${result.graph_uri}`}</span></div>
+        <div className="table-shell"><table><thead><tr>{variables.map((variable) => <th key={variable}>?{variable}</th>)}</tr></thead><tbody>{result.rows.length ? result.rows.map((row, rowIndex) => <tr key={rowIndex}>{variables.map((variable) => { const term = row[variable]; return <td key={variable} title={term?.value || ''}>{term ? <><span>{term.value}</span><small>{term.type}{term.datatype ? ` · ${term.datatype}` : ''}{term['xml:lang'] ? ` · ${term['xml:lang']}` : ''}</small></> : <em>unbound</em>}</td> })}</tr>) : <tr><td colSpan={Math.max(variables.length, 1)}><em>No matching rows.</em></td></tr>}</tbody></table></div>
+      </div>}
+      {result?.type === 'graph' && <div className="query-results"><div className="query-summary"><strong>Graph result</strong><span>{result.content_type}{result.truncated ? ' · preview truncated' : ''}</span></div><pre className="source-preview">{result.text}</pre></div>}
+    </div>
+  </article>
+}
+
 function App() {
   const [run, setRun] = useState(null)
   const [config, setConfig] = useState(null)
@@ -219,7 +274,10 @@ function App() {
 
         <StageCard number={3} definition={stageDefinitions[2]} result={run?.stages?.ingest} enabled={stageDone('rml')} busy={busy === 'ingest'} artifacts={artifactsFor('ingest')} onPreview={setPreviewArtifact} onRun={() => execute('ingest', { graph_name: graphName })} actionLabel="Ingest graph">
           <div className="form-field"><label htmlFor="graph-name">Named graph</label><input id="graph-name" value={graphName} onChange={(event) => setGraphName(event.target.value)} placeholder="products-2026 or https://example.org/graphs/products" /><small>Enter a short name or a complete graph IRI.</small></div>
+          <div className="inline-tip"><strong>Replacement policy</strong><span>The named graph is cleared before every ingestion, then replaced with this run&apos;s mapped RDF.</span></div>
         </StageCard>
+
+        <SparqlWorkspace run={run} enabled={stageDone('ingest')} />
 
         <StageCard number={4} definition={stageDefinitions[3]} result={run?.stages?.shacl_in} enabled={stageDone('ingest')} busy={busy === 'shacl-in'} artifacts={artifactsFor('shacl_in')} onPreview={setPreviewArtifact} onRun={() => execute('shacl-in', { shapes: shaclIn })} actionLabel="Validate mapped RDF">
           <CodeEditor id="shacl-in-editor" label="Input SHACL shape (Turtle)" value={shaclIn} onChange={setShaclIn} placeholder={'@prefix sh: <http://www.w3.org/ns/shacl#> .\n\n# Paste the shape for the mapped RDF here.'} />
