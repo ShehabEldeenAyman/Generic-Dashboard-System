@@ -308,7 +308,7 @@ def rml_mapping(run_id: str, request: RmlRequest) -> dict[str, Any]:
 def mapped_rdf_preview(
     run_id: str,
     offset: int = Query(default=0, ge=0),
-    limit: int = Query(default=100, ge=1, le=100),
+    limit: int = Query(default=10, ge=1, le=10),
 ) -> dict[str, Any]:
     state = load_run(run_id)
     require_stage(state, "rml")

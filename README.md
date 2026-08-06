@@ -62,7 +62,7 @@ Optional stages do not block later processing. RDF2TSS uses reasoned RDF when a 
 ### 3. Mapped RDF preview and download
 
 - Preview Turtle output between mapping and ingestion.
-- Browse RDF by subject, with at most 100 instances per page.
+- Browse RDF by subject, with at most 10 instances per page.
 - Move through the full result using previous and next controls.
 - Download the complete mapped RDF artifact at any time.
 
@@ -191,7 +191,7 @@ flowchart TB
 
 ## Sample assets
 
-The preserved `test-data/` directory contains a representative Excel workbook, CSV source, RML mapping, SPARQL query, and input/output SHACL shapes. These files are useful for exercising the pipeline and as references for the expected semantic inputs.
+The preserved `test-data/` directory contains a representative Excel workbook, CSV source, RML mapping, and input/output SHACL shapes. These files can be used to exercise the pipeline and as references for the expected semantic inputs. Before running the included RML mapping, update its `rml:source` value to match the prepared CSV filename shown by the dashboard.
 
 ## Current compatibility contract
 
@@ -199,9 +199,177 @@ RDF2TSS and RDF2LDES currently use the project's existing semantic queries. Mapp
 
 For Excel uploads, the active worksheet is used. RMLMapper receives the normalized CSV artifact rather than the original workbook, and the dashboard displays its exact logical-source filename.
 
+## Installation
+
+### Prerequisites
+
+Install the following software before starting the application:
+
+- **Python 3.10 or newer** for the FastAPI backend and semantic-processing modules.
+- **Node.js and npm** for the React/Vite frontend.
+- **Java** for running RMLMapper.
+- **RMLMapper** for converting uploaded tabular data to RDF.
+- **EYE reasoner** for the optional N3 reasoning stage.
+- **Apache Jena Fuseki** for named-graph ingestion and SPARQL queries.
+
+### 1. Install the backend dependencies
+
+From the repository root, create and activate a Python virtual environment.
+
+Windows PowerShell:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+macOS or Linux:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+### 2. Add RMLMapper
+
+Download an executable JAR from the [official RMLMapper releases](https://github.com/RMLio/rmlmapper-java/releases) and place it directly inside the repository's `pipeline/` directory. The file must be named exactly:
+
+```text
+pipeline/rmlmapper.jar
+```
+
+The JAR is intentionally excluded from Git because of its size. Use the Java version required by the RMLMapper release you download; for example, RMLMapper 8.1.0 requires Java 21 or newer. Confirm that Java is available before starting the backend:
+
+```bash
+java -version
+```
+
+The dashboard's service-status strip reports whether the backend can find `rmlmapper.jar`.
+
+### 3. Install the EYE reasoner
+
+Install the native [EYE reasoner](https://eyereasoner.github.io/eye/) for your platform and ensure the `eye` command is available on the system `PATH`:
+
+```bash
+eye --help
+```
+
+The rest of the pipeline can run without EYE, but the optional N3 reasoning stage requires it. If EYE is installed under a different command or path, set the `EYE_COMMAND` environment variable before starting the backend.
+
+### 4. Start Apache Jena Fuseki
+
+Download and unpack [Apache Jena Fuseki](https://jena.apache.org/download/). Run it on port `3030` and create a dataset named `dataset`; the backend then uses these endpoints:
+
+```text
+Graph Store endpoint: http://localhost:3030/dataset/data
+SPARQL endpoint:     http://localhost:3030/dataset/query
+```
+
+Keep Fuseki running while using ingestion or SPARQL features. A different deployment can be configured with the `FUSEKI_DATA_URL` and `FUSEKI_QUERY_URL` environment variables.
+
+For a temporary in-memory dataset suitable for local testing, run one of these commands from the unpacked Fuseki directory:
+
+macOS or Linux:
+
+```bash
+./fuseki-server --update --mem /dataset
+```
+
+Windows:
+
+```powershell
+.\fuseki-server.bat --update --mem /dataset
+```
+
+Fuseki uses port `3030` by default. An in-memory dataset is erased when Fuseki stops; use Fuseki's persistent TDB configuration when the data must survive restarts.
+
+### 5. Install the frontend dependencies
+
+From the repository root:
+
+```bash
+cd frontend
+npm install
+```
+
+## Running the application
+
+The backend, frontend, and Fuseki must run at the same time. Use separate terminal windows for each process.
+
+### 1. Run Fuseki
+
+Start the Fuseki server on port `3030` and make sure the `dataset` dataset is available.
+
+### 2. Run the backend API
+
+From the repository root, with the Python virtual environment activated:
+
+```bash
+python -m uvicorn pipeline.playground_server:app --reload --host 0.0.0.0 --port 8000
+```
+
+The API is then available at `http://localhost:8000`, and its interactive documentation is available at `http://localhost:8000/docs`.
+
+### 3. Run the frontend
+
+From the `frontend/` directory:
+
+```bash
+npm run dev
+```
+
+Open the URL printed by Vite, normally `http://localhost:5173`.
+
+## Testing the pipeline with `test-data`
+
+The files in `test-data/` can be used to run through the dashboard:
+
+- `sample.xlsx` and `waterinfo.csv` are uploadable tabular sources.
+- `rml.ttl.txt` is an example RML mapping.
+- `SHACL_in.ttl` is an example shape for validating mapped RDF.
+- `SHACL_out.ttl` is an example shape for validating TSS output.
+
+The sample files are references rather than a hard-coded application dataset. Paste the relevant text files into the matching dashboard editors and adjust the RML logical source as described below.
+
+## Important mapping and transformation constraints
+
+### RML logical-source filename
+
+The filename in `rml:source` must exactly match the prepared CSV filename for the uploaded file. The dashboard displays this filename after upload under **RML source name**.
+
+- Uploading `waterinfo.csv` produces the RML source name `waterinfo.csv`.
+- Uploading `sample.xlsx` converts its active worksheet to CSV and produces the RML source name `sample.csv`.
+
+For example, when `sample.xlsx` is uploaded, the mapping must contain:
+
+```turtle
+rml:logicalSource [
+    rml:source "sample.csv" ;
+    rml:referenceFormulation ql:CSV
+] ;
+```
+
+Do not use an absolute local path. Uploaded files are copied into an isolated run directory, and RMLMapper executes from that directory. Column names referenced by `rr:template` or `rml:reference` must also exactly match the prepared CSV headers shown in the upload preview.
+
+### RDF2TSS and RDF2LDES input structure
+
+RDF2TSS and RDF2LDES currently use the existing built-in semantic queries. For these transformations to work, the selected RDF input must contain the structure expected by those queries:
+
+- a SOSA observation associated with a sensor through `sosa:madeBySensor`;
+- a timestamp through `sosa:resultTime`;
+- a value through `sosa:hasSimpleResult`;
+- an observed property through `sosa:observedProperty`; and
+- a QUDT unit through `qudt:hasUnit`.
+
+If any required relationship is absent or uses a different vocabulary, mapping may still produce valid RDF, but the current TSS or LDES transformation can produce no usable output.
+
 ## Project status
 
-The functional pipeline and dashboard are in place. Installation, local development, and cloud-deployment instructions will be added in a dedicated documentation pass.
+The functional pipeline, dashboard, and local installation instructions are in place. Cloud-deployment instructions will be added in a dedicated documentation pass.
 
 ## License
 

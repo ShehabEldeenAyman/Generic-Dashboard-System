@@ -132,7 +132,7 @@ function RdfPreview({ run, artifact }) {
     let active = true
     setLoading(true)
     setError('')
-    requestJson(`/api/runs/${run.id}/rdf-preview?offset=${offset}&limit=100`)
+    requestJson(`/api/runs/${run.id}/rdf-preview?offset=${offset}&limit=10`)
       .then((value) => active && setPage(value))
       .catch((reason) => active && setError(reason.message))
       .finally(() => active && setLoading(false))
@@ -145,7 +145,7 @@ function RdfPreview({ run, artifact }) {
   return <article className="pipeline-stage rdf-preview-card success" id="mapped-rdf-preview">
     <div className="stage-index">RDF</div>
     <div className="stage-main">
-      <div className="stage-title-row"><div><p className="eyebrow">Mapped output</p><h2>Preview transformed RDF</h2><p className="stage-description">Browse the mapped Turtle by RDF subject before ingesting it into Fuseki. Each page contains at most 100 instances.</p></div><StatusPill status="success" /></div>
+      <div className="stage-title-row"><div><p className="eyebrow">Mapped output</p><h2>Preview transformed RDF</h2><p className="stage-description">Browse the mapped Turtle by RDF subject before ingesting it into Fuseki. Each page contains at most 10 instances.</p></div><StatusPill status="success" /></div>
       <div className="rdf-preview-toolbar">
         <div><strong>{page ? `${page.total_instances.toLocaleString()} RDF instances` : 'Loading RDF instances'}</strong>{page && <span>{page.total_triples.toLocaleString()} triples total</span>}</div>
         {artifact && <a className="artifact-button download" href={`${API}${artifact.download_url}`}><span>TTL</span>Mapped RDF<b>Download</b></a>}
@@ -154,7 +154,7 @@ function RdfPreview({ run, artifact }) {
       {error && <div className="query-message error"><strong>Preview failed</strong><span>{error}</span></div>}
       {!loading && !error && page && <>
         <pre className="source-preview rdf-page">{page.text || 'No RDF instances were produced.'}</pre>
-        <div className="rdf-pagination"><button className="secondary-button" disabled={!page.has_previous} onClick={() => setOffset(Math.max(0, page.offset - page.limit))}>Previous 100</button><span>Instances {first.toLocaleString()}–{last.toLocaleString()} of {page.total_instances.toLocaleString()}</span><button className="secondary-button" disabled={!page.has_next} onClick={() => setOffset(page.offset + page.returned_instances)}>Next 100</button></div>
+        <div className="rdf-pagination"><button className="secondary-button" disabled={!page.has_previous} onClick={() => setOffset(Math.max(0, page.offset - page.limit))}>Previous 10</button><span>Instances {first.toLocaleString()}–{last.toLocaleString()} of {page.total_instances.toLocaleString()}</span><button className="secondary-button" disabled={!page.has_next} onClick={() => setOffset(page.offset + page.returned_instances)}>Next 10</button></div>
       </>}
     </div>
   </article>

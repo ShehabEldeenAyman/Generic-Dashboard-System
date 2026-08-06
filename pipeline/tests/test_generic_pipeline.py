@@ -457,11 +457,11 @@ def test_mapped_rdf_preview_paginates_by_subject(tmp_path, monkeypatch):
     graph.serialize(destination=mapped_path, format="turtle")
     client = TestClient(playground_server.app)
 
-    first = client.get(f"/api/runs/{state['id']}/rdf-preview?offset=0&limit=100")
-    last = client.get(f"/api/runs/{state['id']}/rdf-preview?offset=200&limit=100")
+    first = client.get(f"/api/runs/{state['id']}/rdf-preview?offset=0&limit=10")
+    last = client.get(f"/api/runs/{state['id']}/rdf-preview?offset=200&limit=10")
 
     assert first.status_code == 200
-    assert first.json()["returned_instances"] == 100
+    assert first.json()["returned_instances"] == 10
     assert first.json()["total_instances"] == 205
     assert first.json()["has_previous"] is False
     assert first.json()["has_next"] is True

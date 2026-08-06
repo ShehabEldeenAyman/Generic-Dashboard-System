@@ -1,1 +1,23 @@
-{"0": "generic_pipeline.py", "1": "RDF2TSS_V2.py", "2": "playground_server.py", "3": "Q: Where should RDF preview, artifact downloads, and source-selectable LDES be implemented?", "4": "devDependencies", "5": "Codex Repository Context", "6": "delete_run", "7": "__init__.py", "8": "RunStore", "9": "App.jsx", "11": "RDFTSS2LDES.py", "13": "ingest.py", "31": "Excel upload feature memory", "32": "Q: Can you add a button to clear/delete the uploaded file (csv or xlsx) so user can easily reupload the right file", "36": "Q: Add a SPARQL query form for the ingested Fuseki graph and always clear the named graph before ingestion", "37": "Q: Remove the default graph constraint from SPARQL queries so users define target graphs in the query", "38": "Q: Allow optional pipeline steps so N3 reasoning and SHACL validation do not lock future stages", "74": "Semantic Pipeline Studio", "86": "eslint.config.js", "87": "vite.config.js"}
+{
+  "0": "generic_pipeline.py",
+  "1": "RDF2TSS_V2.py",
+  "2": "playground_server.py",
+  "3": "Q: Where should RDF preview, artifact downloads, and source-selectable LDES be implemented?",
+  "4": "devDependencies",
+  "5": "Codex Repository Context",
+  "6": "delete_run",
+  "7": "__init__.py",
+  "8": "RunStore",
+  "9": "App.jsx",
+  "10": "RDF2TSS_V2.py",
+  "11": "RDFTSS2LDES.py",
+  "12": "Q: Can you add a button to clear/delete the uploaded file (csv or xlsx) so user can easily reupload the right file",
+  "13": "ingest.py",
+  "14": "Q: Remove the default graph constraint from SPARQL queries so users define target graphs in the query",
+  "15": "Q: Allow optional pipeline steps so N3 reasoning and SHACL validation do not lock future stages",
+  "16": "Q: Where should RDF preview, artifact downloads, and source-selectable LDES be implemented?",
+  "17": "Codex Repository Context",
+  "18": "eslint.config.js",
+  "19": "vite.config.js",
+  "20": "__init__.py"
+}

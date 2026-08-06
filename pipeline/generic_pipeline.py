@@ -428,7 +428,7 @@ def rdf_instance_preview(
     rdf_path: str | Path,
     *,
     offset: int = 0,
-    limit: int = 100,
+    limit: int = 10,
 ) -> dict[str, Any]:
     """Return a deterministic Turtle page grouped by RDF subject.
 
