@@ -17,7 +17,7 @@ A generic, web-based workspace for converting CSV and Excel data to RDF, validat
 
 ## Overview
 
-Semantic Pipeline Studio provides one guided interface for a complete semantic-data workflow. Users bring their own tabular data and semantic contracts—the RML mapping, SHACL shapes, N3 rules, graph name, and LDES settings—while the application manages each run and exposes its generated artifacts.
+Semantic Pipeline Studio provides one guided interface for a complete semantic-data workflow. Users bring their own tabular data and semantic contracts—the RML mapping, optional target QUDT unit, SHACL shapes, N3 rules, graph name, and LDES settings—while the application manages each run and exposes its generated artifacts.
 
 The system is domain-independent. It does not assume a particular dataset or business use case, and uploaded data is stored in an isolated, run-scoped workspace suitable for a cloud deployment model.
 
@@ -27,20 +27,23 @@ The system is domain-independent. It does not assume a particular dataset or bus
 flowchart LR
     A["CSV or XLSX upload"] --> B["RML mapping"]
     B --> C["RDF preview and download"]
-    C --> D["Fuseki named graph"]
+    B -. optional .-> U["QUDT unit alignment"]
+    B --> R["Current RDF"]
+    U --> R
+    R --> D["Fuseki named graph"]
     D --> E["SPARQL workspace"]
-    B -. optional .-> F["SHACL input validation"]
-    B -. optional .-> G["N3 reasoning"]
-    B --> H["RDF to TSS"]
+    R -. optional .-> F["SHACL input validation"]
+    R -. optional .-> G["N3 reasoning"]
+    R --> H["RDF to TSS"]
     G -. when available .-> H
     H --> I["TSS download"]
     H -. optional .-> J["SHACL output validation"]
-    B --> K["RDF to LDES"]
+    R --> K["RDF to LDES"]
     H --> K
     K --> L["LDES ZIP download"]
 ```
 
-Optional stages do not block later processing. RDF2TSS uses reasoned RDF when a successful reasoning result exists and otherwise uses the mapped RDF directly. LDES generation can start from either mapped RDF or TSS RDF.
+Optional stages do not block later processing. When unit alignment succeeds, downstream RDF stages use its separate aligned artifact; when it is skipped, they use the mapped RDF. RDF2TSS still prefers reasoned RDF when a successful reasoning result exists. LDES generation can start from either the current RDF or TSS RDF.
 
 ## Features
 
@@ -59,55 +62,64 @@ Optional stages do not block later processing. RDF2TSS uses reasoned RDF when a 
 - Validate the mapping syntax and execute it with RMLMapper.
 - Receive readable stage errors without taking down the application.
 
-### 3. Mapped RDF preview and download
+### 3. Optional QUDT unit alignment
+
+- Paste a complete target QUDT unit IRI, such as `http://qudt.org/vocab/unit/MilliS-PER-CentiM`.
+- Convert each compatible `sosa:hasSimpleResult` through QUDT multiplier and offset metadata.
+- Use cached official conversion values for common conductivity, mass-concentration, and salinity/concentration units.
+- Preserve `mapped.ttl` and generate a separate, downloadable `aligned.ttl` artifact.
+- Feed successful aligned output automatically into ingestion, input SHACL, reasoning, RDF2TSS, and raw-RDF LDES generation.
+- Skip the stage without locking any later stage.
+
+### 4. Mapped RDF preview and download
 
 - Preview Turtle output between mapping and ingestion.
 - Browse RDF by subject, with at most 10 instances per page.
 - Move through the full result using previous and next controls.
 - Download the complete mapped RDF artifact at any time.
 
-### 4. Apache Jena Fuseki ingestion
+### 5. Apache Jena Fuseki ingestion
 
 - Choose a name or full IRI for the target named graph.
 - Clear the target graph before every ingestion to prevent stale or duplicate data.
-- Upload the mapped RDF through Fuseki's Graph Store Protocol.
+- Upload the aligned RDF when available or mapped RDF when alignment was skipped through Fuseki's Graph Store Protocol.
 - Keep graph selection explicit rather than silently treating a named graph as the default graph.
 
-### 5. SPARQL query workspace
+### 6. SPARQL query workspace
 
 - Write and run read-only SPARQL queries against Fuseki.
 - Select the intended named graph explicitly with `GRAPH <...>` in the query.
 - Display `SELECT` results as a table, `ASK` results as a Boolean, and graph-query results as text.
 - Cap large responses on the server to keep the interface responsive.
 
-### 6. SHACL input validation
+### 7. SHACL input validation
 
-- Paste a SHACL shape and validate the mapped RDF.
+- Paste a SHACL shape and validate the current mapped or unit-aligned RDF.
 - View and download the full SHACL validation report.
 - Treat non-conformance as a reportable result—not a system failure—so later stages remain available.
 
-### 7. Optional N3 reasoning
+### 8. Optional N3 reasoning
 
 - Paste user-defined N3 rules and execute them with the EYE reasoner.
-- Materialize inferred statements alongside the mapped RDF.
+- Materialize inferred statements alongside the current mapped or unit-aligned RDF.
 - Report inferred and total triple counts.
 - Skip reasoning entirely when it is not needed.
 
-### 8. RDF to TSS transformation
+### 9. RDF to TSS transformation
 
 - Convert compatible SOSA/QUDT observations into Time Series Snippets.
-- Prefer successfully reasoned RDF automatically, with mapped RDF as the fallback.
+- Prefer successfully reasoned RDF automatically, with unit-aligned or mapped RDF as the fallback.
 - Report sensor and output triple counts.
 - Preview and download the generated TSS Turtle file.
 
-### 9. SHACL output validation
+### 10. SHACL output validation
 
 - Validate generated TSS data against a user-provided output shape.
 - Surface non-conformance and the complete validation report without blocking LDES generation.
 
-### 10. RDF or TSS to LDES
+### 11. RDF or TSS to LDES
 
-- Generate an LDES from either the original mapped RDF or the generated TSS data.
+- Generate an LDES from either the current mapped/unit-aligned RDF or the generated TSS data.
 - Configure the stream name and public base URL.
 - Build date-based TREE fragments and indexes in a complete folder hierarchy.
 - Preview the root TriG index and download the entire LDES directory as a ZIP archive.
@@ -119,7 +131,7 @@ Each upload creates an isolated run with its own state, source files, semantic i
 Artifacts are first-class outputs. Depending on the stages executed, a run can expose:
 
 - the normalized CSV source;
-- the submitted RML mapping and mapped RDF;
+- the submitted RML mapping, mapped RDF, and optional unit-aligned RDF;
 - SHACL shapes and validation reports;
 - N3 rules and reasoned RDF;
 - TSS RDF;
@@ -134,6 +146,7 @@ flowchart TB
     UI["React + Vite dashboard"] --> API["FastAPI pipeline API"]
     API --> STORE["Run-scoped artifact store"]
     API --> RML["RMLMapper"]
+    API --> ALIGN["QUDT unit alignment"]
     API --> SHACL["pySHACL"]
     API --> EYE["EYE N3 reasoner"]
     API --> FUSEKI["Apache Jena Fuseki"]
@@ -147,6 +160,7 @@ flowchart TB
 | React frontend | Guided pipeline, editors, previews, result tables, status feedback, and downloads |
 | FastAPI backend | Run lifecycle, validation, stage orchestration, error isolation, and artifact delivery |
 | RMLMapper | User-controlled tabular-to-RDF mapping |
+| Automated alignment | Optional QUDT multiplier/offset conversion into a run-scoped RDF artifact |
 | Apache Jena Fuseki | Named-graph storage and SPARQL query execution |
 | pySHACL | Input RDF and TSS conformance validation |
 | EYE | Optional N3 rule execution and inference materialization |
@@ -164,6 +178,7 @@ flowchart TB
 | `DELETE /api/runs/{run_id}` | Delete a run and its files |
 | `POST /api/runs/{run_id}/stages/rml` | Run the supplied RML mapping |
 | `GET /api/runs/{run_id}/rdf-preview` | Retrieve a paginated mapped-RDF preview |
+| `POST /api/runs/{run_id}/stages/alignment` | Convert observations to a target QUDT unit |
 | `POST /api/runs/{run_id}/stages/ingest` | Clear and replace a Fuseki named graph |
 | `POST /api/runs/{run_id}/sparql` | Execute a SPARQL query |
 | `POST /api/runs/{run_id}/stages/shacl-in` | Validate mapped RDF |
@@ -179,6 +194,7 @@ flowchart TB
 .
 ├── frontend/                    # React dashboard and Vite configuration
 ├── pipeline/                    # FastAPI API, orchestration, run store, and tests
+├── automating_alignments/       # QUDT multiplier/offset unit conversion
 ├── RDF2TSS_V2/                  # RDF-to-TSS transformation
 ├── RDF2LDES/                    # TSS/RDF-to-LDES generation
 ├── SHACL/                       # SHACL validation adapter
@@ -366,6 +382,19 @@ RDF2TSS and RDF2LDES currently use the existing built-in semantic queries. For t
 - a QUDT unit through `qudt:hasUnit`.
 
 If any required relationship is absent or uses a different vocabulary, mapping may still produce valid RDF, but the current TSS or LDES transformation can produce no usable output.
+
+### QUDT unit alignment
+
+The target must be a complete QUDT unit IRI under `http://qudt.org/vocab/unit/` or `https://qudt.org/vocab/unit/`. The mapped RDF must express values with `sosa:hasSimpleResult` and units with `qudt:hasUnit`. Known incompatible measurement families are rejected instead of silently relabelling values.
+
+The application includes network-free conversion metadata for common water measurements:
+
+- conductivity: `MicroS-PER-CentiM`, `MilliS-PER-CentiM`, `MicroS-PER-M`, `MilliS-PER-M`, and `S-PER-M`;
+- mass concentration/density: `MicroGM-PER-L`, `MilliGM-PER-L`, `GM-PER-L`, `GM-PER-M3`, and `KiloGM-PER-M3`;
+- dimensionless concentration/salinity scales: `PPB`, `PPM`, `PPTH`, `PERMILLE`, and `PERCENT`;
+- water temperature: `DEG_C` and `K`.
+
+Other QUDT unit IRIs are resolved from QUDT at runtime, so the backend needs outbound network access for units not in the local conversion dictionary. Contextual or logarithmic units without a non-zero linear conversion multiplier cannot be transformed by this stage.
 
 ## Project status
 

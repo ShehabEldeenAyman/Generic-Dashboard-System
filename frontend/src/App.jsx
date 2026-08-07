@@ -3,12 +3,26 @@ import './App.css'
 
 const API = import.meta.env.VITE_PIPELINE_API_URL || 'http://localhost:8000'
 const completedStatuses = new Set(['success', 'nonconformant'])
+const defaultAlignmentUnit = 'http://qudt.org/vocab/unit/MilliS-PER-CentiM'
+const alignmentUnitExamples = [
+  ['Conductivity · µS/cm', 'http://qudt.org/vocab/unit/MicroS-PER-CentiM'],
+  ['Conductivity · mS/cm', defaultAlignmentUnit],
+  ['Conductivity · S/m', 'http://qudt.org/vocab/unit/S-PER-M'],
+  ['Mass concentration · µg/L', 'http://qudt.org/vocab/unit/MicroGM-PER-L'],
+  ['Mass concentration · mg/L', 'http://qudt.org/vocab/unit/MilliGM-PER-L'],
+  ['Mass concentration · g/L', 'http://qudt.org/vocab/unit/GM-PER-L'],
+  ['Salinity/concentration · ppm', 'http://qudt.org/vocab/unit/PPM'],
+  ['Salinity/concentration · parts per thousand', 'http://qudt.org/vocab/unit/PPTH'],
+  ['Water temperature · °C', 'http://qudt.org/vocab/unit/DEG_C'],
+  ['Water temperature · K', 'http://qudt.org/vocab/unit/K'],
+]
 
 const stageDefinitions = [
   { id: 'upload', title: 'Upload tabular data', eyebrow: 'Data input', description: 'Upload a CSV file or Excel workbook and inspect a parsed preview before processing begins.' },
   { id: 'rml', title: 'Map data to RDF', eyebrow: 'RML mapping', description: 'Paste your RML mapping and run RMLMapper against the prepared CSV source.' },
-  { id: 'ingest', title: 'Ingest into Fuseki', eyebrow: 'Triple store', description: 'Clear and replace the named graph with the mapped RDF.' },
-  { id: 'shacl_in', title: 'Validate mapped RDF', eyebrow: 'SHACL in · Optional', description: 'Optionally run your input shape without stopping the pipeline when violations are found.' },
+  { id: 'alignment', title: 'Align QUDT units', eyebrow: 'Automated alignment · Optional', description: 'Convert SOSA observation values from their current QUDT units to a user-selected target unit.' },
+  { id: 'ingest', title: 'Ingest into Fuseki', eyebrow: 'Triple store', description: 'Clear and replace the named graph with the current mapped or unit-aligned RDF.' },
+  { id: 'shacl_in', title: 'Validate current RDF', eyebrow: 'SHACL in · Optional', description: 'Optionally validate the current mapped or unit-aligned RDF without stopping the pipeline when violations are found.' },
   { id: 'reason', title: 'Apply semantic rules', eyebrow: 'N3 reasoner · Optional', description: 'Optionally run user-provided N3 rules and materialise inferred RDF.' },
   { id: 'rdf2tss', title: 'Create TSS data', eyebrow: 'RDF2TSS', description: 'Transform compatible RDF observations with the existing RDF2TSS queries.' },
   { id: 'shacl_out', title: 'Validate TSS output', eyebrow: 'SHACL out · Optional', description: 'Optionally check the generated TSS graph against your output shape.' },
@@ -18,6 +32,7 @@ const stageDefinitions = [
 const stagePrerequisites = {
   upload: [],
   rml: ['upload'],
+  alignment: ['rml'],
   ingest: ['rml'],
   shacl_in: ['rml'],
   reason: ['rml'],
@@ -265,6 +280,7 @@ function App() {
   const [error, setError] = useState('')
   const [previewArtifact, setPreviewArtifact] = useState(null)
   const [mapping, setMapping] = useState('')
+  const [targetUnit, setTargetUnit] = useState(defaultAlignmentUnit)
   const [graphName, setGraphName] = useState('')
   const [shaclIn, setShaclIn] = useState('')
   const [rules, setRules] = useState('')
@@ -304,7 +320,7 @@ function App() {
   }
 
   function resetRun() {
-    setRun(null); setFile(null); setMapping(''); setGraphName(''); setShaclIn(''); setRules(''); setShaclOut(''); setStreamName('dataset'); setLdesSource('tss'); setError(''); setPreviewArtifact(null)
+    setRun(null); setFile(null); setMapping(''); setTargetUnit(defaultAlignmentUnit); setGraphName(''); setShaclIn(''); setRules(''); setShaclOut(''); setStreamName('dataset'); setLdesSource('tss'); setError(''); setPreviewArtifact(null)
   }
 
   async function deleteUploadedFile() {
@@ -340,31 +356,36 @@ function App() {
 
         <RdfPreview run={run} artifact={artifactsFor('rml').find((artifact) => artifact.name === 'Mapped RDF')} />
 
-        <StageCard number={3} definition={stageDefinitions[2]} result={run?.stages?.ingest} enabled={stageEnabled('ingest')} busy={busy === 'ingest'} artifacts={artifactsFor('ingest')} onPreview={setPreviewArtifact} onRun={() => execute('ingest', { graph_name: graphName })} actionLabel="Ingest graph">
+        <StageCard number={3} definition={stageDefinitions[2]} result={run?.stages?.alignment} enabled={stageEnabled('alignment')} busy={busy === 'alignment'} artifacts={artifactsFor('alignment')} onPreview={setPreviewArtifact} onRun={() => execute('alignment', { target_unit: targetUnit })} actionLabel="Convert QUDT units">
+          <div className="form-field"><label htmlFor="target-unit">Target QUDT unit IRI</label><input id="target-unit" list="alignment-unit-examples" value={targetUnit} onChange={(event) => setTargetUnit(event.target.value)} placeholder={defaultAlignmentUnit} /><datalist id="alignment-unit-examples">{alignmentUnitExamples.map(([label, value]) => <option key={value} value={value}>{label}</option>)}</datalist><small>Choose a compatible unit from the same measurement family, or paste another complete QUDT unit IRI.</small></div>
+          <div className="inline-tip"><strong>Optional and non-destructive</strong><span>The original mapped RDF is preserved. A successful conversion creates a separate aligned RDF artifact that later RDF stages use automatically.</span></div>
+        </StageCard>
+
+        <StageCard number={4} definition={stageDefinitions[3]} result={run?.stages?.ingest} enabled={stageEnabled('ingest')} busy={busy === 'ingest'} artifacts={artifactsFor('ingest')} onPreview={setPreviewArtifact} onRun={() => execute('ingest', { graph_name: graphName })} actionLabel="Ingest graph">
           <div className="form-field"><label htmlFor="graph-name">Named graph</label><input id="graph-name" value={graphName} onChange={(event) => setGraphName(event.target.value)} placeholder="products-2026 or https://example.org/graphs/products" /><small>Enter a short name or a complete graph IRI.</small></div>
-          <div className="inline-tip"><strong>Replacement policy</strong><span>The named graph is cleared before every ingestion, then replaced with this run&apos;s mapped RDF.</span></div>
+          <div className="inline-tip"><strong>Replacement policy</strong><span>The named graph is cleared before every ingestion, then replaced with the aligned RDF when Stage 3 succeeded or the mapped RDF when alignment was skipped.</span></div>
         </StageCard>
 
         <SparqlWorkspace run={run} enabled={stageDone('ingest')} />
 
-        <StageCard number={4} definition={stageDefinitions[3]} result={run?.stages?.shacl_in} enabled={stageEnabled('shacl_in')} busy={busy === 'shacl-in'} artifacts={artifactsFor('shacl_in')} onPreview={setPreviewArtifact} onRun={() => execute('shacl-in', { shapes: shaclIn })} actionLabel="Validate mapped RDF">
+        <StageCard number={5} definition={stageDefinitions[4]} result={run?.stages?.shacl_in} enabled={stageEnabled('shacl_in')} busy={busy === 'shacl-in'} artifacts={artifactsFor('shacl_in')} onPreview={setPreviewArtifact} onRun={() => execute('shacl-in', { shapes: shaclIn })} actionLabel="Validate RDF">
           <CodeEditor id="shacl-in-editor" label="Input SHACL shape (Turtle)" value={shaclIn} onChange={setShaclIn} placeholder={'@prefix sh: <http://www.w3.org/ns/shacl#> .\n\n# Paste the shape for the mapped RDF here.'} />
         </StageCard>
 
-        <StageCard number={5} definition={stageDefinitions[4]} result={run?.stages?.reason} enabled={stageEnabled('reason')} busy={busy === 'reason'} artifacts={artifactsFor('reason')} onPreview={setPreviewArtifact} onRun={() => execute('reason', { rules })} actionLabel="Run N3 reasoner">
+        <StageCard number={6} definition={stageDefinitions[5]} result={run?.stages?.reason} enabled={stageEnabled('reason')} busy={busy === 'reason'} artifacts={artifactsFor('reason')} onPreview={setPreviewArtifact} onRun={() => execute('reason', { rules })} actionLabel="Run N3 reasoner">
           <CodeEditor id="n3-editor" label="N3 rules" value={rules} onChange={setRules} placeholder={'@prefix : <https://example.org/> .\n\n# Paste your N3 rules here.'} />
         </StageCard>
 
-        <StageCard number={6} definition={stageDefinitions[5]} result={run?.stages?.rdf2tss} enabled={stageEnabled('rdf2tss')} busy={busy === 'rdf2tss'} artifacts={artifactsFor('rdf2tss')} onPreview={setPreviewArtifact} onRun={() => execute('rdf2tss')} actionLabel="Transform RDF to TSS">
-          <div className="assumption-card"><span>Current compatibility contract</span><p>This stage uses reasoned RDF when Stage 5 completed successfully; otherwise it uses the mapped RDF directly. The selected input must contain the SOSA sensor, time, value, observed-property, and QUDT unit structure expected by the existing queries.</p></div>
+        <StageCard number={7} definition={stageDefinitions[6]} result={run?.stages?.rdf2tss} enabled={stageEnabled('rdf2tss')} busy={busy === 'rdf2tss'} artifacts={artifactsFor('rdf2tss')} onPreview={setPreviewArtifact} onRun={() => execute('rdf2tss')} actionLabel="Transform RDF to TSS">
+          <div className="assumption-card"><span>Current compatibility contract</span><p>This stage uses reasoned RDF when Stage 6 completed successfully; otherwise it uses aligned RDF when available or mapped RDF when alignment was skipped. The selected input must contain the SOSA sensor, time, value, observed-property, and QUDT unit structure expected by the existing queries.</p></div>
         </StageCard>
 
-        <StageCard number={7} definition={stageDefinitions[6]} result={run?.stages?.shacl_out} enabled={stageEnabled('shacl_out')} busy={busy === 'shacl-out'} artifacts={artifactsFor('shacl_out')} onPreview={setPreviewArtifact} onRun={() => execute('shacl-out', { shapes: shaclOut })} actionLabel="Validate TSS output">
+        <StageCard number={8} definition={stageDefinitions[7]} result={run?.stages?.shacl_out} enabled={stageEnabled('shacl_out')} busy={busy === 'shacl-out'} artifacts={artifactsFor('shacl_out')} onPreview={setPreviewArtifact} onRun={() => execute('shacl-out', { shapes: shaclOut })} actionLabel="Validate TSS output">
           <CodeEditor id="shacl-out-editor" label="Output SHACL shape (Turtle)" value={shaclOut} onChange={setShaclOut} placeholder={'@prefix sh: <http://www.w3.org/ns/shacl#> .\n\n# Paste the shape for the generated TSS graph here.'} />
         </StageCard>
 
-        <StageCard number={8} definition={stageDefinitions[7]} result={run?.stages?.rdf2ldes} enabled={stageEnabled('rdf2ldes')} busy={busy === 'rdf2ldes'} artifacts={artifactsFor('rdf2ldes')} onPreview={setPreviewArtifact} onRun={() => execute('rdf2ldes', { stream_name: streamName, base_url: baseUrl, source: ldesSource })} actionLabel="Generate LDES and ZIP">
-          <fieldset className="source-selector"><legend>LDES source</legend><label className={ldesSource === 'rdf' ? 'selected' : ''}><input type="radio" name="ldes-source" value="rdf" checked={ldesSource === 'rdf'} onChange={(event) => setLdesSource(event.target.value)} /><span><strong>Mapped RDF</strong><small>Use the original RDF produced by Stage 2.</small></span></label><label className={ldesSource === 'tss' ? 'selected' : ''}><input type="radio" name="ldes-source" value="tss" checked={ldesSource === 'tss'} onChange={(event) => setLdesSource(event.target.value)} /><span><strong>TSS RDF</strong><small>Use the TSS file produced by Stage 6.</small></span></label></fieldset>
+        <StageCard number={9} definition={stageDefinitions[8]} result={run?.stages?.rdf2ldes} enabled={stageEnabled('rdf2ldes')} busy={busy === 'rdf2ldes'} artifacts={artifactsFor('rdf2ldes')} onPreview={setPreviewArtifact} onRun={() => execute('rdf2ldes', { stream_name: streamName, base_url: baseUrl, source: ldesSource })} actionLabel="Generate LDES and ZIP">
+          <fieldset className="source-selector"><legend>LDES source</legend><label className={ldesSource === 'rdf' ? 'selected' : ''}><input type="radio" name="ldes-source" value="rdf" checked={ldesSource === 'rdf'} onChange={(event) => setLdesSource(event.target.value)} /><span><strong>Current RDF</strong><small>Use aligned RDF when available, otherwise the mapped RDF from Stage 2.</small></span></label><label className={ldesSource === 'tss' ? 'selected' : ''}><input type="radio" name="ldes-source" value="tss" checked={ldesSource === 'tss'} onChange={(event) => setLdesSource(event.target.value)} /><span><strong>TSS RDF</strong><small>Use the TSS file produced by Stage 7.</small></span></label></fieldset>
           <div className="two-column"><div className="form-field"><label htmlFor="stream-name">Stream name</label><input id="stream-name" value={streamName} onChange={(event) => setStreamName(event.target.value)} placeholder="dataset" /></div><div className="form-field"><label htmlFor="base-url">Public base URL</label><input id="base-url" value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} placeholder="https://example.org/ldes/" /></div></div>
           <div className="assumption-card"><span>Selected input</span><p>{ldesSource === 'rdf' ? 'Mapped SOSA observations will be converted in memory for the existing date-based TREE partitioning; Stage 6 is not required.' : 'The generated TSS snippets will be partitioned directly into the date-based TREE hierarchy.'} The complete directory is packaged automatically after completion.</p></div>
         </StageCard>

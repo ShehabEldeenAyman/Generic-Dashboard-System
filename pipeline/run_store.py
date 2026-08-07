@@ -21,6 +21,7 @@ from uuid import UUID, uuid4
 STAGE_ORDER = (
     "upload",
     "rml",
+    "alignment",
     "ingest",
     "shacl_in",
     "reason",
@@ -32,6 +33,15 @@ STAGE_ORDER = (
 STAGE_INVALIDATIONS = {
     "upload": set(STAGE_ORDER),
     "rml": set(STAGE_ORDER[1:]),
+    "alignment": {
+        "alignment",
+        "ingest",
+        "shacl_in",
+        "reason",
+        "rdf2tss",
+        "shacl_out",
+        "rdf2ldes",
+    },
     "ingest": {"ingest"},
     "shacl_in": {"shacl_in"},
     "reason": {"reason", "rdf2tss", "shacl_out", "rdf2ldes"},

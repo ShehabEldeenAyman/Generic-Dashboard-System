@@ -17,13 +17,14 @@ import shutil
 import subprocess
 from threading import Lock
 from typing import Any, Sequence
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit
 from zipfile import BadZipFile, ZIP_DEFLATED, ZipFile
 
 from openpyxl import load_workbook
 from openpyxl.utils.exceptions import InvalidFileException
-from rdflib import Graph
+from rdflib import Graph, URIRef
 
+from automating_alignments import automated_alignments
 from RDF2LDES import RDFTSS2LDES
 from RDF2TSS_V2 import RDF2TSS_V2
 from SHACL.SHACL_validate import validate_shacl
@@ -535,6 +536,100 @@ def run_rml_mapping(
         "mapping_triples": mapping_triples,
         "rdf_triples": len(mapped_graph),
         "log": result.log,
+    }
+
+
+def normalise_qudt_unit_uri(value: str) -> URIRef:
+    """Validate a user-supplied QUDT unit IRI and return its canonical URI."""
+    cleaned = value.strip()
+    if cleaned.startswith("<") and cleaned.endswith(">"):
+        cleaned = cleaned[1:-1].strip()
+    parsed = urlsplit(cleaned)
+    unit_name = parsed.path.removeprefix("/vocab/unit/")
+    if (
+        parsed.scheme not in {"http", "https"}
+        or parsed.hostname not in {"qudt.org", "www.qudt.org"}
+        or not parsed.path.startswith("/vocab/unit/")
+        or parsed.path == "/vocab/unit/"
+        or not re.fullmatch(r"[A-Za-z0-9._-]+", unit_name)
+        or parsed.query
+        or parsed.fragment
+        or any(character.isspace() for character in cleaned)
+    ):
+        raise PipelineError(
+            "Enter a complete QUDT unit IRI such as "
+            "http://qudt.org/vocab/unit/MilliS-PER-CentiM."
+        )
+    return URIRef(f"http://qudt.org{parsed.path.rstrip('/')}")
+
+
+def run_unit_alignment(
+    run_directory: Path,
+    source_path: Path,
+    target_unit: str,
+) -> dict[str, Any]:
+    """Create a converted RDF artifact without changing the mapped RDF source."""
+    target = normalise_qudt_unit_uri(target_unit)
+    try:
+        source_graph = Graph().parse(source_path, format="turtle")
+    except Exception as error:
+        raise PipelineError(
+            f"The mapped RDF could not be loaded for unit alignment: {error}"
+        ) from error
+
+    result_subjects = set(source_graph.subjects(predicate=automated_alignments.SOSA.hasSimpleResult))
+    eligible_subjects = {
+        subject
+        for subject in result_subjects
+        if source_graph.value(subject, automated_alignments.QUDT.hasUnit) is not None
+    }
+    if not eligible_subjects:
+        raise PipelineError(
+            "No convertible observations were found. Each SOSA result needs qudt:hasUnit."
+        )
+
+    source_units = {
+        URIRef(source_graph.value(subject, automated_alignments.QUDT.hasUnit))
+        for subject in eligible_subjects
+    }
+    for source_unit in source_units:
+        normalise_qudt_unit_uri(str(source_unit))
+        source_family = automated_alignments.conversion_family(source_unit)
+        target_family = automated_alignments.conversion_family(target)
+        if source_family and target_family and source_family != target_family:
+            raise PipelineError(
+                f"Cannot convert {source_unit} ({source_family}) to "
+                f"{target} ({target_family})."
+            )
+
+    output_path = run_directory / "aligned.ttl"
+    shutil.copy2(source_path, output_path)
+    converted_count = sum(
+        source_graph.value(subject, automated_alignments.QUDT.hasUnit) != target
+        for subject in eligible_subjects
+    )
+    try:
+        message = automated_alignments.transform_unit_optimized(output_path, target)
+        aligned_graph = Graph().parse(output_path, format="turtle")
+    except Exception as error:
+        raise PipelineError(f"QUDT unit alignment could not complete: {error}") from error
+
+    aligned_count = sum(
+        aligned_graph.value(subject, automated_alignments.QUDT.hasUnit) == target
+        for subject in eligible_subjects
+    )
+    if aligned_count != len(eligible_subjects):
+        raise PipelineError(
+            "Unit alignment completed without updating every convertible observation."
+        )
+    return {
+        "output_path": output_path,
+        "message": message,
+        "target_unit": str(target),
+        "source_units": sorted(str(unit) for unit in source_units),
+        "converted_observations": converted_count,
+        "aligned_observations": aligned_count,
+        "rdf_triples": len(aligned_graph),
     }
 
 

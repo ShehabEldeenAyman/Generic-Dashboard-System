@@ -50,6 +50,10 @@ class RmlRequest(BaseModel):
     mapping: str = Field(min_length=1, max_length=2_000_000)
 
 
+class AlignmentRequest(BaseModel):
+    target_unit: str = Field(min_length=1, max_length=2_000)
+
+
 class IngestRequest(BaseModel):
     graph_name: str = Field(min_length=1, max_length=2_000)
 
@@ -160,6 +164,17 @@ def source_path(state: dict[str, Any]) -> Path:
     if not relative_path:
         raise pipeline.PipelineError("The uploaded tabular source artifact is missing.")
     return RUN_STORE.resolve_relative(state["id"], relative_path)
+
+
+def rdf_input_path(state: dict[str, Any], directory: Path) -> tuple[Path, str]:
+    """Use aligned RDF after a successful optional alignment, otherwise mapped RDF."""
+    alignment = state.get("stages", {}).get("alignment") or {}
+    if alignment.get("status") == "success":
+        aligned_path = directory / "aligned.ttl"
+        if not aligned_path.is_file():
+            raise pipeline.PipelineError("The aligned RDF artifact is missing. Run unit alignment again.")
+        return aligned_path, "aligned RDF"
+    return directory / "mapped.ttl", "mapped RDF"
 
 
 @app.get("/api/health")
@@ -322,14 +337,39 @@ def mapped_rdf_preview(
         raise HTTPException(400, str(error)) from error
 
 
+@app.post("/api/runs/{run_id}/stages/alignment")
+def alignment_stage(run_id: str, request: AlignmentRequest) -> dict[str, Any]:
+    def operation(_state: dict[str, Any], directory: Path) -> dict[str, Any]:
+        result = pipeline.run_unit_alignment(
+            directory,
+            directory / "mapped.ttl",
+            request.target_unit,
+        )
+        return {
+            "message": result["message"],
+            "target_unit": result["target_unit"],
+            "source_units": result["source_units"],
+            "converted_observations": result["converted_observations"],
+            "aligned_observations": result["aligned_observations"],
+            "rdf_triples": result["rdf_triples"],
+            "artifacts": [
+                {"path": result["output_path"], "name": "Unit-aligned RDF", "kind": "ttl"}
+            ],
+        }
+
+    return execute_stage(run_id, "alignment", "rml", operation)
+
+
 @app.post("/api/runs/{run_id}/stages/ingest")
 def ingest_stage(run_id: str, request: IngestRequest) -> dict[str, Any]:
-    def operation(_state: dict[str, Any], directory: Path) -> dict[str, Any]:
-        result = pipeline.ingest_graph(directory / "mapped.ttl", request.graph_name)
+    def operation(state: dict[str, Any], directory: Path) -> dict[str, Any]:
+        input_path, input_label = rdf_input_path(state, directory)
+        result = pipeline.ingest_graph(input_path, request.graph_name)
         return {
-            "message": f"Cleared and ingested the mapped RDF into {result['graph_uri']}.",
+            "message": f"Cleared and ingested the {input_label} into {result['graph_uri']}.",
             "graph_uri": result["graph_uri"],
             "graph_cleared": result["graph_cleared"],
+            "input_rdf": input_path.name,
             "state_updates": {
                 "graph": {"name": request.graph_name, "uri": result["graph_uri"]}
             },
@@ -351,15 +391,17 @@ def sparql_query(run_id: str, request: SparqlRequest) -> dict[str, Any]:
 
 @app.post("/api/runs/{run_id}/stages/shacl-in")
 def shacl_in_stage(run_id: str, request: ShaclRequest) -> dict[str, Any]:
-    def operation(_state: dict[str, Any], directory: Path) -> dict[str, Any]:
+    def operation(state: dict[str, Any], directory: Path) -> dict[str, Any]:
+        input_path, input_label = rdf_input_path(state, directory)
         result = pipeline.run_shacl_validation(
-            directory, directory / "mapped.ttl", request.shapes, prefix="shacl_in"
+            directory, input_path, request.shapes, prefix="shacl_in"
         )
         conforms = bool(result["conforms"])
         return {
             "status": "success" if conforms else "nonconformant",
-            "message": "The mapped RDF conforms to the SHACL shape." if conforms else "The mapped RDF does not conform. Review the report; the pipeline remains available.",
+            "message": f"The {input_label} conforms to the SHACL shape." if conforms else f"The {input_label} does not conform. Review the report; the pipeline remains available.",
             "conforms": conforms,
+            "input_rdf": input_path.name,
             "report": result["report"],
             "duration_seconds": result["duration_seconds"],
             "artifacts": [
@@ -373,12 +415,14 @@ def shacl_in_stage(run_id: str, request: ShaclRequest) -> dict[str, Any]:
 
 @app.post("/api/runs/{run_id}/stages/reason")
 def reason_stage(run_id: str, request: ReasonRequest) -> dict[str, Any]:
-    def operation(_state: dict[str, Any], directory: Path) -> dict[str, Any]:
-        result = pipeline.run_reasoner(directory, directory / "mapped.ttl", request.rules)
+    def operation(state: dict[str, Any], directory: Path) -> dict[str, Any]:
+        input_path, input_label = rdf_input_path(state, directory)
+        result = pipeline.run_reasoner(directory, input_path, request.rules)
         return {
-            "message": f"Reasoning added {result['inferred_triples']:,} inferred triples.",
+            "message": f"Reasoning over {input_label} added {result['inferred_triples']:,} inferred triples.",
             "inferred_triples": result["inferred_triples"],
             "total_triples": result["total_triples"],
+            "input_rdf": input_path.name,
             "log": result["log"],
             "artifacts": [
                 {"path": result["rules_path"], "name": "N3 rules", "kind": "n3"},
@@ -395,8 +439,9 @@ def rdf2tss_stage(run_id: str) -> dict[str, Any]:
         reason_status = (state.get("stages", {}).get("reason") or {}).get("status")
         reasoned_path = directory / "reasoned.ttl"
         use_reasoned_rdf = reason_status == "success" and reasoned_path.is_file()
-        input_path = reasoned_path if use_reasoned_rdf else directory / "mapped.ttl"
-        input_label = "reasoned RDF" if use_reasoned_rdf else "mapped RDF"
+        fallback_path, fallback_label = rdf_input_path(state, directory)
+        input_path = reasoned_path if use_reasoned_rdf else fallback_path
+        input_label = "reasoned RDF" if use_reasoned_rdf else fallback_label
         result = pipeline.run_rdf2tss(directory, input_path)
         return {
             "message": f"Created TSS data for {result['sensor_count']:,} sensors from {input_label}.",
@@ -435,9 +480,11 @@ def shacl_out_stage(run_id: str, request: ShaclRequest) -> dict[str, Any]:
 
 @app.post("/api/runs/{run_id}/stages/rdf2ldes")
 def rdf2ldes_stage(run_id: str, request: LdesRequest) -> dict[str, Any]:
-    def operation(_state: dict[str, Any], directory: Path) -> dict[str, Any]:
-        source_path = directory / ("mapped.ttl" if request.source == "rdf" else "timeseries.ttl")
-        source_label = "mapped RDF" if request.source == "rdf" else "TSS RDF"
+    def operation(state: dict[str, Any], directory: Path) -> dict[str, Any]:
+        if request.source == "rdf":
+            source_path, source_label = rdf_input_path(state, directory)
+        else:
+            source_path, source_label = directory / "timeseries.ttl", "TSS RDF"
         result = pipeline.run_rdf2ldes(
             directory,
             source_path,

@@ -8,6 +8,7 @@ from openpyxl import Workbook
 import pytest
 from rdflib import Graph, URIRef
 
+from automating_alignments import automated_alignments
 from pipeline import generic_pipeline
 from pipeline import playground_server
 from pipeline.run_store import RunStore
@@ -201,6 +202,86 @@ def test_ingest_graph_clears_named_graph_before_upload(tmp_path, monkeypatch):
     assert result == {"graph_uri": graph_uri, "graph_cleared": True}
 
 
+def test_unit_alignment_converts_a_copy_and_preserves_mapped_rdf(tmp_path):
+    mapped_path = tmp_path / "mapped.ttl"
+    mapped_path.write_text(
+        """
+        @prefix qudt: <http://qudt.org/schema/qudt/> .
+        @prefix sosa: <http://www.w3.org/ns/sosa/> .
+        @prefix unit: <http://qudt.org/vocab/unit/> .
+        @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+        <urn:observation:1> a sosa:Observation ;
+            sosa:hasSimpleResult "1000"^^xsd:double ;
+            qudt:hasUnit unit:MicroS-PER-CentiM .
+        <urn:observation:2> a sosa:Observation ;
+            sosa:hasSimpleResult "2500"^^xsd:double ;
+            qudt:hasUnit unit:MicroS-PER-CentiM .
+        """,
+        encoding="utf-8",
+    )
+    original = mapped_path.read_text(encoding="utf-8")
+
+    result = generic_pipeline.run_unit_alignment(
+        tmp_path,
+        mapped_path,
+        "https://qudt.org/vocab/unit/MilliS-PER-CentiM",
+    )
+
+    assert mapped_path.read_text(encoding="utf-8") == original
+    assert result["converted_observations"] == 2
+    assert result["aligned_observations"] == 2
+    assert result["target_unit"] == "http://qudt.org/vocab/unit/MilliS-PER-CentiM"
+    aligned = Graph().parse(result["output_path"], format="turtle")
+    target = URIRef(result["target_unit"])
+    subjects = set(aligned.subjects(predicate=automated_alignments.SOSA.hasSimpleResult))
+    assert sorted(
+        float(aligned.value(subject, automated_alignments.SOSA.hasSimpleResult))
+        for subject in subjects
+    ) == [1.0, 2.5]
+    assert all(aligned.value(subject, automated_alignments.QUDT.hasUnit) == target for subject in subjects)
+
+
+@pytest.mark.parametrize(
+    ("source_name", "target_name", "value", "expected"),
+    [
+        ("MicroS-PER-M", "MilliS-PER-M", 1000.0, 1.0),
+        ("MilliGM-PER-L", "GM-PER-L", 1000.0, 1.0),
+        ("PPTH", "PPM", 1.0, 1000.0),
+        ("DEG_C", "K", 20.0, 293.15),
+        ("K", "DEG_C", 293.15, 20.0),
+    ],
+)
+def test_known_water_measurement_conversions(source_name, target_name, value, expected):
+    unit_root = "http://qudt.org/vocab/unit/"
+    source = automated_alignments.KNOWN_CONVERSIONS[URIRef(unit_root + source_name)]
+    target = automated_alignments.KNOWN_CONVERSIONS[URIRef(unit_root + target_name)]
+
+    converted = automated_alignments.convert_qudt_value(value, *source, *target)
+
+    assert converted == pytest.approx(expected)
+
+
+def test_unit_alignment_rejects_incompatible_known_families(tmp_path):
+    mapped_path = tmp_path / "mapped.ttl"
+    mapped_path.write_text(
+        """
+        @prefix qudt: <http://qudt.org/schema/qudt/> .
+        @prefix sosa: <http://www.w3.org/ns/sosa/> .
+        @prefix unit: <http://qudt.org/vocab/unit/> .
+        <urn:observation> sosa:hasSimpleResult 1000 ; qudt:hasUnit unit:MicroS-PER-CentiM .
+        """,
+        encoding="utf-8",
+    )
+
+    with pytest.raises(generic_pipeline.PipelineError, match="electrical conductivity"):
+        generic_pipeline.run_unit_alignment(
+            tmp_path,
+            mapped_path,
+            "http://qudt.org/vocab/unit/MilliGM-PER-L",
+        )
+
+
 def test_ingest_graph_aborts_when_named_graph_cannot_be_cleared(tmp_path, monkeypatch):
     rdf_path = tmp_path / "mapped.ttl"
     rdf_path.write_text("<https://example.org/s> <https://example.org/p> <https://example.org/o> .")
@@ -307,6 +388,7 @@ def test_optional_validation_does_not_invalidate_downstream_results(tmp_path):
         for stage in (
             "upload",
             "rml",
+            "alignment",
             "ingest",
             "shacl_in",
             "reason",
@@ -323,6 +405,53 @@ def test_optional_validation_does_not_invalidate_downstream_results(tmp_path):
     assert state["stages"]["reason"]["status"] == "success"
     assert state["stages"]["rdf2tss"]["status"] == "success"
     assert state["stages"]["rdf2ldes"]["status"] == "success"
+
+
+def test_alignment_api_creates_artifact_and_ingestion_uses_it(tmp_path, monkeypatch):
+    run_store = RunStore(tmp_path / "runs")
+    monkeypatch.setattr(playground_server, "RUN_STORE", run_store)
+    state = run_store.create("items.csv", "items.csv")
+    state["stages"]["rml"] = {"status": "success"}
+    run_store.save(state)
+    directory = run_store.run_dir(state["id"])
+    mapped_path = directory / "mapped.ttl"
+    mapped_path.write_text(
+        """
+        @prefix qudt: <http://qudt.org/schema/qudt/> .
+        @prefix sosa: <http://www.w3.org/ns/sosa/> .
+        @prefix unit: <http://qudt.org/vocab/unit/> .
+        <urn:observation> sosa:hasSimpleResult 1500 ; qudt:hasUnit unit:MicroS-PER-CentiM .
+        """,
+        encoding="utf-8",
+    )
+    client = TestClient(playground_server.app)
+
+    alignment_response = client.post(
+        f"/api/runs/{state['id']}/stages/alignment",
+        json={"target_unit": "http://qudt.org/vocab/unit/MilliS-PER-CentiM"},
+    )
+
+    assert alignment_response.status_code == 200
+    aligned_state = alignment_response.json()
+    assert aligned_state["stages"]["alignment"]["status"] == "success"
+    assert aligned_state["stages"]["alignment"]["details"]["converted_observations"] == 1
+    assert any(artifact["name"] == "Unit-aligned RDF" for artifact in aligned_state["artifacts"])
+
+    captured = {}
+
+    def ingest_graph(rdf_path, graph_name):
+        captured.update({"rdf_path": rdf_path, "graph_name": graph_name})
+        return {"graph_uri": "https://example.org/graphs/aligned", "graph_cleared": True}
+
+    monkeypatch.setattr(generic_pipeline, "ingest_graph", ingest_graph)
+    ingest_response = client.post(
+        f"/api/runs/{state['id']}/stages/ingest",
+        json={"graph_name": "aligned"},
+    )
+
+    assert ingest_response.status_code == 200
+    assert ingest_response.json()["stages"]["ingest"]["details"]["input_rdf"] == "aligned.ttl"
+    assert captured == {"rdf_path": directory / "aligned.ttl", "graph_name": "aligned"}
 
 
 def test_rdf2tss_api_uses_mapped_rdf_when_reasoning_is_skipped(tmp_path, monkeypatch):
