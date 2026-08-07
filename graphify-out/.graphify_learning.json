@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-08-06T12:28:45.991566+00:00",
+  "generated_at": "2026-08-06T19:59:51.460313+00:00",
   "nodes": {
     "frontend_src_app": {
-      "code_fingerprint": "725944a2f890ab1fbe7300e2d180abfa16e2de2b865789f7d2523d631ea03003",
+      "code_fingerprint": "122f312b8340b6cee9fb88ee65ce569eb52c792872d1836adadb18d296af2988",
       "label": "App.jsx",
       "last": "2026-08-06T09:36:50.609969+00:00",
       "provenance": [
@@ -12,13 +12,13 @@
           "q": "Where should RDF preview, artifact downloads, and source-selectable LDES be implemented?"
         }
       ],
-      "score": 0.997245284,
+      "score": 0.990053489,
       "source_file": "frontend/src/App.jsx",
       "status": "tentative",
       "uses": 1
     },
     "frontend_src_app_uploadstage": {
-      "code_fingerprint": "725944a2f890ab1fbe7300e2d180abfa16e2de2b865789f7d2523d631ea03003",
+      "code_fingerprint": "122f312b8340b6cee9fb88ee65ce569eb52c792872d1836adadb18d296af2988",
       "label": "UploadStage()",
       "last": "2026-08-05T12:47:04.457510+00:00",
       "provenance": [
@@ -28,13 +28,13 @@
           "q": "Can you add a button to clear/delete the uploaded file (csv or xlsx) so user can easily reupload the right file"
         }
       ],
-      "score": 0.977447051,
+      "score": 0.970398034,
       "source_file": "frontend/src/App.jsx",
       "status": "tentative",
       "uses": 1
     },
     "pipeline_generic_pipeline_csv_preview": {
-      "code_fingerprint": "61fb776187d5c77f357f562cd97afc48f79a1d279320fefec04e6ed165983949",
+      "code_fingerprint": "4cd0f73c9b2771aebd3aaaf9480d6f3213b26772890a4c5898995995b45dfcf6",
       "label": "csv_preview()",
       "last": "2026-08-05T12:35:44.614612+00:00",
       "provenance": [
@@ -44,13 +44,13 @@
           "q": "i have updated the graphify structure so make sure to check the new one out before doing anything. I have tried to test the system, module 1 data input only supports the upload of csv files, I want it to also support xlsx files as well"
         }
       ],
-      "score": 0.977269365,
+      "score": 0.97022163,
       "source_file": "pipeline/generic_pipeline.py",
       "status": "tentative",
       "uses": 1
     },
     "pipeline_generic_pipeline_tabular_preview": {
-      "code_fingerprint": "61fb776187d5c77f357f562cd97afc48f79a1d279320fefec04e6ed165983949",
+      "code_fingerprint": "4cd0f73c9b2771aebd3aaaf9480d6f3213b26772890a4c5898995995b45dfcf6",
       "label": "tabular_preview()",
       "last": "2026-08-05T12:35:44.614612+00:00",
       "provenance": [
@@ -60,13 +60,13 @@
           "q": "i have updated the graphify structure so make sure to check the new one out before doing anything. I have tried to test the system, module 1 data input only supports the upload of csv files, I want it to also support xlsx files as well"
         }
       ],
-      "score": 0.977269365,
+      "score": 0.97022163,
       "source_file": "pipeline/generic_pipeline.py",
       "status": "tentative",
       "uses": 1
     },
     "pipeline_generic_pipeline_xlsx_preview": {
-      "code_fingerprint": "61fb776187d5c77f357f562cd97afc48f79a1d279320fefec04e6ed165983949",
+      "code_fingerprint": "4cd0f73c9b2771aebd3aaaf9480d6f3213b26772890a4c5898995995b45dfcf6",
       "label": "xlsx_preview()",
       "last": "2026-08-05T12:35:44.614612+00:00",
       "provenance": [
@@ -76,13 +76,13 @@
           "q": "i have updated the graphify structure so make sure to check the new one out before doing anything. I have tried to test the system, module 1 data input only supports the upload of csv files, I want it to also support xlsx files as well"
         }
       ],
-      "score": 0.977269365,
+      "score": 0.97022163,
       "source_file": "pipeline/generic_pipeline.py",
       "status": "tentative",
       "uses": 1
     },
     "pipeline_generic_pipeline_xlsx_to_csv": {
-      "code_fingerprint": "61fb776187d5c77f357f562cd97afc48f79a1d279320fefec04e6ed165983949",
+      "code_fingerprint": "4cd0f73c9b2771aebd3aaaf9480d6f3213b26772890a4c5898995995b45dfcf6",
       "label": "xlsx_to_csv()",
       "last": "2026-08-05T12:35:44.614612+00:00",
       "provenance": [
@@ -92,13 +92,13 @@
           "q": "i have updated the graphify structure so make sure to check the new one out before doing anything. I have tried to test the system, module 1 data input only supports the upload of csv files, I want it to also support xlsx files as well"
         }
       ],
-      "score": 0.977269365,
+      "score": 0.97022163,
       "source_file": "pipeline/generic_pipeline.py",
       "status": "tentative",
       "uses": 1
     },
     "pipeline_playground_server_create_run": {
-      "code_fingerprint": "899914f94c583343bcd11a69838fac957dd371a58eaf4fa2410a3608212517e5",
+      "code_fingerprint": "7ab5ad2ad1da87a87e032ea56932c298775c293fdeac56727a220655ec6398dc",
       "label": "create_run()",
       "last": "2026-08-05T12:35:44.614612+00:00",
       "provenance": [
@@ -108,13 +108,13 @@
           "q": "i have updated the graphify structure so make sure to check the new one out before doing anything. I have tried to test the system, module 1 data input only supports the upload of csv files, I want it to also support xlsx files as well"
         }
       ],
-      "score": 0.977269365,
+      "score": 0.97022163,
       "source_file": "pipeline/playground_server.py",
       "status": "tentative",
       "uses": 1
     },
     "pipeline_playground_server_delete_run": {
-      "code_fingerprint": "899914f94c583343bcd11a69838fac957dd371a58eaf4fa2410a3608212517e5",
+      "code_fingerprint": "7ab5ad2ad1da87a87e032ea56932c298775c293fdeac56727a220655ec6398dc",
       "label": "delete_run()",
       "last": "2026-08-05T12:47:04.457510+00:00",
       "provenance": [
@@ -124,7 +124,7 @@
           "q": "Can you add a button to clear/delete the uploaded file (csv or xlsx) so user can easily reupload the right file"
         }
       ],
-      "score": 0.977447051,
+      "score": 0.970398034,
       "source_file": "pipeline/playground_server.py",
       "status": "tentative",
       "uses": 1
@@ -140,7 +140,7 @@
           "q": "Can you add a button to clear/delete the uploaded file (csv or xlsx) so user can easily reupload the right file"
         }
       ],
-      "score": 0.977447051,
+      "score": 0.970398034,
       "source_file": "pipeline/run_store.py",
       "status": "tentative",
       "uses": 1
@@ -156,13 +156,13 @@
           "q": "Can you add a button to clear/delete the uploaded file (csv or xlsx) so user can easily reupload the right file"
         }
       ],
-      "score": 0.977447051,
+      "score": 0.970398034,
       "source_file": "pipeline/run_store.py",
       "status": "tentative",
       "uses": 1
     },
     "pipeline_tests_test_generic_pipeline_test_delete_run_removes_uploaded_file_and_artifacts": {
-      "code_fingerprint": "c8ee5d024c1ee259a181133c3111903246b0e040ec67b9b7547476efcd715e88",
+      "code_fingerprint": "1b470340d1260f4ee7788055de4ed95907f7b0b3be85b0e95a325dd1e985ec19",
       "label": "test_delete_run_removes_uploaded_file_and_artifacts()",
       "last": "2026-08-05T12:47:04.457510+00:00",
       "provenance": [
@@ -172,13 +172,13 @@
           "q": "Can you add a button to clear/delete the uploaded file (csv or xlsx) so user can easily reupload the right file"
         }
       ],
-      "score": 0.977447051,
+      "score": 0.970398034,
       "source_file": "pipeline/tests/test_generic_pipeline.py",
       "status": "tentative",
       "uses": 1
     },
     "pipeline_tests_test_generic_pipeline_test_upload_xlsx_creates_preview_and_rml_csv_source": {
-      "code_fingerprint": "c8ee5d024c1ee259a181133c3111903246b0e040ec67b9b7547476efcd715e88",
+      "code_fingerprint": "1b470340d1260f4ee7788055de4ed95907f7b0b3be85b0e95a325dd1e985ec19",
       "label": "test_upload_xlsx_creates_preview_and_rml_csv_source()",
       "last": "2026-08-05T12:35:44.614612+00:00",
       "provenance": [
@@ -188,7 +188,7 @@
           "q": "i have updated the graphify structure so make sure to check the new one out before doing anything. I have tried to test the system, module 1 data input only supports the upload of csv files, I want it to also support xlsx files as well"
         }
       ],
-      "score": 0.977269365,
+      "score": 0.97022163,
       "source_file": "pipeline/tests/test_generic_pipeline.py",
       "status": "tentative",
       "uses": 1

@@ -1,32 +1,45 @@
-from rdflib import Graph,URIRef,Namespace,BNode,Literal,Dataset
-from rdflib.namespace import XSD,RDF
-from rdflib.term import BNode
-import pandas as pd
+from rdflib import Graph, URIRef, Namespace, BNode, Literal, Dataset
+from rdflib.namespace import XSD, RDF
 import argparse
 from collections import defaultdict
-from datetime import datetime, timezone,timedelta
-import json
+from datetime import datetime, timezone
 import os
-import calendar
-import time
 from pathlib import Path
 from dateutil.relativedelta import relativedelta
-
-# --- Config ---
-input_path = "../test-data/mapped.ttl"
-base_path = "./LDES-output-NoTSS"
 
 # --- Namespaces ---
 SOSA = Namespace("http://www.w3.org/ns/sosa/")
 EX = Namespace("http://example.com/ns#") 
-XSD = Namespace("http://www.w3.org/2001/XMLSchema#")
-
-directory = base_path
 AS = Namespace("https://www.w3.org/ns/activitystreams#")
 LDES = Namespace("https://w3id.org/ldes#")
 TREE = Namespace("https://w3id.org/tree#")
-eventstream_uri = URIRef("https://shehabeldeenayman.github.io/Mol_sluis_Dessel_Usecase/LDES/LDES.trig#")
-#view_uri = URIRef("https://shehabeldeenayman.github.io/Mol_sluis_Dessel_Usecase/data/data.ttl")
+TSS = Namespace("https://w3id.org/tss#")
+
+# These values are configured for each run by ``set_property``. Keeping them
+# module-local preserves the converter's existing algorithm while allowing the
+# pipeline to isolate every user's output inside its own run directory.
+directory = "./ldes-output"
+base_path = "./ldes-output"
+eventstream_uri = URIRef("https://example.org/ldes/stream#eventstream")
+base_uri = URIRef("https://example.org/ldes/stream/")
+home_page = URIRef("https://example.org/ldes/stream/stream.trig")
+
+
+def set_property(
+    property_name,
+    directory_input="./ldes-output",
+    base_path_input="./ldes-output",
+    base_uri_input="https://example.org/ldes/",
+):
+    """Configure explicit local and public paths for one raw-RDF LDES run."""
+    global directory, eventstream_uri, home_page, base_path, base_uri
+    directory = str(Path(directory_input).resolve())
+    base_path = str(Path(base_path_input).resolve())
+    public_root = str(base_uri_input).rstrip("/")
+    stream_root = f"{public_root}/{property_name}"
+    base_uri = URIRef(f"{stream_root}/")
+    eventstream_uri = URIRef(f"{stream_root}#eventstream")
+    home_page = URIRef(f"{stream_root}/{property_name}.trig")
 
 
 #RDF2LDES##############################################################################################
@@ -127,7 +140,7 @@ def divide_data(observations):
         metadata_graph.add((eventstream_uri, RDF.type, LDES.EventStream))
         metadata_graph.add((eventstream_uri, LDES.timestampPath, SOSA.resultTime))
 
-        metadata_graph.add((eventstream_uri, TREE.view, URIRef(os.path.join(base_uri, f"{base_path}/{year}/{month:02d}/{day:02d}/{day:02d}.trig"))))
+        metadata_graph.add((eventstream_uri, TREE.view, home_page))
         #store = ConjunctiveGraph()
 
         #ran_once = False
@@ -166,17 +179,6 @@ def divide_data(observations):
         #     f.write(temp_graph.serialize(format="nt"))
 
 #RDF2LDES##############################################################################################
-#directory = "LDES/"
-AS = Namespace("https://www.w3.org/ns/activitystreams#")
-LDES = Namespace("https://w3id.org/ldes#")
-TREE = Namespace("https://w3id.org/tree#")
-TSS = Namespace("https://w3id.org/tss#")
-#eventstream_uri = URIRef("https://shehabeldeenayman.github.io/Mol_sluis_Dessel_Usecase/LDES/LDES#eventstream") #change this everytime you change the base uri for hosting
-base_uri = URIRef("https://shehabeldeenayman.github.io/Mol_sluis_Dessel_Usecase/")
-home_page = URIRef("https://shehabeldeenayman.github.io/Mol_sluis_Dessel_Usecase/LDES/LDES.trig")
-
-
-
 def delete_ldes_files():
     for root, dirs, files in os.walk(directory):
         if(Path(os.path.join(root, f"{Path(root).parts[-1]}.trig"))).exists():
