@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
 
-const API = import.meta.env.VITE_PIPELINE_API_URL || 'http://localhost:8000'
+// Same-origin by default: the backend serves the built UI, and the Vite dev
+// server proxies /api. Set VITE_PIPELINE_API_URL only for a separately hosted API.
+const API = import.meta.env.VITE_PIPELINE_API_URL || ''
 const completedStatuses = new Set(['success', 'nonconformant'])
 const defaultAlignmentUnit = 'http://qudt.org/vocab/unit/MilliS-PER-CentiM'
 const alignmentUnitExamples = [

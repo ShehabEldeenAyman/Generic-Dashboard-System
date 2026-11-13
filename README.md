@@ -314,7 +314,27 @@ npm install
 
 ## Running the application
 
-The backend, frontend, and Fuseki must run at the same time. Use separate terminal windows for each process.
+### Quick start: one command
+
+Start Fuseki (see below), then from the repository root, with the Python virtual environment activated:
+
+```bash
+python run.py
+```
+
+This builds the frontend when its sources have changed (running `npm install` the first time) and serves the dashboard and the API together at `http://localhost:8000`. Add `--host 0.0.0.0` to expose it on the network, or `--rebuild` to force a fresh frontend build.
+
+For development with hot reload of both the backend and the frontend:
+
+```bash
+python run.py --dev
+```
+
+This starts uvicorn with `--reload` on port `8000` and the Vite dev server on `http://localhost:5173`, which proxies `/api` to the backend. Ctrl+C stops both.
+
+### Running each process manually
+
+The backend, frontend, and Fuseki can also be run separately in their own terminal windows.
 
 ### 1. Run Fuseki
 

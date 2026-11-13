@@ -15,6 +15,7 @@ import requests
 from fastapi import FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from pipeline import generic_pipeline as pipeline
@@ -543,3 +544,12 @@ def preview_artifact(run_id: str, artifact_id: str) -> dict[str, Any]:
     response["text"] = text[:100_000]
     response["truncated"] = len(text) > 100_000
     return response
+
+
+# Serve the built React app (``npm run build``) from the same origin as the API.
+# Mounted last so every /api route above takes precedence.
+FRONTEND_DIST = Path(
+    os.getenv("FRONTEND_DIST", str(Path(__file__).resolve().parents[1] / "frontend" / "dist"))
+)
+if (FRONTEND_DIST / "index.html").is_file():
+    app.mount("/", StaticFiles(directory=FRONTEND_DIST, html=True), name="frontend")
