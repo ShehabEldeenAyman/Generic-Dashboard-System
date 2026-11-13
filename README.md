@@ -1,15 +1,15 @@
 <div align="center">
 
-# Semantic Pipeline Studio
+# Semantic Data Studio
 
-### Turn tabular data into validated, queryable, and publishable linked data
+### Turn spreadsheets into a validated, queryable knowledge graph
 
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-1.0-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-2.0-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![RDF](https://img.shields.io/badge/RDF-Semantic_Web-5B4B8A)](https://www.w3.org/RDF/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A generic, web-based workspace for converting CSV and Excel data to RDF, validating and enriching it, querying it in Apache Jena Fuseki, and packaging it as an LDES.
+A web dashboard for mapping CSV and Excel data to RDF, checking and enriching it with SHACL, publishing it to Apache Jena Fuseki, and querying the triple store.
 
 </div>
 
@@ -17,370 +17,206 @@ A generic, web-based workspace for converting CSV and Excel data to RDF, validat
 
 ## Overview
 
-Semantic Pipeline Studio provides one guided interface for a complete semantic-data workflow. Users bring their own tabular data and semantic contracts—the RML mapping, optional target QUDT unit, SHACL shapes, N3 rules, graph name, and LDES settings—while the application manages each run and exposes its generated artifacts.
+Semantic Data Studio is a business-friendly dashboard rather than a fixed pipeline. An **Overview** page summarises the active dataset (rows, RDF triples, data quality, published graph, and triple-store status), and a sidebar opens each workspace in any order:
 
-The system is domain-independent. It does not assume a particular dataset or business use case, and uploaded data is stored in an isolated, run-scoped workspace suitable for a cloud deployment model.
+| Workspace | What it does |
+| --- | --- |
+| **Data** | Upload a CSV or XLSX file and inspect a parsed preview, its columns, and the file name to use in the mapping. |
+| **Mapping** | Provide an RML mapping (pasted or uploaded) and run RMLMapper to produce RDF. |
+| **Data quality** | Provide SHACL shapes (pasted or uploaded); validate the data, including SPARQL-based constraints, and apply SHACL rules to add inferred triples. |
+| **Knowledge graph** | Download the current RDF as Turtle, N-Triples, JSON-LD, or RDF/XML; publish it to a Fuseki named graph; browse it entity by entity. |
+| **Query & Agent** | Query every graph in Fuseki directly — no upload needed — through ready-made operations or a SPARQL editor. |
 
-## Pipeline at a glance
+The system is domain-independent. Uploaded data is stored in an isolated, dataset-scoped workspace on the server, and the browser remembers the active dataset across page reloads.
 
 ```mermaid
 flowchart LR
-    A["CSV or XLSX upload"] --> B["RML mapping"]
-    B --> C["RDF preview and download"]
-    B -. optional .-> U["QUDT unit alignment"]
-    B --> R["Current RDF"]
-    U --> R
-    R --> D["Fuseki named graph"]
-    D --> E["SPARQL workspace"]
-    R -. optional .-> F["SHACL input validation"]
-    R -. optional .-> G["N3 reasoning"]
-    R --> H["RDF to TSS"]
-    G -. when available .-> H
-    H --> I["TSS download"]
-    H -. optional .-> J["SHACL output validation"]
-    R --> K["RDF to LDES"]
-    H --> K
-    K --> L["LDES ZIP download"]
+    A["CSV / XLSX"] --> B["RML mapping"]
+    B --> R["Mapped RDF"]
+    R -. optional .-> S["SHACL rules"]
+    S --> E["Enriched RDF"]
+    R --> C["Current RDF"]
+    E --> C
+    C --> V["SHACL validation"]
+    C --> D["Download (4 formats)"]
+    C --> F["Fuseki named graph"]
+    F --> Q["Query & Agent"]
 ```
 
-Optional stages do not block later processing. When unit alignment succeeds, downstream RDF stages use its separate aligned artifact; when it is skipped, they use the mapped RDF. RDF2TSS still prefers reasoned RDF when a successful reasoning result exists. LDES generation can start from either the current RDF or TSS RDF.
+The **current RDF** is the enriched RDF when SHACL rules ran successfully, otherwise the mapped RDF. Validation, downloads, publishing, and the RDF browser all use it.
 
 ## Features
 
-### 1. Tabular data input
+### Data
+- Upload `.csv` or `.xlsx` files; Excel workbooks use the active worksheet.
+- Multi-row Excel headings and separate date/time columns are combined during conversion to CSV for RMLMapper.
+- See row and column counts, encoding or sheet name, and a preview table.
+- Remove a dataset and every file generated from it.
 
-- Upload `.csv` or `.xlsx` files from the browser.
-- Inspect parsed columns, rows, and workbook metadata immediately after upload.
-- Normalize the active Excel worksheet into a run-scoped CSV source for RMLMapper.
-- Combine supported multi-row Excel headings and date/time columns during normalization.
-- Clear a selected file before uploading or delete the active run and start over.
+### Mapping
+- Paste an RML mapping into the editor or upload a Turtle file; an uploaded file can be switched to the editor for changes.
+- The exact logical-source file name and all column names are shown next to the editor.
+- Readable errors when the mapping is invalid or produces no triples, with the RMLMapper log available.
 
-### 2. User-provided RML mapping
+### Data quality (SHACL)
+- Paste or upload one shapes graph that holds both constraints and rules.
+- **Validate data** checks SHACL Core constraints and SPARQL-based constraints (`sh:sparql`) against the current RDF. Results appear as a table (severity, record, property, value, message, constraint) with severity filters and search; the full text report is downloadable.
+- **Apply rules** runs `sh:TripleRule` and `sh:SPARQLRule` once, in `sh:order`, over the mapped RDF and stores the result as enriched RDF. Validation ignores rules, so apply them first when constraints depend on inferred facts.
+- Non-conformance is a result, not a failure: every other workspace stays available.
 
-- Paste a complete RML mapping into the built-in code editor.
-- See the exact prepared CSV filename that must be used as `rml:source`.
-- Validate the mapping syntax and execute it with RMLMapper.
-- Receive readable stage errors without taking down the application.
+### Knowledge graph
+- Download the current RDF as Turtle, N-Triples, JSON-LD, or RDF/XML.
+- Publish to a Fuseki named graph given as a short name or full IRI, either **replacing** the graph's content or **adding** to it.
+- Browse the RDF ten entities at a time.
 
-### 3. Optional QUDT unit alignment
-
-- Paste a complete target QUDT unit IRI, such as `http://qudt.org/vocab/unit/MilliS-PER-CentiM`.
-- Convert each compatible `sosa:hasSimpleResult` through QUDT multiplier and offset metadata.
-- Use cached official conversion values for common conductivity, mass-concentration, and salinity/concentration units.
-- Preserve `mapped.ttl` and generate a separate, downloadable `aligned.ttl` artifact.
-- Feed successful aligned output automatically into ingestion, input SHACL, reasoning, RDF2TSS, and raw-RDF LDES generation.
-- Skip the stage without locking any later stage.
-
-### 4. Mapped RDF preview and download
-
-- Preview Turtle output between mapping and ingestion.
-- Browse RDF by subject, with at most 10 instances per page.
-- Move through the full result using previous and next controls.
-- Download the complete mapped RDF artifact at any time.
-
-### 5. Apache Jena Fuseki ingestion
-
-- Choose a name or full IRI for the target named graph.
-- Clear the target graph before every ingestion to prevent stale or duplicate data.
-- Upload the aligned RDF when available or mapped RDF when alignment was skipped through Fuseki's Graph Store Protocol.
-- Keep graph selection explicit rather than silently treating a named graph as the default graph.
-
-### 6. SPARQL query workspace
-
-- Write and run read-only SPARQL queries against Fuseki.
-- Select the intended named graph explicitly with `GRAPH <...>` in the query.
-- Display `SELECT` results as a table, `ASK` results as a Boolean, and graph-query results as text.
-- Cap large responses on the server to keep the interface responsive.
-
-### 7. SHACL input validation
-
-- Paste a SHACL shape and validate the current mapped or unit-aligned RDF.
-- View and download the full SHACL validation report.
-- Treat non-conformance as a reportable result—not a system failure—so later stages remain available.
-
-### 8. Optional N3 reasoning
-
-- Paste user-defined N3 rules and execute them with the EYE reasoner.
-- Materialize inferred statements alongside the current mapped or unit-aligned RDF.
-- Report inferred and total triple counts.
-- Skip reasoning entirely when it is not needed.
-
-### 9. RDF to TSS transformation
-
-- Convert compatible SOSA/QUDT observations into Time Series Snippets.
-- Prefer successfully reasoned RDF automatically, with unit-aligned or mapped RDF as the fallback.
-- Report sensor and output triple counts.
-- Preview and download the generated TSS Turtle file.
-
-### 10. SHACL output validation
-
-- Validate generated TSS data against a user-provided output shape.
-- Surface non-conformance and the complete validation report without blocking LDES generation.
-
-### 11. RDF or TSS to LDES
-
-- Generate an LDES from either the current mapped/unit-aligned RDF or the generated TSS data.
-- Configure the stream name and public base URL.
-- Build date-based TREE fragments and indexes in a complete folder hierarchy.
-- Preview the root TriG index and download the entire LDES directory as a ZIP archive.
-
-## Run and artifact model
-
-Each upload creates an isolated run with its own state, source files, semantic inputs, logs, and generated outputs. Stage failures are recorded on that run and returned to the interface as structured feedback rather than crashing the API.
-
-Artifacts are first-class outputs. Depending on the stages executed, a run can expose:
-
-- the normalized CSV source;
-- the submitted RML mapping, mapped RDF, and optional unit-aligned RDF;
-- SHACL shapes and validation reports;
-- N3 rules and reasoned RDF;
-- TSS RDF;
-- the LDES root index and complete ZIP package.
-
-Deleting an active run removes its uploaded and generated files. Data previously sent to Fuseki is managed separately through its named-graph lifecycle.
+### Query & Agent
+- Lists every named graph in Fuseki with its triple count; works without uploading a dataset.
+- **Operations**: reusable, parameterised, read-only queries — graph overview, entity types, property usage, sample records, find entities by type, describe an entity, and text search. The generated SPARQL is shown and can be opened in the editor.
+- **SPARQL editor** for free read-only queries (Ctrl+Enter runs), with results as a table, a yes/no answer, or RDF text, and CSV export.
+- **Agent-ready**: the operations catalog is published at `GET /api/store/operations` with typed parameters, so an AI agent can register each operation as a tool and call `POST /api/store/operations/{id}`. Parameters are validated and escaped on the server.
 
 ## Architecture
 
 ```mermaid
 flowchart TB
-    UI["React + Vite dashboard"] --> API["FastAPI pipeline API"]
-    API --> STORE["Run-scoped artifact store"]
-    API --> RML["RMLMapper"]
-    API --> ALIGN["QUDT unit alignment"]
+    UI["React + Vite dashboard"] --> API["FastAPI"]
+    API --> STORE["Dataset-scoped artifact store"]
+    API --> RML["RMLMapper (Java)"]
     API --> SHACL["pySHACL"]
-    API --> EYE["EYE N3 reasoner"]
+    API --> OPS["Query operations"]
     API --> FUSEKI["Apache Jena Fuseki"]
-    API --> TSS["RDF2TSS transformer"]
-    API --> LDES["RDF2LDES generator"]
-    FUSEKI --> API
+    OPS --> FUSEKI
 ```
 
-| Layer | Responsibility |
+| Path | Responsibility |
 | --- | --- |
-| React frontend | Guided pipeline, editors, previews, result tables, status feedback, and downloads |
-| FastAPI backend | Run lifecycle, validation, stage orchestration, error isolation, and artifact delivery |
-| RMLMapper | User-controlled tabular-to-RDF mapping |
-| Automated alignment | Optional QUDT multiplier/offset conversion into a run-scoped RDF artifact |
-| Apache Jena Fuseki | Named-graph storage and SPARQL query execution |
-| pySHACL | Input RDF and TSS conformance validation |
-| EYE | Optional N3 rule execution and inference materialization |
-| RDF2TSS | Conversion of compatible semantic observations to Time Series Snippets |
-| RDF2LDES | TREE/LDES hierarchy generation and ZIP packaging |
+| `frontend/` | React dashboard: overview, workspaces, editors, previews, result tables, downloads |
+| `pipeline/playground_server.py` | FastAPI endpoints, dataset lifecycle, error isolation, artifact delivery, serving the built UI |
+| `pipeline/generic_pipeline.py` | Tabular parsing and XLSX conversion, RMLMapper execution, SHACL actions, RDF export, ingestion |
+| `pipeline/run_store.py` | Dataset state and artifacts; re-running an action clears results derived from it |
+| `SHACL/shacl_engine.py` | Structured SHACL validation and rule execution on pySHACL |
+| `query_agent/operations.py` | Catalog of named, parameterised read-only SPARQL operations |
+| `triple_store_ingestion/ingest.py` | Fuseki Graph Store Protocol and SPARQL query client |
+| `run.py` | One-command launcher (production build or hot-reload development) |
 
 ## API surface
 
 | Endpoint | Purpose |
 | --- | --- |
-| `GET /api/health` | API health check |
-| `GET /api/config` | Fuseki and local tool readiness |
-| `POST /api/runs` | Create a run from a CSV or XLSX upload |
-| `GET /api/runs/{run_id}` | Retrieve current run state |
-| `DELETE /api/runs/{run_id}` | Delete a run and its files |
-| `POST /api/runs/{run_id}/stages/rml` | Run the supplied RML mapping |
-| `GET /api/runs/{run_id}/rdf-preview` | Retrieve a paginated mapped-RDF preview |
-| `POST /api/runs/{run_id}/stages/alignment` | Convert observations to a target QUDT unit |
-| `POST /api/runs/{run_id}/stages/ingest` | Clear and replace a Fuseki named graph |
-| `POST /api/runs/{run_id}/sparql` | Execute a SPARQL query |
-| `POST /api/runs/{run_id}/stages/shacl-in` | Validate mapped RDF |
-| `POST /api/runs/{run_id}/stages/reason` | Apply N3 reasoning rules |
-| `POST /api/runs/{run_id}/stages/rdf2tss` | Generate TSS RDF |
-| `POST /api/runs/{run_id}/stages/shacl-out` | Validate TSS RDF |
-| `POST /api/runs/{run_id}/stages/rdf2ldes` | Generate and package an LDES |
-| `GET /api/runs/{run_id}/artifacts/{artifact_id}` | Download a generated artifact |
+| `GET /api/health` | Health check |
+| `GET /api/config` | Fuseki connection and tool readiness |
+| `POST /api/runs` | Create a dataset from a CSV or XLSX upload |
+| `GET /api/runs/{id}` · `DELETE /api/runs/{id}` | Read or remove a dataset |
+| `POST /api/runs/{id}/stages/rml` | Run an RML mapping (`mapping`, optional `source_name`) |
+| `POST /api/runs/{id}/stages/shacl` | Validate the current RDF (`shapes`, optional `source_name`) |
+| `POST /api/runs/{id}/stages/shacl-rules` | Apply SHACL rules and create enriched RDF |
+| `POST /api/runs/{id}/stages/ingest` | Publish to a named graph (`graph_name`, `mode`: `replace` or `append`) |
+| `GET /api/runs/{id}/rdf?format=` | Download the current RDF (`turtle`, `ntriples`, `jsonld`, `xml`) |
+| `GET /api/runs/{id}/rdf-preview` | Page through the current RDF by entity |
+| `GET /api/runs/{id}/artifacts/{artifact_id}` | Download a stored artifact (mapping, shapes, report) |
+| `GET /api/store/graphs` | Named graphs in Fuseki with triple counts |
+| `POST /api/store/query` | Run a read-only SPARQL query |
+| `GET /api/store/operations` | Catalog of query operations and their parameters |
+| `POST /api/store/operations/{id}` | Run an operation (`parameters` object) |
 
-## Repository structure
-
-```text
-.
-├── frontend/                    # React dashboard and Vite configuration
-├── pipeline/                    # FastAPI API, orchestration, run store, and tests
-├── automating_alignments/       # QUDT multiplier/offset unit conversion
-├── RDF2TSS_V2/                  # RDF-to-TSS transformation
-├── RDF2LDES/                    # TSS/RDF-to-LDES generation
-├── SHACL/                       # SHACL validation adapter
-├── triple_store_ingestion/      # Fuseki graph-store and query client
-├── test-data/                   # Preserved sample data and semantic contracts
-├── graphify-out/                # Current code-topology graph and report
-├── requirements.txt             # Backend runtime dependencies
-└── LICENSE                      # MIT license
-```
-
-## Sample assets
-
-The preserved `test-data/` directory contains a representative Excel workbook, CSV source, RML mapping, and input/output SHACL shapes. These files can be used to exercise the pipeline and as references for the expected semantic inputs. Before running the included RML mapping, update its `rml:source` value to match the prepared CSV filename shown by the dashboard.
-
-## Current compatibility contract
-
-RDF2TSS and RDF2LDES currently use the project's existing semantic queries. Mapped RDF intended for these stages must therefore provide the SOSA observation structure, sensor, timestamp, simple result, observed property, and QUDT unit expected by those queries. Making these transformation queries user-configurable is intentionally left for a later iteration.
-
-For Excel uploads, the active worksheet is used. RMLMapper receives the normalized CSV artifact rather than the original workbook, and the dashboard displays its exact logical-source filename.
+Interactive documentation is available at `/docs` while the backend runs.
 
 ## Installation
 
 ### Prerequisites
 
-Install the following software before starting the application:
-
-- **Python 3.10 or newer** for the FastAPI backend and semantic-processing modules.
-- **Node.js and npm** for the React/Vite frontend.
-- **Java** for running RMLMapper.
-- **RMLMapper** for converting uploaded tabular data to RDF.
-- **EYE reasoner** for the optional N3 reasoning stage.
-- **Apache Jena Fuseki** for named-graph ingestion and SPARQL queries.
+- **Python 3.10 or newer** for the backend.
+- **Node.js and npm** for building the frontend.
+- **Java** for RMLMapper (RMLMapper 8.x needs Java 21 or newer).
+- **RMLMapper** JAR.
+- **Apache Jena Fuseki** for publishing and querying.
 
 ### 1. Install the backend dependencies
 
-From the repository root, create and activate a Python virtual environment.
-
-Windows PowerShell:
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-```
-
-macOS or Linux:
+From the repository root:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+pip install -r requirements.txt
 ```
+
+A virtual environment (`python3 -m venv .venv` then `source .venv/bin/activate`, or `.\.venv\Scripts\Activate.ps1` on Windows) keeps these packages separate from other projects.
 
 ### 2. Add RMLMapper
 
-Download an executable JAR from the [official RMLMapper releases](https://github.com/RMLio/rmlmapper-java/releases) and place it directly inside the repository's `pipeline/` directory. The file must be named exactly:
+Download the `-all.jar` asset from the [RMLMapper releases](https://github.com/RMLio/rmlmapper-java/releases), rename it, and place it at:
 
 ```text
 pipeline/rmlmapper.jar
 ```
 
-The JAR is intentionally excluded from Git because of its size. Use the Java version required by the RMLMapper release you download; for example, RMLMapper 8.1.0 requires Java 21 or newer. Confirm that Java is available before starting the backend:
+The JAR is excluded from Git. To keep it elsewhere, set `RML_MAPPER_JAR` to its path. The sidebar shows whether the backend finds it.
+
+### 3. Start Apache Jena Fuseki
+
+Download `apache-jena-fuseki-<version>.zip` from the [Jena download page](https://jena.apache.org/download/) (not the `apache-jena` tools archive), unpack it, and start it with a dataset named `dataset`:
 
 ```bash
-java -version
+./fuseki-server --update --mem /dataset          # macOS / Linux
+.\fuseki-server.bat --update --mem /dataset      # Windows
 ```
 
-The dashboard's service-status strip reports whether the backend can find `rmlmapper.jar`.
-
-### 3. Install the EYE reasoner
-
-Install the native [EYE reasoner](https://eyereasoner.github.io/eye/) for your platform and ensure the `eye` command is available on the system `PATH`:
-
-```bash
-eye --help
-```
-
-The rest of the pipeline can run without EYE, but the optional N3 reasoning stage requires it. If EYE is installed under a different command or path, set the `EYE_COMMAND` environment variable before starting the backend.
-
-### 4. Start Apache Jena Fuseki
-
-Download and unpack [Apache Jena Fuseki](https://jena.apache.org/download/). Run it on port `3030` and create a dataset named `dataset`; the backend then uses these endpoints:
+The in-memory dataset is erased when Fuseki stops. For persistent storage, use `--tdb2 --loc=databases/dataset /dataset` instead of `--mem`. The backend expects:
 
 ```text
 Graph Store endpoint: http://localhost:3030/dataset/data
-SPARQL endpoint:     http://localhost:3030/dataset/query
+SPARQL endpoint:      http://localhost:3030/dataset/query
 ```
 
-Keep Fuseki running while using ingestion or SPARQL features. A different deployment can be configured with the `FUSEKI_DATA_URL` and `FUSEKI_QUERY_URL` environment variables.
-
-For a temporary in-memory dataset suitable for local testing, run one of these commands from the unpacked Fuseki directory:
-
-macOS or Linux:
-
-```bash
-./fuseki-server --update --mem /dataset
-```
-
-Windows:
-
-```powershell
-.\fuseki-server.bat --update --mem /dataset
-```
-
-Fuseki uses port `3030` by default. An in-memory dataset is erased when Fuseki stops; use Fuseki's persistent TDB configuration when the data must survive restarts.
-
-### 5. Install the frontend dependencies
-
-From the repository root:
-
-```bash
-cd frontend
-npm install
-```
+Other deployments can be configured with `FUSEKI_DATA_URL` and `FUSEKI_QUERY_URL`.
 
 ## Running the application
 
-### Quick start: one command
-
-Start Fuseki (see below), then from the repository root, with the Python virtual environment activated:
+With Fuseki running, from the repository root:
 
 ```bash
 python run.py
 ```
 
-This builds the frontend when its sources have changed (running `npm install` the first time) and serves the dashboard and the API together at `http://localhost:8000`. Add `--host 0.0.0.0` to expose it on the network, or `--rebuild` to force a fresh frontend build.
+This builds the frontend when its sources have changed (running `npm install` the first time) and serves the dashboard and API together at `http://localhost:8000`. Options: `--host 0.0.0.0` to expose it on the network, `--port` to change the port, `--rebuild` to force a fresh build.
 
-For development with hot reload of both the backend and the frontend:
+For development with hot reload of the backend and the frontend:
 
 ```bash
 python run.py --dev
 ```
 
-This starts uvicorn with `--reload` on port `8000` and the Vite dev server on `http://localhost:5173`, which proxies `/api` to the backend. Ctrl+C stops both.
+This starts uvicorn with `--reload` on port 8000 and the Vite dev server on `http://localhost:5173`, which proxies `/api` to the backend. Ctrl+C stops both.
 
-### Running each process manually
-
-The backend, frontend, and Fuseki can also be run separately in their own terminal windows.
-
-### 1. Run Fuseki
-
-Start the Fuseki server on port `3030` and make sure the `dataset` dataset is available.
-
-### 2. Run the backend API
-
-From the repository root, with the Python virtual environment activated:
+### Running the processes manually
 
 ```bash
-python -m uvicorn pipeline.playground_server:app --reload --host 0.0.0.0 --port 8000
+python -m uvicorn pipeline.playground_server:app --reload --port 8000   # backend
+cd frontend && npm run dev                                                # frontend
 ```
 
-The API is then available at `http://localhost:8000`, and its interactive documentation is available at `http://localhost:8000/docs`.
+### Configuration
 
-### 3. Run the frontend
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `FUSEKI_DATA_URL` | `http://localhost:3030/dataset/data` | Fuseki Graph Store endpoint |
+| `FUSEKI_QUERY_URL` | derived from the data URL | Fuseki SPARQL query endpoint |
+| `FUSEKI_GRAPH_BASE` | `https://example.org/graphs/` | Base IRI for short graph names |
+| `RML_MAPPER_JAR` | `pipeline/rmlmapper.jar` | RMLMapper location |
+| `PIPELINE_STORAGE_DIR` | system temp folder | Where dataset workspaces are stored |
+| `MAX_UPLOAD_BYTES` | 50 MB | Upload size limit |
+| `PIPELINE_COMMAND_TIMEOUT` | 300 | RMLMapper time limit in seconds |
+| `SPARQL_RESULT_ROW_LIMIT` | 1000 | Maximum rows returned per query |
 
-From the `frontend/` directory:
+## Trying it with `test-data`
 
-```bash
-npm run dev
-```
+- `sample.xlsx` and `waterinfo.csv` are uploadable sources.
+- `rml.ttl.txt` is an example RML mapping. Change its `rml:source` from `data.csv` to the file name shown in the dashboard (`waterinfo.csv`, or `sample.csv` for the workbook).
+- `SHACL_in.ttl` is an example shapes file for the mapped observations.
+- `mapped.ttl` and `query.txt` are reference outputs.
 
-Open the URL printed by Vite, normally `http://localhost:5173`.
+## Mapping constraints
 
-## Testing the pipeline with `test-data`
-
-The files in `test-data/` can be used to run through the dashboard:
-
-- `sample.xlsx` and `waterinfo.csv` are uploadable tabular sources.
-- `rml.ttl.txt` is an example RML mapping.
-- `SHACL_in.ttl` is an example shape for validating mapped RDF.
-- `SHACL_out.ttl` is an example shape for validating TSS output.
-
-The sample files are references rather than a hard-coded application dataset. Paste the relevant text files into the matching dashboard editors and adjust the RML logical source as described below.
-
-## Important mapping and transformation constraints
-
-### RML logical-source filename
-
-The filename in `rml:source` must exactly match the prepared CSV filename for the uploaded file. The dashboard displays this filename after upload under **RML source name**.
-
-- Uploading `waterinfo.csv` produces the RML source name `waterinfo.csv`.
-- Uploading `sample.xlsx` converts its active worksheet to CSV and produces the RML source name `sample.csv`.
-
-For example, when `sample.xlsx` is uploaded, the mapping must contain:
+The file name in `rml:source` must exactly match the prepared CSV name shown in the dashboard. Uploading `sample.xlsx` produces `sample.csv`:
 
 ```turtle
 rml:logicalSource [
@@ -389,36 +225,19 @@ rml:logicalSource [
 ] ;
 ```
 
-Do not use an absolute local path. Uploaded files are copied into an isolated run directory, and RMLMapper executes from that directory. Column names referenced by `rr:template` or `rml:reference` must also exactly match the prepared CSV headers shown in the upload preview.
+Do not use an absolute path; RMLMapper runs inside the dataset's isolated directory. Column names in `rr:template` and `rml:reference` must match the CSV headers exactly.
 
-### RDF2TSS and RDF2LDES input structure
+## Performance notes
 
-RDF2TSS and RDF2LDES currently use the existing built-in semantic queries. For these transformations to work, the selected RDF input must contain the structure expected by those queries:
+pySHACL evaluates SPARQL-based constraints and rules once per target record, so they dominate run time on large datasets (roughly a few seconds per thousand targeted records). SHACL Core constraints are much faster. RDF is held in memory while it is processed.
 
-- a SOSA observation associated with a sensor through `sosa:madeBySensor`;
-- a timestamp through `sosa:resultTime`;
-- a value through `sosa:hasSimpleResult`;
-- an observed property through `sosa:observedProperty`; and
-- a QUDT unit through `qudt:hasUnit`.
+## Tests
 
-If any required relationship is absent or uses a different vocabulary, mapping may still produce valid RDF, but the current TSS or LDES transformation can produce no usable output.
+```bash
+python -m pytest pipeline/tests
+```
 
-### QUDT unit alignment
-
-The target must be a complete QUDT unit IRI under `http://qudt.org/vocab/unit/` or `https://qudt.org/vocab/unit/`. The mapped RDF must express values with `sosa:hasSimpleResult` and units with `qudt:hasUnit`. Known incompatible measurement families are rejected instead of silently relabelling values.
-
-The application includes network-free conversion metadata for common water measurements:
-
-- conductivity: `MicroS-PER-CentiM`, `MilliS-PER-CentiM`, `MicroS-PER-M`, `MilliS-PER-M`, and `S-PER-M`;
-- mass concentration/density: `MicroGM-PER-L`, `MilliGM-PER-L`, `GM-PER-L`, `GM-PER-M3`, and `KiloGM-PER-M3`;
-- dimensionless concentration/salinity scales: `PPB`, `PPM`, `PPTH`, `PERMILLE`, and `PERCENT`;
-- water temperature: `DEG_C` and `K`.
-
-Other QUDT unit IRIs are resolved from QUDT at runtime, so the backend needs outbound network access for units not in the local conversion dictionary. Contextual or logarithmic units without a non-zero linear conversion multiplier cannot be transformed by this stage.
-
-## Project status
-
-The functional pipeline, dashboard, and local installation instructions are in place. Cloud-deployment instructions will be added in a dedicated documentation pass.
+Integration tests that run RMLMapper are skipped when Java or `pipeline/rmlmapper.jar` is missing.
 
 ## License
 

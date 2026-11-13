@@ -8,7 +8,6 @@ from openpyxl import Workbook
 import pytest
 from rdflib import Graph, URIRef
 
-from automating_alignments import automated_alignments
 from pipeline import generic_pipeline
 from pipeline import playground_server
 from pipeline.run_store import RunStore
@@ -192,94 +191,14 @@ def test_ingest_graph_clears_named_graph_before_upload(tmp_path, monkeypatch):
     monkeypatch.setattr(
         generic_pipeline.ingest,
         "upload_graph",
-        lambda path, graph_uri: calls.append(("upload", graph_uri, path)) or True,
+        lambda path, graph_uri, replace=True: calls.append(("upload", graph_uri, path, replace)) or True,
     )
 
     result = generic_pipeline.ingest_graph(rdf_path, "replacement graph")
 
     graph_uri = "https://example.org/graphs/replacement%20graph"
-    assert calls == [("clear", graph_uri), ("upload", graph_uri, str(rdf_path))]
-    assert result == {"graph_uri": graph_uri, "graph_cleared": True}
-
-
-def test_unit_alignment_converts_a_copy_and_preserves_mapped_rdf(tmp_path):
-    mapped_path = tmp_path / "mapped.ttl"
-    mapped_path.write_text(
-        """
-        @prefix qudt: <http://qudt.org/schema/qudt/> .
-        @prefix sosa: <http://www.w3.org/ns/sosa/> .
-        @prefix unit: <http://qudt.org/vocab/unit/> .
-        @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-
-        <urn:observation:1> a sosa:Observation ;
-            sosa:hasSimpleResult "1000"^^xsd:double ;
-            qudt:hasUnit unit:MicroS-PER-CentiM .
-        <urn:observation:2> a sosa:Observation ;
-            sosa:hasSimpleResult "2500"^^xsd:double ;
-            qudt:hasUnit unit:MicroS-PER-CentiM .
-        """,
-        encoding="utf-8",
-    )
-    original = mapped_path.read_text(encoding="utf-8")
-
-    result = generic_pipeline.run_unit_alignment(
-        tmp_path,
-        mapped_path,
-        "https://qudt.org/vocab/unit/MilliS-PER-CentiM",
-    )
-
-    assert mapped_path.read_text(encoding="utf-8") == original
-    assert result["converted_observations"] == 2
-    assert result["aligned_observations"] == 2
-    assert result["target_unit"] == "http://qudt.org/vocab/unit/MilliS-PER-CentiM"
-    aligned = Graph().parse(result["output_path"], format="turtle")
-    target = URIRef(result["target_unit"])
-    subjects = set(aligned.subjects(predicate=automated_alignments.SOSA.hasSimpleResult))
-    assert sorted(
-        float(aligned.value(subject, automated_alignments.SOSA.hasSimpleResult))
-        for subject in subjects
-    ) == [1.0, 2.5]
-    assert all(aligned.value(subject, automated_alignments.QUDT.hasUnit) == target for subject in subjects)
-
-
-@pytest.mark.parametrize(
-    ("source_name", "target_name", "value", "expected"),
-    [
-        ("MicroS-PER-M", "MilliS-PER-M", 1000.0, 1.0),
-        ("MilliGM-PER-L", "GM-PER-L", 1000.0, 1.0),
-        ("PPTH", "PPM", 1.0, 1000.0),
-        ("DEG_C", "K", 20.0, 293.15),
-        ("K", "DEG_C", 293.15, 20.0),
-    ],
-)
-def test_known_water_measurement_conversions(source_name, target_name, value, expected):
-    unit_root = "http://qudt.org/vocab/unit/"
-    source = automated_alignments.KNOWN_CONVERSIONS[URIRef(unit_root + source_name)]
-    target = automated_alignments.KNOWN_CONVERSIONS[URIRef(unit_root + target_name)]
-
-    converted = automated_alignments.convert_qudt_value(value, *source, *target)
-
-    assert converted == pytest.approx(expected)
-
-
-def test_unit_alignment_rejects_incompatible_known_families(tmp_path):
-    mapped_path = tmp_path / "mapped.ttl"
-    mapped_path.write_text(
-        """
-        @prefix qudt: <http://qudt.org/schema/qudt/> .
-        @prefix sosa: <http://www.w3.org/ns/sosa/> .
-        @prefix unit: <http://qudt.org/vocab/unit/> .
-        <urn:observation> sosa:hasSimpleResult 1000 ; qudt:hasUnit unit:MicroS-PER-CentiM .
-        """,
-        encoding="utf-8",
-    )
-
-    with pytest.raises(generic_pipeline.PipelineError, match="electrical conductivity"):
-        generic_pipeline.run_unit_alignment(
-            tmp_path,
-            mapped_path,
-            "http://qudt.org/vocab/unit/MilliGM-PER-L",
-        )
+    assert calls == [("clear", graph_uri), ("upload", graph_uri, str(rdf_path), True)]
+    assert result == {"graph_uri": graph_uri, "mode": "replace", "graph_cleared": True}
 
 
 def test_ingest_graph_aborts_when_named_graph_cannot_be_cleared(tmp_path, monkeypatch):
@@ -289,7 +208,7 @@ def test_ingest_graph_aborts_when_named_graph_cannot_be_cleared(tmp_path, monkey
 
     monkeypatch.setattr(generic_pipeline.ingest, "delete_graph", lambda _graph_uri: False)
 
-    def upload_graph(_path, _graph_uri):
+    def upload_graph(_path, _graph_uri, replace=True):
         nonlocal upload_called
         upload_called = True
         return True
@@ -344,234 +263,6 @@ def test_fuseki_query_leaves_named_graph_selection_to_query(monkeypatch):
     assert result["rows"][0]["subject"]["value"] == "https://example.org/item"
 
 
-def test_sparql_api_queries_the_graph_saved_for_the_run(tmp_path, monkeypatch):
-    run_store = RunStore(tmp_path / "runs")
-    monkeypatch.setattr(playground_server, "RUN_STORE", run_store)
-    state = run_store.create("items.csv", "items.csv")
-    state["stages"]["ingest"] = {"status": "success"}
-    state["graph"] = {
-        "name": "items",
-        "uri": "https://example.org/graphs/items",
-    }
-    run_store.save(state)
-    captured = {}
-
-    def run_query(query, graph_uri):
-        captured.update({"query": query, "graph_uri": graph_uri})
-        return {
-            "type": "ask",
-            "boolean": True,
-            "graph_uri": graph_uri,
-        }
-
-    monkeypatch.setattr(generic_pipeline, "run_sparql_query", run_query)
-    client = TestClient(playground_server.app)
-
-    response = client.post(
-        f"/api/runs/{state['id']}/sparql",
-        json={"query": "ASK { ?subject ?predicate ?object }"},
-    )
-
-    assert response.status_code == 200
-    assert response.json()["boolean"] is True
-    assert captured == {
-        "query": "ASK { ?subject ?predicate ?object }",
-        "graph_uri": "https://example.org/graphs/items",
-    }
-
-
-def test_optional_validation_does_not_invalidate_downstream_results(tmp_path):
-    run_store = RunStore(tmp_path / "runs")
-    state = run_store.create("items.csv", "items.csv")
-    state["stages"] = {
-        stage: {"status": "success", "artifacts": []}
-        for stage in (
-            "upload",
-            "rml",
-            "alignment",
-            "ingest",
-            "shacl_in",
-            "reason",
-            "rdf2tss",
-            "shacl_out",
-            "rdf2ldes",
-        )
-    }
-    run_store.save(state)
-
-    state = run_store.begin_stage(state, "shacl_in")
-
-    assert state["stages"]["shacl_in"]["status"] == "running"
-    assert state["stages"]["reason"]["status"] == "success"
-    assert state["stages"]["rdf2tss"]["status"] == "success"
-    assert state["stages"]["rdf2ldes"]["status"] == "success"
-
-
-def test_alignment_api_creates_artifact_and_ingestion_uses_it(tmp_path, monkeypatch):
-    run_store = RunStore(tmp_path / "runs")
-    monkeypatch.setattr(playground_server, "RUN_STORE", run_store)
-    state = run_store.create("items.csv", "items.csv")
-    state["stages"]["rml"] = {"status": "success"}
-    run_store.save(state)
-    directory = run_store.run_dir(state["id"])
-    mapped_path = directory / "mapped.ttl"
-    mapped_path.write_text(
-        """
-        @prefix qudt: <http://qudt.org/schema/qudt/> .
-        @prefix sosa: <http://www.w3.org/ns/sosa/> .
-        @prefix unit: <http://qudt.org/vocab/unit/> .
-        <urn:observation> sosa:hasSimpleResult 1500 ; qudt:hasUnit unit:MicroS-PER-CentiM .
-        """,
-        encoding="utf-8",
-    )
-    client = TestClient(playground_server.app)
-
-    alignment_response = client.post(
-        f"/api/runs/{state['id']}/stages/alignment",
-        json={"target_unit": "http://qudt.org/vocab/unit/MilliS-PER-CentiM"},
-    )
-
-    assert alignment_response.status_code == 200
-    aligned_state = alignment_response.json()
-    assert aligned_state["stages"]["alignment"]["status"] == "success"
-    assert aligned_state["stages"]["alignment"]["details"]["converted_observations"] == 1
-    assert any(artifact["name"] == "Unit-aligned RDF" for artifact in aligned_state["artifacts"])
-
-    captured = {}
-
-    def ingest_graph(rdf_path, graph_name):
-        captured.update({"rdf_path": rdf_path, "graph_name": graph_name})
-        return {"graph_uri": "https://example.org/graphs/aligned", "graph_cleared": True}
-
-    monkeypatch.setattr(generic_pipeline, "ingest_graph", ingest_graph)
-    ingest_response = client.post(
-        f"/api/runs/{state['id']}/stages/ingest",
-        json={"graph_name": "aligned"},
-    )
-
-    assert ingest_response.status_code == 200
-    assert ingest_response.json()["stages"]["ingest"]["details"]["input_rdf"] == "aligned.ttl"
-    assert captured == {"rdf_path": directory / "aligned.ttl", "graph_name": "aligned"}
-
-
-def test_rdf2tss_api_uses_mapped_rdf_when_reasoning_is_skipped(tmp_path, monkeypatch):
-    run_store = RunStore(tmp_path / "runs")
-    monkeypatch.setattr(playground_server, "RUN_STORE", run_store)
-    state = run_store.create("items.csv", "items.csv")
-    state["stages"]["rml"] = {"status": "success"}
-    run_store.save(state)
-    directory = run_store.run_dir(state["id"])
-    mapped_path = directory / "mapped.ttl"
-    mapped_path.write_text("<urn:item> <urn:value> 1 .", encoding="utf-8")
-    captured = {}
-
-    def run_rdf2tss(run_directory, data_path):
-        captured["data_path"] = data_path
-        output_path = run_directory / "timeseries.ttl"
-        output_path.write_text("<urn:series> <urn:value> 1 .", encoding="utf-8")
-        return {"output_path": output_path, "sensor_count": 1, "tss_triples": 1}
-
-    monkeypatch.setattr(generic_pipeline, "run_rdf2tss", run_rdf2tss)
-    client = TestClient(playground_server.app)
-
-    response = client.post(f"/api/runs/{state['id']}/stages/rdf2tss")
-
-    assert response.status_code == 200
-    payload = response.json()
-    assert payload["stages"]["rdf2tss"]["status"] == "success"
-    assert payload["stages"]["rdf2tss"]["details"]["input_rdf"] == "mapped.ttl"
-    assert captured["data_path"] == mapped_path
-
-
-def test_rdf2ldes_api_does_not_require_shacl_out(tmp_path, monkeypatch):
-    run_store = RunStore(tmp_path / "runs")
-    monkeypatch.setattr(playground_server, "RUN_STORE", run_store)
-    state = run_store.create("items.csv", "items.csv")
-    state["stages"]["rdf2tss"] = {"status": "success"}
-    run_store.save(state)
-    directory = run_store.run_dir(state["id"])
-    tss_path = directory / "timeseries.ttl"
-    tss_path.write_text("<urn:series> <urn:value> 1 .", encoding="utf-8")
-    captured = {}
-
-    def run_rdf2ldes(run_directory, input_path, stream_name, base_url, *, source_kind):
-        captured.update({"input_path": input_path, "source_kind": source_kind})
-        output_directory = run_directory / "ldes" / stream_name
-        output_directory.mkdir(parents=True)
-        zip_path = run_directory / f"{stream_name}.zip"
-        zip_path.write_bytes(b"zip")
-        return {
-            "output_directory": output_directory,
-            "zip_path": zip_path,
-            "stream_name": stream_name,
-            "base_url": base_url,
-            "trig_file_count": 0,
-            "fragment_count": 0,
-            "index_count": 0,
-            "source_file": input_path.name,
-        }
-
-    monkeypatch.setattr(generic_pipeline, "run_rdf2ldes", run_rdf2ldes)
-    client = TestClient(playground_server.app)
-
-    response = client.post(
-        f"/api/runs/{state['id']}/stages/rdf2ldes",
-        json={"stream_name": "items", "base_url": "https://example.org/ldes/"},
-    )
-
-    assert response.status_code == 200
-    assert response.json()["stages"]["rdf2ldes"]["status"] == "success"
-    assert captured["input_path"] == tss_path
-    assert captured["source_kind"] == "tss"
-
-
-def test_rdf2ldes_api_can_use_mapped_rdf_without_tss_stage(tmp_path, monkeypatch):
-    run_store = RunStore(tmp_path / "runs")
-    monkeypatch.setattr(playground_server, "RUN_STORE", run_store)
-    state = run_store.create("items.csv", "items.csv")
-    state["stages"]["rml"] = {"status": "success"}
-    run_store.save(state)
-    directory = run_store.run_dir(state["id"])
-    mapped_path = directory / "mapped.ttl"
-    mapped_path.write_text("<urn:item> <urn:value> 1 .", encoding="utf-8")
-    captured = {}
-
-    def run_rdf2ldes(run_directory, input_path, stream_name, base_url, *, source_kind):
-        captured.update({"input_path": input_path, "source_kind": source_kind})
-        output_directory = run_directory / "ldes" / stream_name
-        output_directory.mkdir(parents=True)
-        zip_path = run_directory / f"{stream_name}.zip"
-        zip_path.write_bytes(b"zip")
-        return {
-            "output_directory": output_directory,
-            "zip_path": zip_path,
-            "stream_name": stream_name,
-            "base_url": base_url,
-            "trig_file_count": 1,
-            "fragment_count": 1,
-            "index_count": 0,
-            "source_file": input_path.name,
-        }
-
-    monkeypatch.setattr(generic_pipeline, "run_rdf2ldes", run_rdf2ldes)
-    client = TestClient(playground_server.app)
-
-    response = client.post(
-        f"/api/runs/{state['id']}/stages/rdf2ldes",
-        json={
-            "stream_name": "items",
-            "base_url": "https://example.org/ldes/",
-            "source": "rdf",
-        },
-    )
-
-    assert response.status_code == 200
-    payload = response.json()["stages"]["rdf2ldes"]
-    assert payload["status"] == "success"
-    assert payload["details"]["source"] == "rdf"
-    assert captured == {"input_path": mapped_path, "source_kind": "rdf"}
-
-
 def test_mapped_rdf_preview_paginates_by_subject(tmp_path, monkeypatch):
     run_store = RunStore(tmp_path / "runs")
     monkeypatch.setattr(playground_server, "RUN_STORE", run_store)
@@ -598,32 +289,6 @@ def test_mapped_rdf_preview_paginates_by_subject(tmp_path, monkeypatch):
     assert last.json()["has_previous"] is True
     assert last.json()["has_next"] is False
     assert "item/204" in last.json()["text"]
-
-
-def test_shacl_violation_returns_a_report_without_raising(tmp_path):
-    data_path = tmp_path / "mapped.ttl"
-    data_path.write_text(
-        """
-        @prefix ex: <https://example.org/> .
-        ex:item ex:name "Example" .
-        """,
-        encoding="utf-8",
-    )
-    shapes = """
-        @prefix sh: <http://www.w3.org/ns/shacl#> .
-        @prefix ex: <https://example.org/> .
-        ex:ItemShape a sh:NodeShape ;
-            sh:targetNode ex:item ;
-            sh:property [ sh:path ex:price ; sh:minCount 1 ] .
-    """
-
-    result = generic_pipeline.run_shacl_validation(
-        tmp_path, data_path, shapes, prefix="shacl_in"
-    )
-
-    assert result["conforms"] is False
-    assert "Constraint Violation" in result["report"]
-    assert result["report_path"].is_file()
 
 
 @pytest.mark.skipif(
@@ -726,96 +391,316 @@ def test_normalized_multirow_xlsx_runs_with_user_mapping(tmp_path):
     ) in graph
 
 
-@pytest.mark.skipif(
-    not generic_pipeline.tool_status()["eye"],
-    reason="A working EYE installation is required for the integration test.",
-)
-def test_user_supplied_n3_rules_create_reasoned_rdf(tmp_path):
-    data = tmp_path / "mapped.ttl"
-    data.write_text(
-        '@prefix ex: <https://example.org/> . ex:item ex:category "lamp" .',
-        encoding="utf-8",
+# --- Ingestion modes ---------------------------------------------------------------------
+
+
+def test_ingest_graph_append_mode_does_not_clear_the_graph(tmp_path, monkeypatch):
+    rdf_path = tmp_path / "mapped.ttl"
+    rdf_path.write_text("<https://example.org/s> <https://example.org/p> <https://example.org/o> .")
+    calls = []
+    monkeypatch.setattr(
+        generic_pipeline.ingest, "delete_graph", lambda graph_uri: calls.append("clear") or True
     )
-    rules = """
-        @prefix ex: <https://example.org/> .
-        { ?item ex:category "lamp" . } => { ?item ex:illuminates true . } .
+    monkeypatch.setattr(
+        generic_pipeline.ingest,
+        "upload_graph",
+        lambda path, graph_uri, replace=True: calls.append(("upload", replace)) or True,
+    )
+
+    result = generic_pipeline.ingest_graph(rdf_path, "items", mode="append")
+
+    assert calls == [("upload", False)]
+    assert result["mode"] == "append"
+    assert result["graph_cleared"] is False
+
+
+def test_upload_graph_uses_put_to_replace_and_post_to_append(tmp_path, monkeypatch):
+    rdf_path = tmp_path / "mapped.ttl"
+    rdf_path.write_text("<https://example.org/s> <https://example.org/p> <https://example.org/o> .")
+    methods = []
+
+    class Response:
+        status_code = 204
+        text = ""
+
+    monkeypatch.setattr(fuseki_ingest.requests, "put", lambda *a, **k: methods.append("PUT") or Response())
+    monkeypatch.setattr(fuseki_ingest.requests, "post", lambda *a, **k: methods.append("POST") or Response())
+
+    assert fuseki_ingest.upload_graph(str(rdf_path), "https://example.org/g", replace=True)
+    assert fuseki_ingest.upload_graph(str(rdf_path), "https://example.org/g", replace=False)
+    assert methods == ["PUT", "POST"]
+
+
+# --- SHACL validation and rules ----------------------------------------------------------
+
+SHACL_DATA = """
+    @prefix ex: <https://example.org/> .
+    ex:alice a ex:Person ; ex:age 200 ; ex:name "Alice" .
+    ex:bob a ex:Person .
+"""
+
+SHACL_SHAPES = """
+    @prefix sh: <http://www.w3.org/ns/shacl#> .
+    @prefix ex: <https://example.org/> .
+    ex:PersonShape a sh:NodeShape ;
+        sh:targetClass ex:Person ;
+        sh:property [
+            sh:path ex:age ; sh:minCount 1 ; sh:maxInclusive 150 ;
+            sh:message "Age is missing or implausible."
+        ] ;
+        sh:property [ sh:path ex:name ; sh:minCount 1 ; sh:severity sh:Warning ] ;
+        sh:sparql [
+            sh:message "Every person needs a registration."  ;
+            sh:select "SELECT $this WHERE { FILTER NOT EXISTS { $this <https://example.org/registered> ?r } }"
+        ] .
+"""
+
+SHACL_RULES = """
+    @prefix sh: <http://www.w3.org/ns/shacl#> .
+    @prefix ex: <https://example.org/> .
+    ex:PersonRules a sh:NodeShape ;
+        sh:targetClass ex:Person ;
+        sh:rule [ a sh:TripleRule ; sh:subject sh:this ; sh:predicate ex:registered ; sh:object true ] ;
+        sh:rule [ a sh:SPARQLRule ; sh:construct "CONSTRUCT { $this a <https://example.org/Agent> } WHERE { }" ] .
+"""
+
+
+def test_shacl_validation_returns_structured_results_with_sparql_constraints(tmp_path):
+    data_path = tmp_path / "mapped.ttl"
+    data_path.write_text(SHACL_DATA, encoding="utf-8")
+
+    result = generic_pipeline.run_shacl_validation(tmp_path, data_path, SHACL_SHAPES)
+
+    assert result["conforms"] is False
+    assert result["severity_counts"] == {"Violation": 4, "Warning": 1, "Info": 0}
+    assert result["shapes"] == {
+        "node_shapes": 1, "property_shapes": 2, "sparql_constraints": 1, "rules": 0,
+    }
+    first = result["results"][0]
+    assert first["severity"] == "Violation"
+    assert {item["constraint"] for item in result["results"]} >= {"MaxInclusive", "MinCount", "SPARQL"}
+    implausible = next(item for item in result["results"] if item["constraint"] == "MaxInclusive")
+    assert implausible == {
+        "severity": "Violation",
+        "focus_node": "https://example.org/alice",
+        "path": "https://example.org/age",
+        "value": "200",
+        "message": "Age is missing or implausible.",
+        "constraint": "MaxInclusive",
+        "source_shape": None,
+    }
+    assert result["report_path"].read_text(encoding="utf-8").startswith("Validation Report")
+
+
+def test_shacl_validation_rejects_invalid_shapes(tmp_path):
+    data_path = tmp_path / "mapped.ttl"
+    data_path.write_text(SHACL_DATA, encoding="utf-8")
+    with pytest.raises(generic_pipeline.PipelineError, match="not valid Turtle"):
+        generic_pipeline.run_shacl_validation(tmp_path, data_path, "this is not turtle")
+
+
+def test_shacl_rules_materialise_inferred_triples(tmp_path):
+    data_path = tmp_path / "mapped.ttl"
+    data_path.write_text(SHACL_DATA, encoding="utf-8")
+
+    result = generic_pipeline.run_shacl_rules(tmp_path, data_path, SHACL_RULES)
+
+    enriched = Graph().parse(result["output_path"], format="turtle")
+    assert result["inferred_triples"] == 4
+    assert result["total_triples"] == result["input_triples"] + 4 == len(enriched)
+    assert (URIRef("https://example.org/bob"), URIRef("https://example.org/registered"), None) in enriched
+    assert Graph().parse(data_path, format="turtle").__len__() == result["input_triples"]
+
+
+def test_shacl_rules_require_at_least_one_rule(tmp_path):
+    data_path = tmp_path / "mapped.ttl"
+    data_path.write_text(SHACL_DATA, encoding="utf-8")
+    with pytest.raises(generic_pipeline.PipelineError, match="sh:rule"):
+        generic_pipeline.run_shacl_rules(tmp_path, data_path, SHACL_SHAPES)
+
+
+def _mapped_run(tmp_path, monkeypatch, data=SHACL_DATA):
+    run_store = RunStore(tmp_path / "runs")
+    monkeypatch.setattr(playground_server, "RUN_STORE", run_store)
+    state = run_store.create("people.csv", "people.csv")
+    state["stages"]["upload"] = {"status": "success", "artifacts": []}
+    state["stages"]["rml"] = {"status": "success", "artifacts": []}
+    run_store.save(state)
+    (run_store.run_dir(state["id"]) / "mapped.ttl").write_text(data, encoding="utf-8")
+    return run_store, state, TestClient(playground_server.app)
+
+
+def test_rules_enrich_the_rdf_used_by_validation_and_ingestion(tmp_path, monkeypatch):
+    run_store, state, client = _mapped_run(tmp_path, monkeypatch)
+    run_id = state["id"]
+    sparql_only = SHACL_SHAPES.split("sh:property [\n            sh:path ex:age")[0] + """
+        sh:sparql [
+            sh:message "Every person needs a registration." ;
+            sh:select "SELECT $this WHERE { FILTER NOT EXISTS { $this <https://example.org/registered> ?r } }"
+        ] .
     """
 
-    result = generic_pipeline.run_reasoner(tmp_path, data, rules)
-    graph = Graph().parse(result["output_path"], format="turtle")
+    before = client.post(f"/api/runs/{run_id}/stages/shacl", json={"shapes": sparql_only}).json()
+    rules = client.post(
+        f"/api/runs/{run_id}/stages/shacl-rules",
+        json={"shapes": SHACL_RULES, "source_name": "rules.ttl"},
+    ).json()
+    after = client.post(f"/api/runs/{run_id}/stages/shacl", json={"shapes": sparql_only}).json()
 
-    assert result["inferred_triples"] >= 1
-    assert (URIRef("https://example.org/item"), URIRef("https://example.org/illuminates"), None) in graph
+    captured = {}
 
+    def ingest_graph(path, graph_name, mode):
+        captured.update({"path": path.name, "graph_name": graph_name, "mode": mode})
+        return {"graph_uri": "https://example.org/graphs/people", "mode": mode, "graph_cleared": True}
 
-def test_rdf2ldes_generates_a_downloadable_zip(tmp_path):
-    tss_path = tmp_path / "timeseries.ttl"
-    tss_path.write_text(
-        '''
-        @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-        @prefix sosa: <http://www.w3.org/ns/sosa/> .
-        @prefix tss: <https://w3id.org/tss#> .
-        @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+    monkeypatch.setattr(generic_pipeline, "ingest_graph", ingest_graph)
+    ingested = client.post(
+        f"/api/runs/{run_id}/stages/ingest", json={"graph_name": "people", "mode": "replace"}
+    ).json()
 
-        <https://example.org/snippet> a tss:Snippet ;
-            tss:about _:template ;
-            tss:from "2026-01-02T00:00:00+00:00"^^xsd:dateTime ;
-            tss:until "2026-01-02T23:59:59+00:00"^^xsd:dateTime ;
-            tss:pointType sosa:Observation ;
-            tss:points "[{\\"id\\": \\"https://example.org/reading/1\\", \\"time\\": \\"2026-01-02T12:00:00+00:00\\", \\"value\\": 42.0}]"^^rdf:JSON .
-
-        _:template a tss:PointTemplate ;
-            sosa:madeBySensor <https://example.org/sensor/1> ;
-            sosa:observedProperty <https://example.org/property/temperature> .
-        ''',
-        encoding="utf-8",
-    )
-
-    result = generic_pipeline.run_rdf2ldes(
-        tmp_path,
-        tss_path,
-        "example-stream",
-        "https://data.example/ldes/",
-    )
-
-    assert result["zip_path"].is_file()
-    assert result["trig_file_count"] >= 4
-    assert result["fragment_count"] == 1
-    assert any(path.name == "readings.trig" for path in Path(result["output_directory"]).rglob("*.trig"))
+    assert before["stages"]["shacl"]["status"] == "nonconformant"
+    assert before["stages"]["shacl"]["details"]["severity_counts"]["Violation"] == 2
+    assert rules["stages"]["rules"]["status"] == "success"
+    assert rules["stages"]["rules"]["details"]["inferred_triples"] == 4
+    assert rules["stages"]["rules"]["details"]["shapes_source"] == "uploaded file rules.ttl"
+    assert "shacl" not in rules["stages"]
+    assert after["stages"]["shacl"]["status"] == "success"
+    assert after["stages"]["shacl"]["details"]["input_rdf"] == "enriched RDF"
+    assert captured == {"path": "enriched.ttl", "graph_name": "people", "mode": "replace"}
+    assert ingested["graph"]["uri"] == "https://example.org/graphs/people"
 
 
-@pytest.mark.skipif(
-    not generic_pipeline.RML_MAPPER_JAR.is_file() or not shutil.which("java"),
-    reason="RMLMapper and Java are required for the sample integration test.",
+def test_rerunning_operations_clears_only_derived_results(tmp_path):
+    run_store = RunStore(tmp_path / "runs")
+    state = run_store.create("items.csv", "items.csv")
+    state["stages"] = {
+        stage: {"status": "success", "artifacts": []}
+        for stage in ("upload", "rml", "rules", "shacl", "ingest")
+    }
+    state["graph"] = {"name": "items", "uri": "https://example.org/graphs/items"}
+    run_store.save(state)
+
+    state = run_store.begin_stage(state, "shacl")
+    assert set(state["stages"]) == {"upload", "rml", "rules", "shacl", "ingest"}
+    assert state["graph"] is not None
+
+    state = run_store.begin_stage(state, "rules")
+    assert set(state["stages"]) == {"upload", "rml", "rules"}
+    assert state["graph"] is None
+
+
+# --- RDF download ------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("rdf_format", "parser", "extension"),
+    [("turtle", "turtle", "ttl"), ("ntriples", "nt", "nt"), ("jsonld", "json-ld", "jsonld"), ("xml", "xml", "rdf")],
 )
-def test_supplied_sample_generates_ldes_from_mapped_rdf_and_tss(tmp_path):
-    repository = Path(__file__).resolve().parents[2]
-    workbook_path = repository / "test-data" / "sample.xlsx"
-    mapping_path = repository / "test-data" / "rml.ttl.txt"
-    preview = generic_pipeline.xlsx_preview(workbook_path)
-    csv_path = generic_pipeline.xlsx_to_csv(workbook_path, tmp_path / "sample.csv", preview)
-    mapping = mapping_path.read_text(encoding="utf-8").replace("data.csv", "sample.csv")
+def test_download_current_rdf_in_each_format(tmp_path, monkeypatch, rdf_format, parser, extension):
+    _run_store, state, client = _mapped_run(tmp_path, monkeypatch)
 
-    mapped = generic_pipeline.run_rml_mapping(tmp_path, csv_path, mapping)
-    tss = generic_pipeline.run_rdf2tss(tmp_path, mapped["output_path"])
-    from_rdf = generic_pipeline.run_rdf2ldes(
-        tmp_path,
-        mapped["output_path"],
-        "sample-rdf",
-        "https://example.org/ldes/",
-        source_kind="rdf",
+    response = client.get(f"/api/runs/{state['id']}/rdf", params={"format": rdf_format})
+
+    assert response.status_code == 200
+    assert f'filename="people-mapped.{extension}"' in response.headers["content-disposition"]
+    graph = Graph().parse(data=response.content, format=parser)
+    assert len(graph) == len(Graph().parse(data=SHACL_DATA, format="turtle"))
+
+
+def test_download_rdf_requires_a_mapping(tmp_path, monkeypatch):
+    run_store = RunStore(tmp_path / "runs")
+    monkeypatch.setattr(playground_server, "RUN_STORE", run_store)
+    state = run_store.create("people.csv", "people.csv")
+    client = TestClient(playground_server.app)
+    assert client.get(f"/api/runs/{state['id']}/rdf").status_code == 409
+
+
+# --- Triple store query and operations ---------------------------------------------------
+
+
+def test_operations_build_safe_queries():
+    from query_agent import operations
+
+    query = operations.build_query(
+        "search_text",
+        {"graph": "https://example.org/graphs/items", "text": 'Desk "lamp"\\', "limit": 5},
     )
-    from_tss = generic_pipeline.run_rdf2ldes(
-        tmp_path,
-        tss["output_path"],
-        "sample-tss",
-        "https://example.org/ldes/",
-        source_kind="tss",
+    assert 'LCASE("Desk \\"lamp\\"\\\\")' in query
+    assert "GRAPH <https://example.org/graphs/items>" in query
+    assert query.rstrip().endswith("LIMIT 5")
+
+    for bad_graph in ("not an iri", "https://example.org/g> } DROP ALL {", ""):
+        with pytest.raises(operations.OperationError):
+            operations.build_query("sample_triples", {"graph": bad_graph})
+    with pytest.raises(operations.OperationError, match="at most 1000"):
+        operations.build_query("sample_triples", {"graph": "https://example.org/g", "limit": 5000})
+
+
+def test_store_operations_api_lists_and_runs_operations(monkeypatch):
+    from query_agent import operations
+
+    captured = {}
+
+    def query_graph(query):
+        captured["query"] = query
+        return {"type": "select", "variables": ["type", "entities"], "rows": [], "row_count": 0, "truncated": False}
+
+    monkeypatch.setattr(operations.ingest, "query_graph", query_graph)
+    client = TestClient(playground_server.app)
+
+    catalog = client.get("/api/store/operations").json()["operations"]
+    response = client.post(
+        "/api/store/operations/entity_types",
+        json={"parameters": {"graph": "https://example.org/graphs/items"}},
     )
 
-    assert mapped["rdf_triples"] > 0
-    assert tss["tss_triples"] > 0
-    assert from_rdf["fragment_count"] > 0
-    assert from_tss["fragment_count"] > 0
-    assert from_rdf["zip_path"].stat().st_size > 0
-    assert from_tss["zip_path"].stat().st_size > 0
+    assert {item["id"] for item in catalog} >= {"graph_overview", "entity_types", "search_text"}
+    assert response.status_code == 200
+    assert response.json()["query"] == captured["query"]
+    assert "LIMIT 50" in captured["query"]
+    assert client.post("/api/store/operations/nope", json={}).status_code == 404
+    assert client.post(
+        "/api/store/operations/entity_types", json={"parameters": {}}
+    ).status_code == 400
+
+
+def test_store_graphs_lists_named_graphs(monkeypatch):
+    from query_agent import operations
+
+    def query_graph(query):
+        if "GRAPH ?graph" in query:
+            rows = [{"graph": {"type": "uri", "value": "https://example.org/graphs/a"},
+                     "triples": {"type": "literal", "value": "42"}}]
+        else:
+            rows = [{"triples": {"type": "literal", "value": "3"}}]
+        return {"type": "select", "variables": [], "rows": rows, "row_count": len(rows), "truncated": False}
+
+    monkeypatch.setattr(operations.ingest, "query_graph", query_graph)
+    client = TestClient(playground_server.app)
+
+    assert client.get("/api/store/graphs").json() == {
+        "graphs": [{"uri": "https://example.org/graphs/a", "triples": 42}],
+        "default_graph_triples": 3,
+    }
+
+
+def test_store_query_reports_fuseki_failures_as_bad_gateway(monkeypatch):
+    def query_graph(_query):
+        raise fuseki_ingest.FusekiError("Fuseki query request failed: connection refused")
+
+    monkeypatch.setattr(playground_server.ingest, "query_graph", query_graph)
+    client = TestClient(playground_server.app)
+
+    response = client.post("/api/store/query", json={"query": "ASK {}"})
+    assert response.status_code == 502
+    assert "connection refused" in response.json()["detail"]
+    assert client.post("/api/store/query", json={"query": "   "}).status_code == 400
+
+
+def test_store_query_reports_rejected_queries_as_bad_request(monkeypatch):
+    def query_graph(_query):
+        raise fuseki_ingest.FusekiError("Fuseki query failed with HTTP 400: Parse error", 400)
+
+    monkeypatch.setattr(playground_server.ingest, "query_graph", query_graph)
+    response = TestClient(playground_server.app).post("/api/store/query", json={"query": "DROP ALL"})
+    assert response.status_code == 400

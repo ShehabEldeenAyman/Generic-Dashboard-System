@@ -25,7 +25,7 @@ FRONTEND = ROOT / "frontend"
 DIST_INDEX = FRONTEND / "dist" / "index.html"
 
 
-BACKEND_MODULES = ("fastapi", "uvicorn", "multipart", "rdflib", "pyshacl", "openpyxl", "dateutil", "requests")
+BACKEND_MODULES = ("fastapi", "uvicorn", "multipart", "rdflib", "pyshacl", "openpyxl", "requests")
 
 
 def check_backend_dependencies() -> None:

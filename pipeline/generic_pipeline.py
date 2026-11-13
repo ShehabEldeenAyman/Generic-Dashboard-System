@@ -15,19 +15,15 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
-from threading import Lock
 from typing import Any, Sequence
-from urllib.parse import quote, urlsplit
-from zipfile import BadZipFile, ZIP_DEFLATED, ZipFile
+from urllib.parse import quote
+from zipfile import BadZipFile
 
 from openpyxl import load_workbook
 from openpyxl.utils.exceptions import InvalidFileException
-from rdflib import Graph, URIRef
+from rdflib import Graph
 
-from automating_alignments import automated_alignments
-from RDF2LDES import RDFTSS2LDES
-from RDF2TSS_V2 import RDF2TSS_V2
-from SHACL.SHACL_validate import validate_shacl
+from SHACL import shacl_engine
 from triple_store_ingestion import ingest
 
 
@@ -36,9 +32,7 @@ RML_MAPPER_JAR = Path(
     os.getenv("RML_MAPPER_JAR", str(ROOT_DIR / "pipeline" / "rmlmapper.jar"))
 ).expanduser().resolve()
 DEFAULT_GRAPH_BASE = os.getenv("FUSEKI_GRAPH_BASE", "https://example.org/graphs/")
-DEFAULT_LDES_BASE = os.getenv("LDES_BASE_URL", "https://example.org/ldes/")
 COMMAND_TIMEOUT_SECONDS = int(os.getenv("PIPELINE_COMMAND_TIMEOUT", "300"))
-LDES_LOCK = Lock()
 SUPPORTED_TABULAR_EXTENSIONS = {".csv", ".xlsx"}
 
 
@@ -438,11 +432,11 @@ def rdf_instance_preview(
     """
     source = Path(rdf_path)
     if not source.is_file():
-        raise PipelineError("The mapped RDF artifact is missing.")
+        raise PipelineError("The RDF artifact is missing.")
     try:
         graph = Graph().parse(source, format="turtle")
     except Exception as error:
-        raise PipelineError(f"The mapped RDF could not be previewed: {error}") from error
+        raise PipelineError(f"The RDF could not be previewed: {error}") from error
 
     subjects = sorted(set(graph.subjects()), key=lambda term: (term.__class__.__name__, term.n3()))
     total_instances = len(subjects)
@@ -539,99 +533,6 @@ def run_rml_mapping(
     }
 
 
-def normalise_qudt_unit_uri(value: str) -> URIRef:
-    """Validate a user-supplied QUDT unit IRI and return its canonical URI."""
-    cleaned = value.strip()
-    if cleaned.startswith("<") and cleaned.endswith(">"):
-        cleaned = cleaned[1:-1].strip()
-    parsed = urlsplit(cleaned)
-    unit_name = parsed.path.removeprefix("/vocab/unit/")
-    if (
-        parsed.scheme not in {"http", "https"}
-        or parsed.hostname not in {"qudt.org", "www.qudt.org"}
-        or not parsed.path.startswith("/vocab/unit/")
-        or parsed.path == "/vocab/unit/"
-        or not re.fullmatch(r"[A-Za-z0-9._-]+", unit_name)
-        or parsed.query
-        or parsed.fragment
-        or any(character.isspace() for character in cleaned)
-    ):
-        raise PipelineError(
-            "Enter a complete QUDT unit IRI such as "
-            "http://qudt.org/vocab/unit/MilliS-PER-CentiM."
-        )
-    return URIRef(f"http://qudt.org{parsed.path.rstrip('/')}")
-
-
-def run_unit_alignment(
-    run_directory: Path,
-    source_path: Path,
-    target_unit: str,
-) -> dict[str, Any]:
-    """Create a converted RDF artifact without changing the mapped RDF source."""
-    target = normalise_qudt_unit_uri(target_unit)
-    try:
-        source_graph = Graph().parse(source_path, format="turtle")
-    except Exception as error:
-        raise PipelineError(
-            f"The mapped RDF could not be loaded for unit alignment: {error}"
-        ) from error
-
-    result_subjects = set(source_graph.subjects(predicate=automated_alignments.SOSA.hasSimpleResult))
-    eligible_subjects = {
-        subject
-        for subject in result_subjects
-        if source_graph.value(subject, automated_alignments.QUDT.hasUnit) is not None
-    }
-    if not eligible_subjects:
-        raise PipelineError(
-            "No convertible observations were found. Each SOSA result needs qudt:hasUnit."
-        )
-
-    source_units = {
-        URIRef(source_graph.value(subject, automated_alignments.QUDT.hasUnit))
-        for subject in eligible_subjects
-    }
-    for source_unit in source_units:
-        normalise_qudt_unit_uri(str(source_unit))
-        source_family = automated_alignments.conversion_family(source_unit)
-        target_family = automated_alignments.conversion_family(target)
-        if source_family and target_family and source_family != target_family:
-            raise PipelineError(
-                f"Cannot convert {source_unit} ({source_family}) to "
-                f"{target} ({target_family})."
-            )
-
-    output_path = run_directory / "aligned.ttl"
-    shutil.copy2(source_path, output_path)
-    converted_count = sum(
-        source_graph.value(subject, automated_alignments.QUDT.hasUnit) != target
-        for subject in eligible_subjects
-    )
-    try:
-        message = automated_alignments.transform_unit_optimized(output_path, target)
-        aligned_graph = Graph().parse(output_path, format="turtle")
-    except Exception as error:
-        raise PipelineError(f"QUDT unit alignment could not complete: {error}") from error
-
-    aligned_count = sum(
-        aligned_graph.value(subject, automated_alignments.QUDT.hasUnit) == target
-        for subject in eligible_subjects
-    )
-    if aligned_count != len(eligible_subjects):
-        raise PipelineError(
-            "Unit alignment completed without updating every convertible observation."
-        )
-    return {
-        "output_path": output_path,
-        "message": message,
-        "target_unit": str(target),
-        "source_units": sorted(str(unit) for unit in source_units),
-        "converted_observations": converted_count,
-        "aligned_observations": aligned_count,
-        "rdf_triples": len(aligned_graph),
-    }
-
 
 def graph_name_to_uri(graph_name: str) -> str:
     value = graph_name.strip()
@@ -644,191 +545,119 @@ def graph_name_to_uri(graph_name: str) -> str:
     return f"{DEFAULT_GRAPH_BASE.rstrip('/')}/{quote(value, safe='-._~')}"
 
 
-def eye_command(*arguments: str) -> list[str]:
-    eye_executable = os.getenv("EYE_COMMAND") or shutil.which("eye") or "eye"
-    command = [eye_executable, *arguments]
-    if os.name == "nt" and Path(eye_executable).suffix.lower() in {".cmd", ".bat"}:
-        command = [os.environ.get("COMSPEC", "cmd.exe"), "/d", "/c", *command]
-    return command
-
-
-def ingest_graph(rdf_path: Path, graph_name: str) -> dict[str, Any]:
+def ingest_graph(rdf_path: Path, graph_name: str, mode: str = "replace") -> dict[str, Any]:
+    """Load RDF into a Fuseki named graph, replacing or appending to its content."""
+    if mode not in {"replace", "append"}:
+        raise PipelineError("Ingestion mode must be 'replace' or 'append'.")
     graph_uri = graph_name_to_uri(graph_name)
-    if not ingest.delete_graph(graph_uri):
+    replace = mode == "replace"
+    if replace and not ingest.delete_graph(graph_uri):
         raise PipelineError(
             f"Fuseki could not clear the named graph {graph_uri}. No data was uploaded."
         )
-    if not ingest.upload_graph(str(rdf_path), graph_uri):
+    if not ingest.upload_graph(str(rdf_path), graph_uri, replace=replace):
         raise PipelineError(
             "Fuseki ingestion failed. Check FUSEKI_DATA_URL, the dataset name, and the Fuseki logs."
         )
-    return {"graph_uri": graph_uri, "graph_cleared": True}
+    return {"graph_uri": graph_uri, "mode": mode, "graph_cleared": replace}
 
 
-def run_sparql_query(query: str, graph_uri: str) -> dict[str, Any]:
-    query_text = query.strip()
-    if not query_text:
-        raise PipelineError("Enter a SPARQL query before running it.")
-    if not graph_uri:
-        raise PipelineError("The run does not have an ingested named graph yet.")
+def load_rdf(path: Path, *, label: str = "The RDF data") -> Graph:
+    if not path.is_file():
+        raise PipelineError(f"{label} is missing. Run the RML mapping first.")
     try:
-        return ingest.query_graph(query_text)
-    except ingest.FusekiError as error:
-        raise PipelineError(str(error)) from error
+        return Graph().parse(path, format="turtle")
+    except Exception as error:
+        raise PipelineError(f"{label} could not be loaded: {error}") from error
 
 
-def run_shacl_validation(
-    run_directory: Path,
-    data_path: Path,
-    shapes_text: str,
-    *,
-    prefix: str,
-) -> dict[str, Any]:
+def load_shapes(shapes_text: str) -> Graph:
     if not shapes_text.strip():
-        raise PipelineError("Paste a SHACL shape before running validation.")
-    parse_turtle(shapes_text, label="The SHACL shape")
-    shapes_path = run_directory / f"{prefix}_shapes.ttl"
-    report_path = run_directory / f"{prefix}_report.txt"
+        raise PipelineError("Provide SHACL shapes by pasting them or uploading a file.")
+    try:
+        return Graph().parse(
+            data=shapes_text, format="turtle", publicID="https://example.org/shapes/"
+        )
+    except Exception as error:
+        raise PipelineError(f"The SHACL shapes are not valid Turtle: {error}") from error
+
+
+def run_shacl_validation(run_directory: Path, data_path: Path, shapes_text: str) -> dict[str, Any]:
+    """Validate RDF against SHACL shapes, including SHACL-SPARQL constraints."""
+    shapes = load_shapes(shapes_text)
+    data = load_rdf(data_path)
+    shapes_path = run_directory / "shacl_validation_shapes.ttl"
+    report_path = run_directory / "shacl_validation_report.txt"
     shapes_path.write_text(shapes_text, encoding="utf-8")
     try:
-        result = validate_shacl(str(data_path), str(shapes_path), str(report_path))
+        result = shacl_engine.validate(data, shapes)
     except Exception as error:
         raise PipelineError(f"SHACL validation could not run: {error}") from error
+    report_path.write_text(result.pop("report_text"), encoding="utf-8")
     return {
         **result,
+        "shapes": shacl_engine.shapes_summary(shapes),
+        "data_triples": len(data),
         "shapes_path": shapes_path,
         "report_path": report_path,
-        "report": report_path.read_text(encoding="utf-8", errors="replace"),
     }
 
 
-def run_reasoner(run_directory: Path, data_path: Path, rules_text: str) -> dict[str, Any]:
-    if not rules_text.strip():
-        raise PipelineError("Paste N3 rules before running the reasoner.")
-    rules_path = run_directory / "reasoning_rules.n3"
-    inferred_path = run_directory / "reasoned.ttl"
-    rules_path.write_text(rules_text, encoding="utf-8")
-    result = run_command(
-        eye_command(str(data_path), str(rules_path), "--nope", "--pass-only-new"),
-        cwd=run_directory,
-        label="N3 reasoning",
-    )
-
-    try:
-        combined = Graph().parse(data_path, format="turtle")
-        inferred_count = 0
-        if result.stdout.strip():
-            inferred = Graph().parse(data=result.stdout, format="n3")
-            inferred_count = len(inferred)
-            combined += inferred
-        combined.serialize(destination=inferred_path, format="turtle")
-    except Exception as error:
-        raise PipelineError(f"EYE returned RDF that could not be parsed: {error}", result.log) from error
-    return {
-        "rules_path": rules_path,
-        "output_path": inferred_path,
-        "inferred_triples": inferred_count,
-        "total_triples": len(combined),
-        "log": result.log,
-    }
-
-
-def run_rdf2tss(run_directory: Path, data_path: Path) -> dict[str, Any]:
-    output_path = run_directory / "timeseries.ttl"
-    try:
-        source_graph = RDF2TSS_V2.load_graph(str(data_path))
-        sensor_set = RDF2TSS_V2.create_sensor_set(source_graph)
-        tss_graph = RDF2TSS_V2.create_tss(sensor_set, source_graph)
-        RDF2TSS_V2.save_graph(str(output_path), tss_graph, overwrite=True)
-    except Exception as error:
-        raise PipelineError(f"RDF2TSS could not transform the RDF: {error}") from error
-    if not sensor_set:
+def run_shacl_rules(run_directory: Path, data_path: Path, shapes_text: str) -> dict[str, Any]:
+    """Apply sh:rule definitions and write the enriched graph as a new artifact."""
+    shapes = load_shapes(shapes_text)
+    summary = shacl_engine.shapes_summary(shapes)
+    if not summary["rules"]:
         raise PipelineError(
-            "RDF2TSS found no sensors. The current query expects sosa:madeBySensor observations."
+            "The shapes do not declare any sh:rule. Add a sh:TripleRule or sh:SPARQLRule to enrich data."
         )
-    return {
-        "output_path": output_path,
-        "sensor_count": len(sensor_set),
-        "tss_triples": len(tss_graph),
-    }
-
-
-def normalise_stream_name(value: str) -> str:
-    cleaned = re.sub(r"[^A-Za-z0-9._-]+", "-", value.strip()).strip("-._")
-    if not cleaned:
-        raise PipelineError("Enter an LDES stream name.")
-    return cleaned
-
-
-def run_rdf2ldes(
-    run_directory: Path,
-    source_path: Path,
-    stream_name: str,
-    base_url: str | None = None,
-    *,
-    source_kind: str = "tss",
-) -> dict[str, Any]:
-    safe_name = normalise_stream_name(stream_name)
-    public_base = (base_url or DEFAULT_LDES_BASE).strip()
-    if not public_base.startswith(("http://", "https://")):
-        raise PipelineError("The LDES base URL must start with http:// or https://.")
-    output_directory = run_directory / "ldes" / safe_name
-    if output_directory.exists():
-        shutil.rmtree(output_directory)
-    output_directory.mkdir(parents=True, exist_ok=True)
-
+    data = load_rdf(data_path)
+    shapes_path = run_directory / "shacl_rules_shapes.ttl"
+    output_path = run_directory / "enriched.ttl"
+    shapes_path.write_text(shapes_text, encoding="utf-8")
     try:
-        with LDES_LOCK:
-            RDFTSS2LDES.generate_ldes(
-                source_ttl=source_path,
-                output_directory=output_directory,
-                stream_name=safe_name,
-                base_url=public_base,
-                source_kind=source_kind,
-            )
+        enriched = shacl_engine.apply_rules(data, shapes)
     except Exception as error:
-        raise PipelineError(f"RDF2LDES could not generate the stream: {error}") from error
-
-    trig_files = sorted(output_directory.rglob("*.trig"))
-    if not trig_files:
-        raise PipelineError("RDF2LDES completed without generating any TriG files.")
-
-    zip_path = run_directory / f"{safe_name}_ldes.zip"
-    with ZipFile(zip_path, "w", compression=ZIP_DEFLATED) as archive:
-        for path in trig_files:
-            archive.write(path, (Path(safe_name) / path.relative_to(output_directory)).as_posix())
+        raise PipelineError(f"SHACL rules could not run: {error}") from error
+    enriched.serialize(destination=output_path, format="turtle")
     return {
-        "output_directory": output_directory,
-        "zip_path": zip_path,
-        "stream_name": safe_name,
-        "base_url": public_base,
-        "source_kind": source_kind,
-        "source_file": source_path.name,
-        "trig_file_count": len(trig_files),
-        "fragment_count": sum(path.name == "readings.trig" for path in trig_files),
-        "index_count": sum(path.name != "readings.trig" for path in trig_files),
+        "shapes": summary,
+        "input_triples": len(data),
+        "inferred_triples": max(len(enriched) - len(data), 0),
+        "total_triples": len(enriched),
+        "shapes_path": shapes_path,
+        "output_path": output_path,
     }
+
+
+RDF_EXPORT_FORMATS = {
+    "turtle": ("text/turtle", "ttl"),
+    "ntriples": ("application/n-triples", "nt"),
+    "jsonld": ("application/ld+json", "jsonld"),
+    "xml": ("application/rdf+xml", "rdf"),
+}
+
+
+def export_rdf(path: Path, rdf_format: str) -> tuple[bytes, str, str]:
+    """Serialise an RDF artifact in the requested format: (content, media type, extension)."""
+    if rdf_format not in RDF_EXPORT_FORMATS:
+        raise PipelineError(
+            "Unsupported RDF format. Choose one of: " + ", ".join(RDF_EXPORT_FORMATS) + "."
+        )
+    media_type, extension = RDF_EXPORT_FORMATS[rdf_format]
+    if rdf_format == "turtle":
+        if not path.is_file():
+            raise PipelineError("The RDF data is missing. Run the RML mapping first.")
+        return path.read_bytes(), media_type, extension
+    graph = load_rdf(path)
+    serialised = graph.serialize(format="json-ld" if rdf_format == "jsonld" else rdf_format)
+    data = serialised.encode("utf-8") if isinstance(serialised, str) else serialised
+    return data, media_type, extension
 
 
 def tool_status() -> dict[str, Any]:
-    eye_ready = False
-    eye_detail = "EYE was not found on PATH."
-    if os.getenv("EYE_COMMAND") or shutil.which("eye"):
-        try:
-            probe = subprocess.run(
-                eye_command("--help"),
-                capture_output=True,
-                text=True,
-                timeout=10,
-            )
-            eye_ready = probe.returncode == 0
-            eye_detail = "" if eye_ready else (probe.stderr or probe.stdout or "EYE did not start.").strip()
-        except (OSError, subprocess.TimeoutExpired) as error:
-            eye_detail = str(error)
     return {
         "java": bool(shutil.which("java")),
-        "eye": eye_ready,
-        "eye_detail": eye_detail,
         "rml_mapper": RML_MAPPER_JAR.is_file(),
         "rml_mapper_path": str(RML_MAPPER_JAR),
     }

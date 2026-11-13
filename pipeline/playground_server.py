@@ -1,6 +1,6 @@
-"""Cloud-oriented API for the generic semantic data pipeline.
+"""API for Semantic Data Studio.
 
-Run with: ``python -m uvicorn pipeline.playground_server:app --reload --port 8000``
+Run with: ``python run.py`` (or ``python -m uvicorn pipeline.playground_server:app --reload``).
 """
 
 from __future__ import annotations
@@ -20,6 +20,7 @@ from pydantic import BaseModel, Field
 
 from pipeline import generic_pipeline as pipeline
 from pipeline.run_store import RunStore
+from query_agent import operations
 from triple_store_ingestion import ingest
 
 
@@ -35,9 +36,9 @@ def configured_origins() -> list[str]:
 
 
 app = FastAPI(
-    title="Semantic Pipeline API",
-    description="Run-scoped CSV/XLSX to RDF, TSS, and LDES processing.",
-    version="1.0.0",
+    title="Semantic Data Studio API",
+    description="Map tabular data to RDF, check it with SHACL, publish it to Fuseki, and query the triple store.",
+    version="2.0.0",
 )
 app.add_middleware(
     CORSMiddleware,
@@ -49,32 +50,25 @@ app.add_middleware(
 
 class RmlRequest(BaseModel):
     mapping: str = Field(min_length=1, max_length=2_000_000)
-
-
-class AlignmentRequest(BaseModel):
-    target_unit: str = Field(min_length=1, max_length=2_000)
-
-
-class IngestRequest(BaseModel):
-    graph_name: str = Field(min_length=1, max_length=2_000)
-
-
-class SparqlRequest(BaseModel):
-    query: str = Field(min_length=1, max_length=2_000_000)
+    source_name: str | None = Field(default=None, max_length=300)
 
 
 class ShaclRequest(BaseModel):
     shapes: str = Field(min_length=1, max_length=2_000_000)
+    source_name: str | None = Field(default=None, max_length=300)
 
 
-class ReasonRequest(BaseModel):
-    rules: str = Field(min_length=1, max_length=2_000_000)
+class IngestRequest(BaseModel):
+    graph_name: str = Field(min_length=1, max_length=2_000)
+    mode: Literal["replace", "append"] = "replace"
 
 
-class LdesRequest(BaseModel):
-    stream_name: str = Field(default="dataset", min_length=1, max_length=200)
-    base_url: str | None = Field(default=None, max_length=2_000)
-    source: Literal["rdf", "tss"] = "tss"
+class QueryRequest(BaseModel):
+    query: str = Field(min_length=1, max_length=2_000_000)
+
+
+class OperationRequest(BaseModel):
+    parameters: dict[str, Any] = Field(default_factory=dict)
 
 
 def load_run(run_id: str) -> dict[str, Any]:
@@ -94,11 +88,13 @@ def public_state(state: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
+STAGE_LABELS = {"upload": "data upload", "rml": "RML mapping", "rules": "SHACL rules"}
+
+
 def require_stage(state: dict[str, Any], stage: str) -> None:
     result = state.get("stages", {}).get(stage)
     if not result or result.get("status") not in {"success", "nonconformant"}:
-        label = stage.replace("_", " ").upper()
-        raise HTTPException(409, f"Complete the {label} stage first.")
+        raise HTTPException(409, f"Complete the {STAGE_LABELS.get(stage, stage)} first.")
 
 
 StageOperation = Callable[[dict[str, Any], Path], dict[str, Any]]
@@ -143,19 +139,10 @@ def execute_stage(
             artifact_ids=artifact_ids,
         )
     except pipeline.PipelineError as error:
-        state = RUN_STORE.finish_stage(
-            state,
-            stage,
-            "error",
-            str(error),
-            log=error.log,
-        )
+        state = RUN_STORE.finish_stage(state, stage, "error", str(error), log=error.log)
     except Exception as error:  # keep a failed tool from taking down the API
         state = RUN_STORE.finish_stage(
-            state,
-            stage,
-            "error",
-            f"The stage could not complete: {error}",
+            state, stage, "error", f"The operation could not complete: {error}"
         )
     return public_state(state)
 
@@ -167,20 +154,27 @@ def source_path(state: dict[str, Any]) -> Path:
     return RUN_STORE.resolve_relative(state["id"], relative_path)
 
 
-def rdf_input_path(state: dict[str, Any], directory: Path) -> tuple[Path, str]:
-    """Use aligned RDF after a successful optional alignment, otherwise mapped RDF."""
-    alignment = state.get("stages", {}).get("alignment") or {}
-    if alignment.get("status") == "success":
-        aligned_path = directory / "aligned.ttl"
-        if not aligned_path.is_file():
-            raise pipeline.PipelineError("The aligned RDF artifact is missing. Run unit alignment again.")
-        return aligned_path, "aligned RDF"
+def current_rdf(state: dict[str, Any], directory: Path) -> tuple[Path, str]:
+    """The dataset's current RDF: SHACL-enriched when rules ran, otherwise mapped."""
+    rules = state.get("stages", {}).get("rules") or {}
+    if rules.get("status") == "success":
+        enriched_path = directory / "enriched.ttl"
+        if not enriched_path.is_file():
+            raise pipeline.PipelineError("The enriched RDF is missing. Run the SHACL rules again.")
+        return enriched_path, "enriched RDF"
     return directory / "mapped.ttl", "mapped RDF"
+
+
+def source_note(source_name: str | None) -> str:
+    return f"uploaded file {source_name}" if source_name else "pasted text"
+
+
+# --- Service status -------------------------------------------------------------------
 
 
 @app.get("/api/health")
 def health() -> dict[str, str]:
-    return {"status": "ok", "service": "semantic-pipeline"}
+    return {"status": "ok", "service": "semantic-data-studio"}
 
 
 @app.get("/api/config")
@@ -208,8 +202,12 @@ def configuration() -> dict[str, Any]:
         },
         "tools": pipeline.tool_status(),
         "max_upload_bytes": MAX_UPLOAD_BYTES,
-        "storage": "run-scoped",
+        "default_graph_base": pipeline.DEFAULT_GRAPH_BASE,
+        "rdf_formats": list(pipeline.RDF_EXPORT_FORMATS),
     }
+
+
+# --- Datasets (runs) ------------------------------------------------------------------
 
 
 @app.post("/api/runs")
@@ -308,6 +306,7 @@ def rml_mapping(run_id: str, request: RmlRequest) -> dict[str, Any]:
         result = pipeline.run_rml_mapping(directory, source_path(state), request.mapping)
         return {
             "message": f"RML mapping created {result['rdf_triples']:,} RDF triples.",
+            "mapping_source": source_note(request.source_name),
             "mapping_triples": result["mapping_triples"],
             "rdf_triples": result["rdf_triples"],
             "log": result["log"],
@@ -320,57 +319,72 @@ def rml_mapping(run_id: str, request: RmlRequest) -> dict[str, Any]:
     return execute_stage(run_id, "rml", "upload", operation)
 
 
-@app.get("/api/runs/{run_id}/rdf-preview")
-def mapped_rdf_preview(
-    run_id: str,
-    offset: int = Query(default=0, ge=0),
-    limit: int = Query(default=10, ge=1, le=10),
-) -> dict[str, Any]:
-    state = load_run(run_id)
-    require_stage(state, "rml")
-    try:
-        return pipeline.rdf_instance_preview(
-            RUN_STORE.run_dir(run_id) / "mapped.ttl",
-            offset=offset,
-            limit=limit,
-        )
-    except pipeline.PipelineError as error:
-        raise HTTPException(400, str(error)) from error
-
-
-@app.post("/api/runs/{run_id}/stages/alignment")
-def alignment_stage(run_id: str, request: AlignmentRequest) -> dict[str, Any]:
+@app.post("/api/runs/{run_id}/stages/shacl-rules")
+def shacl_rules_stage(run_id: str, request: ShaclRequest) -> dict[str, Any]:
     def operation(_state: dict[str, Any], directory: Path) -> dict[str, Any]:
-        result = pipeline.run_unit_alignment(
-            directory,
-            directory / "mapped.ttl",
-            request.target_unit,
-        )
+        result = pipeline.run_shacl_rules(directory, directory / "mapped.ttl", request.shapes)
         return {
-            "message": result["message"],
-            "target_unit": result["target_unit"],
-            "source_units": result["source_units"],
-            "converted_observations": result["converted_observations"],
-            "aligned_observations": result["aligned_observations"],
-            "rdf_triples": result["rdf_triples"],
+            "message": f"SHACL rules inferred {result['inferred_triples']:,} new triples.",
+            "shapes_source": source_note(request.source_name),
+            "shapes": result["shapes"],
+            "input_triples": result["input_triples"],
+            "inferred_triples": result["inferred_triples"],
+            "total_triples": result["total_triples"],
             "artifacts": [
-                {"path": result["output_path"], "name": "Unit-aligned RDF", "kind": "ttl"}
+                {"path": result["shapes_path"], "name": "SHACL rules", "kind": "ttl"},
+                {"path": result["output_path"], "name": "Enriched RDF", "kind": "ttl"},
             ],
         }
 
-    return execute_stage(run_id, "alignment", "rml", operation)
+    return execute_stage(run_id, "rules", "rml", operation)
+
+
+@app.post("/api/runs/{run_id}/stages/shacl")
+def shacl_validation_stage(run_id: str, request: ShaclRequest) -> dict[str, Any]:
+    def operation(state: dict[str, Any], directory: Path) -> dict[str, Any]:
+        input_path, input_label = current_rdf(state, directory)
+        result = pipeline.run_shacl_validation(directory, input_path, request.shapes)
+        counts = result["severity_counts"]
+        if result["conforms"]:
+            message = f"The {input_label} conforms to the SHACL shapes."
+        else:
+            message = (
+                f"Found {counts.get('Violation', 0):,} violations, {counts.get('Warning', 0):,} "
+                f"warnings, and {counts.get('Info', 0):,} notes in the {input_label}."
+            )
+        return {
+            "status": "success" if result["conforms"] else "nonconformant",
+            "message": message,
+            "shapes_source": source_note(request.source_name),
+            "input_rdf": input_label,
+            "conforms": result["conforms"],
+            "data_triples": result["data_triples"],
+            "shapes": result["shapes"],
+            "severity_counts": counts,
+            "total_results": result["total_results"],
+            "results": result["results"],
+            "truncated": result["truncated"],
+            "duration_seconds": result["duration_seconds"],
+            "artifacts": [
+                {"path": result["shapes_path"], "name": "SHACL shapes", "kind": "ttl"},
+                {"path": result["report_path"], "name": "Validation report", "kind": "txt"},
+            ],
+        }
+
+    return execute_stage(run_id, "shacl", "rml", operation)
 
 
 @app.post("/api/runs/{run_id}/stages/ingest")
 def ingest_stage(run_id: str, request: IngestRequest) -> dict[str, Any]:
     def operation(state: dict[str, Any], directory: Path) -> dict[str, Any]:
-        input_path, input_label = rdf_input_path(state, directory)
-        result = pipeline.ingest_graph(input_path, request.graph_name)
+        input_path, input_label = current_rdf(state, directory)
+        result = pipeline.ingest_graph(input_path, request.graph_name, request.mode)
+        verb = "Replaced" if request.mode == "replace" else "Appended to"
         return {
-            "message": f"Cleared and ingested the {input_label} into {result['graph_uri']}.",
+            "message": f"{verb} {result['graph_uri']} with the {input_label}.",
             "graph_uri": result["graph_uri"],
-            "graph_cleared": result["graph_cleared"],
-            "input_rdf": input_path.name,
+            "mode": result["mode"],
+            "input_rdf": input_label,
             "state_updates": {
                 "graph": {"name": request.graph_name, "uri": result["graph_uri"]}
             },
@@ -379,142 +393,85 @@ def ingest_stage(run_id: str, request: IngestRequest) -> dict[str, Any]:
     return execute_stage(run_id, "ingest", "rml", operation)
 
 
-@app.post("/api/runs/{run_id}/sparql")
-def sparql_query(run_id: str, request: SparqlRequest) -> dict[str, Any]:
+@app.get("/api/runs/{run_id}/rdf")
+def download_rdf(
+    run_id: str,
+    rdf_format: Literal["turtle", "ntriples", "jsonld", "xml"] = Query(default="turtle", alias="format"),
+) -> Response:
     state = load_run(run_id)
-    require_stage(state, "ingest")
-    graph_uri = (state.get("graph") or {}).get("uri", "")
+    require_stage(state, "rml")
+    directory = RUN_STORE.run_dir(run_id)
     try:
-        return pipeline.run_sparql_query(request.query, graph_uri)
+        path, label = current_rdf(state, directory)
+        content, media_type, extension = pipeline.export_rdf(path, rdf_format)
     except pipeline.PipelineError as error:
         raise HTTPException(400, str(error)) from error
+    stem = Path(state["source"]["stored_filename"]).stem or "dataset"
+    suffix = "enriched" if label == "enriched RDF" else "mapped"
+    return Response(
+        content,
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{stem}-{suffix}.{extension}"'},
+    )
 
 
-@app.post("/api/runs/{run_id}/stages/shacl-in")
-def shacl_in_stage(run_id: str, request: ShaclRequest) -> dict[str, Any]:
-    def operation(state: dict[str, Any], directory: Path) -> dict[str, Any]:
-        input_path, input_label = rdf_input_path(state, directory)
-        result = pipeline.run_shacl_validation(
-            directory, input_path, request.shapes, prefix="shacl_in"
-        )
-        conforms = bool(result["conforms"])
-        return {
-            "status": "success" if conforms else "nonconformant",
-            "message": f"The {input_label} conforms to the SHACL shape." if conforms else f"The {input_label} does not conform. Review the report; the pipeline remains available.",
-            "conforms": conforms,
-            "input_rdf": input_path.name,
-            "report": result["report"],
-            "duration_seconds": result["duration_seconds"],
-            "artifacts": [
-                {"path": result["shapes_path"], "name": "SHACL input shape", "kind": "ttl"},
-                {"path": result["report_path"], "name": "SHACL input report", "kind": "txt"},
-            ],
-        }
-
-    return execute_stage(run_id, "shacl_in", "rml", operation)
+@app.get("/api/runs/{run_id}/rdf-preview")
+def rdf_preview(
+    run_id: str,
+    offset: int = Query(default=0, ge=0),
+    limit: int = Query(default=10, ge=1, le=10),
+) -> dict[str, Any]:
+    state = load_run(run_id)
+    require_stage(state, "rml")
+    directory = RUN_STORE.run_dir(run_id)
+    try:
+        path, label = current_rdf(state, directory)
+        preview = pipeline.rdf_instance_preview(path, offset=offset, limit=limit)
+    except pipeline.PipelineError as error:
+        raise HTTPException(400, str(error)) from error
+    return {**preview, "source": label}
 
 
-@app.post("/api/runs/{run_id}/stages/reason")
-def reason_stage(run_id: str, request: ReasonRequest) -> dict[str, Any]:
-    def operation(state: dict[str, Any], directory: Path) -> dict[str, Any]:
-        input_path, input_label = rdf_input_path(state, directory)
-        result = pipeline.run_reasoner(directory, input_path, request.rules)
-        return {
-            "message": f"Reasoning over {input_label} added {result['inferred_triples']:,} inferred triples.",
-            "inferred_triples": result["inferred_triples"],
-            "total_triples": result["total_triples"],
-            "input_rdf": input_path.name,
-            "log": result["log"],
-            "artifacts": [
-                {"path": result["rules_path"], "name": "N3 rules", "kind": "n3"},
-                {"path": result["output_path"], "name": "Reasoned RDF", "kind": "ttl"},
-            ],
-        }
-
-    return execute_stage(run_id, "reason", "rml", operation)
+# --- Triple store: direct query and agent-ready operations ----------------------------
 
 
-@app.post("/api/runs/{run_id}/stages/rdf2tss")
-def rdf2tss_stage(run_id: str) -> dict[str, Any]:
-    def operation(state: dict[str, Any], directory: Path) -> dict[str, Any]:
-        reason_status = (state.get("stages", {}).get("reason") or {}).get("status")
-        reasoned_path = directory / "reasoned.ttl"
-        use_reasoned_rdf = reason_status == "success" and reasoned_path.is_file()
-        fallback_path, fallback_label = rdf_input_path(state, directory)
-        input_path = reasoned_path if use_reasoned_rdf else fallback_path
-        input_label = "reasoned RDF" if use_reasoned_rdf else fallback_label
-        result = pipeline.run_rdf2tss(directory, input_path)
-        return {
-            "message": f"Created TSS data for {result['sensor_count']:,} sensors from {input_label}.",
-            "sensor_count": result["sensor_count"],
-            "tss_triples": result["tss_triples"],
-            "input_rdf": input_path.name,
-            "artifacts": [
-                {"path": result["output_path"], "name": "TSS RDF", "kind": "ttl"}
-            ],
-        }
-
-    return execute_stage(run_id, "rdf2tss", "rml", operation)
+def store_call(function: Callable[[], dict[str, Any]]) -> dict[str, Any]:
+    try:
+        return function()
+    except operations.OperationError as error:
+        raise HTTPException(400, str(error)) from error
+    except ingest.FusekiError as error:
+        # A query Fuseki rejects (syntax error, update keywords) is the caller's mistake.
+        status = 400 if error.status_code == 400 else 502
+        raise HTTPException(status, str(error)) from error
 
 
-@app.post("/api/runs/{run_id}/stages/shacl-out")
-def shacl_out_stage(run_id: str, request: ShaclRequest) -> dict[str, Any]:
-    def operation(_state: dict[str, Any], directory: Path) -> dict[str, Any]:
-        result = pipeline.run_shacl_validation(
-            directory, directory / "timeseries.ttl", request.shapes, prefix="shacl_out"
-        )
-        conforms = bool(result["conforms"])
-        return {
-            "status": "success" if conforms else "nonconformant",
-            "message": "The TSS output conforms to the SHACL shape." if conforms else "The TSS output does not conform. Review the report; LDES generation remains available.",
-            "conforms": conforms,
-            "report": result["report"],
-            "duration_seconds": result["duration_seconds"],
-            "artifacts": [
-                {"path": result["shapes_path"], "name": "SHACL output shape", "kind": "ttl"},
-                {"path": result["report_path"], "name": "SHACL output report", "kind": "txt"},
-            ],
-        }
-
-    return execute_stage(run_id, "shacl_out", "rdf2tss", operation)
+@app.get("/api/store/graphs")
+def store_graphs() -> dict[str, Any]:
+    return store_call(operations.list_graphs)
 
 
-@app.post("/api/runs/{run_id}/stages/rdf2ldes")
-def rdf2ldes_stage(run_id: str, request: LdesRequest) -> dict[str, Any]:
-    def operation(state: dict[str, Any], directory: Path) -> dict[str, Any]:
-        if request.source == "rdf":
-            source_path, source_label = rdf_input_path(state, directory)
-        else:
-            source_path, source_label = directory / "timeseries.ttl", "TSS RDF"
-        result = pipeline.run_rdf2ldes(
-            directory,
-            source_path,
-            request.stream_name,
-            request.base_url,
-            source_kind=request.source,
-        )
-        root_indexes = sorted(
-            path for path in result["output_directory"].glob("*.trig") if path.is_file()
-        )
-        artifacts = [
-            {"path": result["zip_path"], "name": f"{result['stream_name']} LDES ZIP", "kind": "zip"}
-        ]
-        if root_indexes:
-            artifacts.append({"path": root_indexes[0], "name": "LDES root index", "kind": "trig"})
-        return {
-            "message": f"Generated {result['trig_file_count']:,} LDES files from {source_label} and packaged them as ZIP.",
-            "stream_name": result["stream_name"],
-            "base_url": result["base_url"],
-            "source": request.source,
-            "source_file": result["source_file"],
-            "trig_file_count": result["trig_file_count"],
-            "fragment_count": result["fragment_count"],
-            "index_count": result["index_count"],
-            "artifacts": artifacts,
-        }
+@app.post("/api/store/query")
+def store_query(request: QueryRequest) -> dict[str, Any]:
+    query = request.query.strip()
+    if not query:
+        raise HTTPException(400, "Enter a SPARQL query before running it.")
+    return store_call(lambda: ingest.query_graph(query))
 
-    prerequisite = "rml" if request.source == "rdf" else "rdf2tss"
-    return execute_stage(run_id, "rdf2ldes", prerequisite, operation)
+
+@app.get("/api/store/operations")
+def store_operations() -> dict[str, Any]:
+    return {"operations": operations.catalog()}
+
+
+@app.post("/api/store/operations/{operation_id}")
+def run_store_operation(operation_id: str, request: OperationRequest) -> dict[str, Any]:
+    if operation_id not in operations.OPERATIONS:
+        raise HTTPException(404, f"Unknown operation: {operation_id}")
+    return store_call(lambda: operations.run_operation(operation_id, request.parameters))
+
+
+# --- Artifacts ------------------------------------------------------------------------
 
 
 @app.get("/api/runs/{run_id}/artifacts/{artifact_id}")
@@ -536,9 +493,6 @@ def preview_artifact(run_id: str, artifact_id: str) -> dict[str, Any]:
     response: dict[str, Any] = {"artifact": public_state({"id": run_id, "artifacts": [artifact]})["artifacts"][0]}
     if path.suffix.lower() in {".csv", ".xlsx"}:
         response["table"] = pipeline.tabular_preview(path)
-        return response
-    if path.suffix.lower() == ".zip":
-        response["message"] = "Download the ZIP to inspect the complete LDES folder."
         return response
     text = path.read_text(encoding="utf-8", errors="replace")
     response["text"] = text[:100_000]

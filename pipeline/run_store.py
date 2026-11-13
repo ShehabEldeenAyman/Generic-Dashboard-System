@@ -1,4 +1,4 @@
-"""Run-scoped state and artifact storage for the generic semantic pipeline.
+"""Dataset-scoped state and artifact storage for Semantic Data Studio.
 
 The default filesystem backend is intentionally rooted outside the repository.
 Cloud deployments can point ``PIPELINE_STORAGE_DIR`` at a persistent volume;
@@ -18,36 +18,16 @@ from typing import Any
 from uuid import UUID, uuid4
 
 
-STAGE_ORDER = (
-    "upload",
-    "rml",
-    "alignment",
-    "ingest",
-    "shacl_in",
-    "reason",
-    "rdf2tss",
-    "shacl_out",
-    "rdf2ldes",
-)
+# Operations are independent actions on one dataset, not a fixed sequence.
+# Re-running an operation clears the results that were derived from its output.
+STAGE_ORDER = ("upload", "rml", "rules", "shacl", "ingest")
 
 STAGE_INVALIDATIONS = {
     "upload": set(STAGE_ORDER),
-    "rml": set(STAGE_ORDER[1:]),
-    "alignment": {
-        "alignment",
-        "ingest",
-        "shacl_in",
-        "reason",
-        "rdf2tss",
-        "shacl_out",
-        "rdf2ldes",
-    },
+    "rml": {"rml", "rules", "shacl", "ingest"},
+    "rules": {"rules", "shacl", "ingest"},
+    "shacl": {"shacl"},
     "ingest": {"ingest"},
-    "shacl_in": {"shacl_in"},
-    "reason": {"reason", "rdf2tss", "shacl_out", "rdf2ldes"},
-    "rdf2tss": {"rdf2tss", "shacl_out", "rdf2ldes"},
-    "shacl_out": {"shacl_out"},
-    "rdf2ldes": {"rdf2ldes"},
 }
 
 

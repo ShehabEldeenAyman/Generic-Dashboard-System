@@ -1,6 +1,5 @@
 fastapi[standard]
 openpyxl
-python-dateutil
 python-multipart
 pyshacl
 rdflib

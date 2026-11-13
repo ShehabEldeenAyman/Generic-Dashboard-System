@@ -13,7 +13,14 @@ MAX_GRAPH_RESULT_CHARACTERS = max(
 
 
 class FusekiError(RuntimeError):
-    """Raised when Fuseki cannot complete a graph or query operation."""
+    """Raised when Fuseki cannot complete a graph or query operation.
+
+    ``status_code`` is Fuseki's HTTP status when it answered, else ``None``.
+    """
+
+    def __init__(self, message, status_code=None):
+        super().__init__(message)
+        self.status_code = status_code
 
 
 def get_query_url():
@@ -24,11 +31,16 @@ def get_query_url():
     return FUSEKI_DATA_URL.rsplit("/data", 1)[0] + "/query"
 
 
-def upload_graph(ttl_data_path, graph_uri):
-    """Replace a named graph with a Turtle file through Graph Store Protocol."""
+def upload_graph(ttl_data_path, graph_uri, replace=True):
+    """Load a Turtle file into a named graph through Graph Store Protocol.
+
+    ``replace=True`` uses PUT (the graph's content is replaced); ``replace=False``
+    uses POST (triples are added to whatever the graph already holds).
+    """
+    send = requests.put if replace else requests.post
     try:
         with open(ttl_data_path, "rb") as source:
-            response = requests.put(
+            response = send(
                 FUSEKI_DATA_URL,
                 params={"graph": graph_uri},
                 data=source,
@@ -81,7 +93,9 @@ def query_graph(query):
 
     if not response.ok:
         detail = response.text.strip()[:2_000] or "Fuseki did not provide an error message."
-        raise FusekiError(f"Fuseki query failed with HTTP {response.status_code}: {detail}")
+        raise FusekiError(
+            f"Fuseki query failed with HTTP {response.status_code}: {detail}", response.status_code
+        )
 
     content_type = response.headers.get("Content-Type", "").split(";", 1)[0].strip()
     if content_type == "application/sparql-results+json":
