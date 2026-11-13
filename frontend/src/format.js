@@ -18,8 +18,9 @@ export function compactNumber(value) {
 export function formatBytes(bytes) {
   if (!bytes && bytes !== 0) return '—'
   if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+  const trim = (value) => value.toFixed(1).replace(/\.0$/, '')
+  if (bytes < 1024 * 1024) return `${trim(bytes / 1024)} KB`
+  return `${trim(bytes / 1024 / 1024)} MB`
 }
 
 export function timeAgo(isoString) {

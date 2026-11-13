@@ -197,7 +197,7 @@ export default function App() {
           </div>
         )}
         <div hidden={view !== 'overview'}><Overview run={run} config={config} store={store} navigate={navigate} /></div>
-        <div hidden={view !== 'data'}><DataView key={datasetKey} run={run} busy={busy} onUpload={upload} onDelete={removeDataset} /></div>
+        <div hidden={view !== 'data'}><DataView key={datasetKey} run={run} config={config} busy={busy} onUpload={upload} onDelete={removeDataset} /></div>
         <div hidden={view !== 'mapping'}><MappingView key={datasetKey} {...shared} /></div>
         <div hidden={view !== 'quality'}><QualityView key={datasetKey} {...shared} artifactsFor={artifactsFor} /></div>
         <div hidden={view !== 'graph'}><GraphView key={datasetKey} {...shared} onQueryGraph={queryGraph} /></div>

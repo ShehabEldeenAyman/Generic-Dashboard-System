@@ -277,6 +277,10 @@ button.kpi:hover { transform: translateY(-1px); box-shadow: var(--shadow-lg); }
 .fact-list span { color: var(--muted); }
 .plain-list { margin: 0; padding-left: 18px; color: var(--text-2); display: flex; flex-direction: column; gap: 6px; }
 
+.format-list { display: flex; flex-direction: column; gap: 14px; }
+.format-item { display: flex; flex-direction: column; gap: 8px; }
+.format-item .badge { align-self: flex-start; font-family: ui-monospace, Menlo, Consolas, monospace; }
+
 /* ---------- Tables ---------- */
 .table-wrap { overflow: auto; max-height: 420px; border: 1px solid var(--border); border-radius: var(--radius-sm); }
 .card > div > .table-wrap { border: 0; border-top: 1px solid var(--border); border-radius: 0 0 var(--radius) var(--radius); margin-top: 16px; }

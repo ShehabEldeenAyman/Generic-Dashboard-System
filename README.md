@@ -16,7 +16,7 @@ publish it to Apache Jena Fuseki, and explore it with ready-made queries or SPAR
 
 <img src="docs/images/overview.png" alt="Semantic Data Studio overview page with dataset, triples, data quality, published graph and triple store tiles" width="900">
 
-[Features](#-features) · [Installation](#-installation) · [Quick tour](#-quick-tour) · [Agent API](#-query--agent-api) · [Troubleshooting](#-troubleshooting)
+[Features](#-features) · [Formats](#-supported-data-formats) · [Installation](#-installation) · [Quick tour](#-quick-tour) · [Agent API](#-query--agent-api) · [Troubleshooting](#-troubleshooting)
 
 </div>
 
@@ -27,7 +27,7 @@ publish it to Apache Jena Fuseki, and explore it with ready-made queries or SPAR
 | | Workspace | What you can do |
 | :---: | --- | --- |
 | 📊 | **Overview** | See the dataset size, RDF triple count, data quality, published graph, and triple-store status at a glance, with quick actions and recent activity. |
-| 📁 | **Data** | Upload `.csv` or `.xlsx` files. Preview rows, columns, and the file name your mapping should reference. Multi-row Excel headers and split date/time columns are merged automatically. |
+| 📁 | **Data** | Upload `.csv` or `.xlsx` files ([details](#-supported-data-formats)). Preview rows, columns, and the file name your mapping should reference. Multi-row Excel headers and split date/time columns are merged automatically. |
 | 🔀 | **Mapping** | **Paste** an RML mapping or **upload** a mapping file, then generate RDF with RMLMapper. Column names and the logical-source name are shown next to the editor. |
 | 🛡️ | **Data quality** | **Paste** or **upload** SHACL shapes. **Validate** against SHACL Core and SPARQL-based constraints, with a searchable table of violations, warnings, and notes. **Apply rules** (`sh:TripleRule`, `sh:SPARQLRule`) to enrich the data with inferred facts. |
 | 🗄️ | **Knowledge graph** | **Download** the RDF as Turtle, N-Triples, JSON-LD, or RDF/XML. **Publish** it to a Fuseki named graph, replacing or adding to its content. Browse it entity by entity. |
@@ -62,6 +62,19 @@ flowchart LR
 ```
 
 The **current RDF** is the enriched RDF when SHACL rules have run, and the mapped RDF otherwise. Validation, downloads, publishing, and the RDF browser all use it.
+
+
+## 📁 Supported data formats
+
+The **Upload a dataset** option accepts **CSV (`.csv`)** and **Excel (`.xlsx`)** files up to **50 MB** (configurable with `MAX_UPLOAD_BYTES`).
+
+| Format | How it's read |
+| --- | --- |
+| **`.csv`** | The delimiter is detected automatically (comma, semicolon, tab, or pipe). UTF-8 encoding, with Latin-1 as a fallback. The first row must hold the column names. For tab-separated files, rename `.tsv` to `.csv`. |
+| **`.xlsx`** | Only the **active worksheet** is used. Headings spread over several rows are merged into one column name (for example `Ambient temperature \| SENSOR_A \| degC`). A date column directly followed by a time column becomes one `DateTime` column. Formulas use their last calculated values. The sheet is converted to CSV for RMLMapper, so your mapping references `<name>.csv`. |
+
+> [!NOTE]
+> Older Excel files (`.xls`), macro-enabled workbooks (`.xlsm`), OpenDocument spreadsheets (`.ods`), JSON, and XML are **not supported**. Save them as `.xlsx` or `.csv` first.
 
 ---
 
@@ -272,6 +285,12 @@ The Python running `run.py` doesn't have the requirements installed. Run `pip in
 <summary><b>Fuseki shows "Offline"</b></summary>
 
 Make sure Fuseki is running in its own terminal and was started with the dataset name `/dataset` on port 3030. Then click the refresh icon in the sidebar's Services panel. For a different host, port, or dataset name, set `FUSEKI_DATA_URL`.
+</details>
+
+<details>
+<summary><b>"Please upload a .csv or .xlsx file"</b></summary>
+
+Only `.csv` and `.xlsx` files are accepted. Save `.xls`, `.xlsm`, or `.ods` workbooks as `.xlsx` (in Excel: *File → Save As → Excel Workbook*), and rename tab-separated `.tsv` files to `.csv`. See [Supported data formats](#-supported-data-formats).
 </details>
 
 <details>
