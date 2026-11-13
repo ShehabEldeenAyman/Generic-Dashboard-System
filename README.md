@@ -1,105 +1,223 @@
 <div align="center">
 
-# Semantic Data Studio
+# 🧭 Semantic Data Studio
 
-### Turn spreadsheets into a validated, queryable knowledge graph
+**Turn spreadsheets into a validated, queryable knowledge graph, all in one dashboard.**
 
-[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-2.0-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![RDF](https://img.shields.io/badge/RDF-Semantic_Web-5B4B8A)](https://www.w3.org/RDF/)
+Upload a CSV or Excel file, map it to RDF with RML, check and enrich it with SHACL,<br>
+publish it to Apache Jena Fuseki, and explore it with ready-made queries or SPARQL.
+
+[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-backend-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![Apache Jena Fuseki](https://img.shields.io/badge/Apache_Jena-Fuseki-D22128?logo=apache&logoColor=white)](https://jena.apache.org/documentation/fuseki2/)
+[![SHACL](https://img.shields.io/badge/W3C-SHACL-005A9C)](https://www.w3.org/TR/shacl/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A web dashboard for mapping CSV and Excel data to RDF, checking and enriching it with SHACL, publishing it to Apache Jena Fuseki, and querying the triple store.
+<img src="docs/images/overview.png" alt="Semantic Data Studio overview page with dataset, triples, data quality, published graph and triple store tiles" width="900">
+
+[Features](#-features) · [Installation](#-installation) · [Quick tour](#-quick-tour) · [Agent API](#-query--agent-api) · [Troubleshooting](#-troubleshooting)
 
 </div>
 
 ---
 
-## Overview
+## ✨ Features
 
-Semantic Data Studio is a business-friendly dashboard rather than a fixed pipeline. An **Overview** page summarises the active dataset (rows, RDF triples, data quality, published graph, and triple-store status), and a sidebar opens each workspace in any order:
+| | Workspace | What you can do |
+| :---: | --- | --- |
+| 📊 | **Overview** | See the dataset size, RDF triple count, data quality, published graph, and triple-store status at a glance, with quick actions and recent activity. |
+| 📁 | **Data** | Upload `.csv` or `.xlsx` files. Preview rows, columns, and the file name your mapping should reference. Multi-row Excel headers and split date/time columns are merged automatically. |
+| 🔀 | **Mapping** | **Paste** an RML mapping or **upload** a mapping file, then generate RDF with RMLMapper. Column names and the logical-source name are shown next to the editor. |
+| 🛡️ | **Data quality** | **Paste** or **upload** SHACL shapes. **Validate** against SHACL Core and SPARQL-based constraints, with a searchable table of violations, warnings, and notes. **Apply rules** (`sh:TripleRule`, `sh:SPARQLRule`) to enrich the data with inferred facts. |
+| 🗄️ | **Knowledge graph** | **Download** the RDF as Turtle, N-Triples, JSON-LD, or RDF/XML. **Publish** it to a Fuseki named graph, replacing or adding to its content. Browse it entity by entity. |
+| 🤖 | **Query & Agent** | Query **any graph** in Fuseki, no upload needed. Use ready-made operations (overview, entity types, property usage, search, and more) or write SPARQL, then export results as CSV. The operations are also exposed as an API that AI agents can call as tools. |
 
-| Workspace | What it does |
-| --- | --- |
-| **Data** | Upload a CSV or XLSX file and inspect a parsed preview, its columns, and the file name to use in the mapping. |
-| **Mapping** | Provide an RML mapping (pasted or uploaded) and run RMLMapper to produce RDF. |
-| **Data quality** | Provide SHACL shapes (pasted or uploaded); validate the data, including SPARQL-based constraints, and apply SHACL rules to add inferred triples. |
-| **Knowledge graph** | Download the current RDF as Turtle, N-Triples, JSON-LD, or RDF/XML; publish it to a Fuseki named graph; browse it entity by entity. |
-| **Query & Agent** | Query every graph in Fuseki directly — no upload needed — through ready-made operations or a SPARQL editor. |
+You can open the workspaces in any order. Each one says what it needs before it can run.
 
-The system is domain-independent. Uploaded data is stored in an isolated, dataset-scoped workspace on the server, and the browser remembers the active dataset across page reloads.
+<table>
+  <tr>
+    <td width="50%"><img src="docs/images/data-quality.png" alt="Data quality workspace showing SHACL validation results with severity filters"><p align="center"><b>Data quality:</b> SHACL validation results</p></td>
+    <td width="50%"><img src="docs/images/query-agent.png" alt="Query and Agent workspace with graph list, operations and a results table"><p align="center"><b>Query &amp; Agent:</b> operations on the triple store</p></td>
+  </tr>
+  <tr>
+    <td colspan="2"><img src="docs/images/knowledge-graph.png" alt="Knowledge graph workspace with download formats, Fuseki publishing and an RDF browser"><p align="center"><b>Knowledge graph:</b> download, publish, and browse RDF</p></td>
+  </tr>
+</table>
+
+## 🔄 How it works
 
 ```mermaid
 flowchart LR
-    A["CSV / XLSX"] --> B["RML mapping"]
+    A["📁 CSV / XLSX"] --> B["🔀 RML mapping"]
     B --> R["Mapped RDF"]
-    R -. optional .-> S["SHACL rules"]
+    R -. optional .-> S["✨ SHACL rules"]
     S --> E["Enriched RDF"]
-    R --> C["Current RDF"]
+    R --> C(("Current RDF"))
     E --> C
-    C --> V["SHACL validation"]
-    C --> D["Download (4 formats)"]
-    C --> F["Fuseki named graph"]
-    F --> Q["Query & Agent"]
+    C --> V["🛡️ SHACL validation"]
+    C --> D["⬇️ Download"]
+    C --> F["🗄️ Fuseki named graph"]
+    F --> Q["🤖 Query & Agent"]
 ```
 
-The **current RDF** is the enriched RDF when SHACL rules ran successfully, otherwise the mapped RDF. Validation, downloads, publishing, and the RDF browser all use it.
+The **current RDF** is the enriched RDF when SHACL rules have run, and the mapped RDF otherwise. Validation, downloads, publishing, and the RDF browser all use it.
 
-## Features
+---
 
-### Data
-- Upload `.csv` or `.xlsx` files; Excel workbooks use the active worksheet.
-- Multi-row Excel headings and separate date/time columns are combined during conversion to CSV for RMLMapper.
-- See row and column counts, encoding or sheet name, and a preview table.
-- Remove a dataset and every file generated from it.
+## 🚀 Installation
 
-### Mapping
-- Paste an RML mapping into the editor or upload a Turtle file; an uploaded file can be switched to the editor for changes.
-- The exact logical-source file name and all column names are shown next to the editor.
-- Readable errors when the mapping is invalid or produces no triples, with the RMLMapper log available.
+Semantic Data Studio has three parts: this application (a Python backend plus a React frontend), **RMLMapper** for the mapping step, and **Apache Jena Fuseki** as the triple store. You install RMLMapper and Fuseki separately; both are free downloads.
 
-### Data quality (SHACL)
-- Paste or upload one shapes graph that holds both constraints and rules.
-- **Validate data** checks SHACL Core constraints and SPARQL-based constraints (`sh:sparql`) against the current RDF. Results appear as a table (severity, record, property, value, message, constraint) with severity filters and search; the full text report is downloadable.
-- **Apply rules** runs `sh:TripleRule` and `sh:SPARQLRule` once, in `sh:order`, over the mapped RDF and stores the result as enriched RDF. Validation ignores rules, so apply them first when constraints depend on inferred facts.
-- Non-conformance is a result, not a failure: every other workspace stays available.
+### Prerequisites
 
-### Knowledge graph
-- Download the current RDF as Turtle, N-Triples, JSON-LD, or RDF/XML.
-- Publish to a Fuseki named graph given as a short name or full IRI, either **replacing** the graph's content or **adding** to it.
-- Browse the RDF ten entities at a time.
+| Software | Version | Needed for | Check with |
+| --- | --- | --- | --- |
+| [Python](https://www.python.org/downloads/) | 3.10 or newer | Backend | `python --version` |
+| [Node.js](https://nodejs.org/) (includes npm) | 20.19+ or 22.12+ | Building the dashboard | `node --version` |
+| [Java](https://adoptium.net/) | 21 or newer | Running RMLMapper and Fuseki | `java -version` |
+| [RMLMapper](https://github.com/RMLio/rmlmapper-java/releases) | latest release | Mapping tabular data to RDF | see step 3 |
+| [Apache Jena Fuseki](https://jena.apache.org/download/) | latest release | Storing and querying RDF | see step 4 |
 
-### Query & Agent
-- Lists every named graph in Fuseki with its triple count; works without uploading a dataset.
-- **Operations**: reusable, parameterised, read-only queries — graph overview, entity types, property usage, sample records, find entities by type, describe an entity, and text search. The generated SPARQL is shown and can be opened in the editor.
-- **SPARQL editor** for free read-only queries (Ctrl+Enter runs), with results as a table, a yes/no answer, or RDF text, and CSV export.
-- **Agent-ready**: the operations catalog is published at `GET /api/store/operations` with typed parameters, so an AI agent can register each operation as a tool and call `POST /api/store/operations/{id}`. Parameters are validated and escaped on the server.
+### 1. Get the code
 
-## Architecture
-
-```mermaid
-flowchart TB
-    UI["React + Vite dashboard"] --> API["FastAPI"]
-    API --> STORE["Dataset-scoped artifact store"]
-    API --> RML["RMLMapper (Java)"]
-    API --> SHACL["pySHACL"]
-    API --> OPS["Query operations"]
-    API --> FUSEKI["Apache Jena Fuseki"]
-    OPS --> FUSEKI
+```bash
+git clone https://github.com/ShehabEldeenAyman/Generic-Dashboard-System.git
+cd Generic-Dashboard-System
+git checkout December-2026-Demo
 ```
 
-| Path | Responsibility |
+### 2. Install the Python dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+> [!TIP]
+> To keep the project's packages separate from the rest of your system, create a virtual environment first:
+> `python -m venv .venv`, then `source .venv/bin/activate` (macOS/Linux) or `.\.venv\Scripts\Activate.ps1` (Windows).
+
+You don't need to install the frontend dependencies by hand. `run.py` runs `npm install` the first time it starts.
+
+### 3. Download and add RMLMapper
+
+> [!IMPORTANT]
+> The mapping step needs RMLMapper. It isn't included in the repository because of its size.
+
+1. Open the [RMLMapper releases page](https://github.com/RMLio/rmlmapper-java/releases) and pick the latest release.
+2. Under **Assets**, download the file ending in **`-all.jar`** (for example `rmlmapper-8.x.x-r…-all.jar`). This version bundles everything RMLMapper needs.
+3. Rename it to **`rmlmapper.jar`** and move it into this repository's **`pipeline/`** folder:
+
+   ```text
+   Generic-Dashboard-System/
+   └── pipeline/
+       └── rmlmapper.jar   ← here
+   ```
+
+   On macOS or Linux, once the download has finished:
+
+   ```bash
+   mv ~/Downloads/rmlmapper-*-all.jar pipeline/rmlmapper.jar
+   ```
+
+The JAR is ignored by Git. To keep it somewhere else, set the `RML_MAPPER_JAR` environment variable to its full path.
+
+### 4. Install and start Apache Jena Fuseki
+
+> [!IMPORTANT]
+> Publishing and querying need a running Fuseki server with a dataset named **`dataset`**.
+
+1. Go to the [Apache Jena download page](https://jena.apache.org/download/).
+2. Download **`apache-jena-fuseki-<version>.zip`** (or `.tar.gz`).
+   Don't download `apache-jena-<version>`; that archive only has command-line tools, not the server.
+3. Unzip it anywhere, for example in your home folder.
+4. Open a **new terminal**, go into the unzipped folder, and start Fuseki:
+
+   **macOS / Linux**
+   ```bash
+   cd ~/apache-jena-fuseki-<version>
+   ./fuseki-server --update --mem /dataset
+   ```
+
+   **Windows (PowerShell)**
+   ```powershell
+   cd $HOME\apache-jena-fuseki-<version>
+   .\fuseki-server.bat --update --mem /dataset
+   ```
+
+5. Leave this terminal open; closing it stops Fuseki. Fuseki's own web interface is at <http://localhost:3030>.
+
+`--mem` keeps data in memory, so it's erased when Fuseki stops. To keep your data between restarts, use persistent storage instead:
+
+```bash
+./fuseki-server --update --tdb2 --loc=databases/dataset /dataset
+```
+
+### 5. Run Semantic Data Studio
+
+In another terminal, from the repository folder:
+
+```bash
+python run.py
+```
+
+Then open **<http://localhost:8000>**.
+
+The first start builds the dashboard, which takes a moment. After that it only rebuilds when the frontend code changes.
+
+### ✅ Check your setup
+
+The **Services** panel at the bottom of the sidebar should show:
+
+| Service | Expected | If not |
+| --- | --- | --- |
+| Fuseki | 🟢 Connected | Start Fuseki (step 4), then click the refresh icon in the panel. |
+| RMLMapper | 🟢 Ready | Check that the file is exactly `pipeline/rmlmapper.jar` (step 3). |
+| Java | 🟢 Found | Install Java 21+ and make sure `java` is on your `PATH`. |
+
+### `run.py` options
+
+| Command | What it does |
 | --- | --- |
-| `frontend/` | React dashboard: overview, workspaces, editors, previews, result tables, downloads |
-| `pipeline/playground_server.py` | FastAPI endpoints, dataset lifecycle, error isolation, artifact delivery, serving the built UI |
-| `pipeline/generic_pipeline.py` | Tabular parsing and XLSX conversion, RMLMapper execution, SHACL actions, RDF export, ingestion |
-| `pipeline/run_store.py` | Dataset state and artifacts; re-running an action clears results derived from it |
-| `SHACL/shacl_engine.py` | Structured SHACL validation and rule execution on pySHACL |
-| `query_agent/operations.py` | Catalog of named, parameterised read-only SPARQL operations |
-| `triple_store_ingestion/ingest.py` | Fuseki Graph Store Protocol and SPARQL query client |
-| `run.py` | One-command launcher (production build or hot-reload development) |
+| `python run.py` | Builds the dashboard if needed and serves the dashboard and API on port 8000. |
+| `python run.py --dev` | Development mode: auto-reloading backend on port 8000 and Vite dev server on <http://localhost:5173>. Ctrl+C stops both. |
+| `python run.py --rebuild` | Forces a fresh dashboard build. |
+| `python run.py --port 9000` | Uses another port. |
+| `python run.py --host 0.0.0.0` | Makes the dashboard reachable from other machines on your network. |
 
-## API surface
+---
+
+## 🧪 Quick tour
+
+The `test-data/` folder has everything you need for a first run:
+
+1. **Data:** upload `test-data/waterinfo.csv`.
+2. **Mapping:** open `test-data/rml.ttl.txt`, change `rml:source "data.csv"` to `rml:source "waterinfo.csv"`, then paste the mapping or upload the edited file. Click **Generate RDF**.
+3. **Data quality:** upload `test-data/SHACL_in.ttl` and click **Validate data**.
+4. **Knowledge graph:** download the RDF in your preferred format, or enter a graph name such as `waterinfo` and click **Publish**.
+5. **Query & Agent:** pick the graph and run **Entity types** or **Graph overview**. You can also switch to the SPARQL editor.
+
+> [!NOTE]
+> The file name in `rml:source` must match the name shown on the Data page exactly. Uploading `sample.xlsx` gives `sample.csv`, because Excel files are converted to CSV for RMLMapper. Use the file name only, not a path. Column names in `rr:template` and `rml:reference` must also match the headers exactly.
+
+---
+
+## 🤖 Query & Agent API
+
+The operations in the Query & Agent workspace are published as a catalog with typed parameters, so an AI agent can register each one as a tool. Parameters are validated and escaped on the server, and every operation is read-only.
+
+```bash
+# Discover the available operations
+curl http://localhost:8000/api/store/operations
+
+# Run one
+curl -X POST http://localhost:8000/api/store/operations/entity_types \
+  -H "Content-Type: application/json" \
+  -d '{"parameters": {"graph": "https://example.org/graphs/waterinfo", "limit": 10}}'
+```
+
+<details>
+<summary><b>Full API reference</b></summary>
 
 | Endpoint | Purpose |
 | --- | --- |
@@ -113,132 +231,113 @@ flowchart TB
 | `POST /api/runs/{id}/stages/ingest` | Publish to a named graph (`graph_name`, `mode`: `replace` or `append`) |
 | `GET /api/runs/{id}/rdf?format=` | Download the current RDF (`turtle`, `ntriples`, `jsonld`, `xml`) |
 | `GET /api/runs/{id}/rdf-preview` | Page through the current RDF by entity |
-| `GET /api/runs/{id}/artifacts/{artifact_id}` | Download a stored artifact (mapping, shapes, report) |
+| `GET /api/runs/{id}/artifacts/{artifact_id}` | Download a stored file (mapping, shapes, report) |
 | `GET /api/store/graphs` | Named graphs in Fuseki with triple counts |
 | `POST /api/store/query` | Run a read-only SPARQL query |
-| `GET /api/store/operations` | Catalog of query operations and their parameters |
-| `POST /api/store/operations/{id}` | Run an operation (`parameters` object) |
+| `GET /api/store/operations` | Operations catalog |
+| `POST /api/store/operations/{id}` | Run an operation |
 
-Interactive documentation is available at `/docs` while the backend runs.
+Interactive documentation is at <http://localhost:8000/docs> while the app is running.
 
-## Installation
+</details>
 
-### Prerequisites
+---
 
-- **Python 3.10 or newer** for the backend.
-- **Node.js and npm** for building the frontend.
-- **Java** for RMLMapper (RMLMapper 8.x needs Java 21 or newer).
-- **RMLMapper** JAR.
-- **Apache Jena Fuseki** for publishing and querying.
+## ⚙️ Configuration
 
-### 1. Install the backend dependencies
-
-From the repository root:
-
-```bash
-pip install -r requirements.txt
-```
-
-A virtual environment (`python3 -m venv .venv` then `source .venv/bin/activate`, or `.\.venv\Scripts\Activate.ps1` on Windows) keeps these packages separate from other projects.
-
-### 2. Add RMLMapper
-
-Download the `-all.jar` asset from the [RMLMapper releases](https://github.com/RMLio/rmlmapper-java/releases), rename it, and place it at:
-
-```text
-pipeline/rmlmapper.jar
-```
-
-The JAR is excluded from Git. To keep it elsewhere, set `RML_MAPPER_JAR` to its path. The sidebar shows whether the backend finds it.
-
-### 3. Start Apache Jena Fuseki
-
-Download `apache-jena-fuseki-<version>.zip` from the [Jena download page](https://jena.apache.org/download/) (not the `apache-jena` tools archive), unpack it, and start it with a dataset named `dataset`:
-
-```bash
-./fuseki-server --update --mem /dataset          # macOS / Linux
-.\fuseki-server.bat --update --mem /dataset      # Windows
-```
-
-The in-memory dataset is erased when Fuseki stops. For persistent storage, use `--tdb2 --loc=databases/dataset /dataset` instead of `--mem`. The backend expects:
-
-```text
-Graph Store endpoint: http://localhost:3030/dataset/data
-SPARQL endpoint:      http://localhost:3030/dataset/query
-```
-
-Other deployments can be configured with `FUSEKI_DATA_URL` and `FUSEKI_QUERY_URL`.
-
-## Running the application
-
-With Fuseki running, from the repository root:
-
-```bash
-python run.py
-```
-
-This builds the frontend when its sources have changed (running `npm install` the first time) and serves the dashboard and API together at `http://localhost:8000`. Options: `--host 0.0.0.0` to expose it on the network, `--port` to change the port, `--rebuild` to force a fresh build.
-
-For development with hot reload of the backend and the frontend:
-
-```bash
-python run.py --dev
-```
-
-This starts uvicorn with `--reload` on port 8000 and the Vite dev server on `http://localhost:5173`, which proxies `/api` to the backend. Ctrl+C stops both.
-
-### Running the processes manually
-
-```bash
-python -m uvicorn pipeline.playground_server:app --reload --port 8000   # backend
-cd frontend && npm run dev                                                # frontend
-```
-
-### Configuration
+All settings are optional environment variables.
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `FUSEKI_DATA_URL` | `http://localhost:3030/dataset/data` | Fuseki Graph Store endpoint |
-| `FUSEKI_QUERY_URL` | derived from the data URL | Fuseki SPARQL query endpoint |
+| `FUSEKI_QUERY_URL` | derived from the data URL | Fuseki SPARQL endpoint |
 | `FUSEKI_GRAPH_BASE` | `https://example.org/graphs/` | Base IRI for short graph names |
-| `RML_MAPPER_JAR` | `pipeline/rmlmapper.jar` | RMLMapper location |
-| `PIPELINE_STORAGE_DIR` | system temp folder | Where dataset workspaces are stored |
+| `RML_MAPPER_JAR` | `pipeline/rmlmapper.jar` | Location of RMLMapper |
+| `PIPELINE_STORAGE_DIR` | system temp folder | Where uploaded and generated files are kept |
 | `MAX_UPLOAD_BYTES` | 50 MB | Upload size limit |
-| `PIPELINE_COMMAND_TIMEOUT` | 300 | RMLMapper time limit in seconds |
-| `SPARQL_RESULT_ROW_LIMIT` | 1000 | Maximum rows returned per query |
+| `PIPELINE_COMMAND_TIMEOUT` | `300` | RMLMapper time limit, in seconds |
+| `SPARQL_RESULT_ROW_LIMIT` | `1000` | Maximum rows returned per query |
 
-## Trying it with `test-data`
+---
 
-- `sample.xlsx` and `waterinfo.csv` are uploadable sources.
-- `rml.ttl.txt` is an example RML mapping. Change its `rml:source` from `data.csv` to the file name shown in the dashboard (`waterinfo.csv`, or `sample.csv` for the workbook).
-- `SHACL_in.ttl` is an example shapes file for the mapped observations.
-- `mapped.ttl` and `query.txt` are reference outputs.
+## 🩺 Troubleshooting
 
-## Mapping constraints
+<details>
+<summary><b><code>ModuleNotFoundError: No module named 'fastapi'</code></b></summary>
 
-The file name in `rml:source` must exactly match the prepared CSV name shown in the dashboard. Uploading `sample.xlsx` produces `sample.csv`:
+The Python running `run.py` doesn't have the requirements installed. Run `pip install -r requirements.txt` with that same Python. If you use a virtual environment, activate it first. `run.py` lists any missing packages before it starts.
+</details>
 
-```turtle
-rml:logicalSource [
-    rml:source "sample.csv" ;
-    rml:referenceFormulation ql:CSV
-] ;
+<details>
+<summary><b>Fuseki shows "Offline"</b></summary>
+
+Make sure Fuseki is running in its own terminal and was started with the dataset name `/dataset` on port 3030. Then click the refresh icon in the sidebar's Services panel. For a different host, port, or dataset name, set `FUSEKI_DATA_URL`.
+</details>
+
+<details>
+<summary><b>RMLMapper shows "Missing"</b></summary>
+
+The file must be at `pipeline/rmlmapper.jar` with exactly that name. Download the `-all.jar` asset, not the source code. The dashboard picks it up when you refresh the page.
+</details>
+
+<details>
+<summary><b>"RMLMapper produced zero triples"</b></summary>
+
+Usually `rml:source` doesn't match the file name shown on the Data page, or a column name in the mapping doesn't match the CSV header. Both are case-sensitive.
+</details>
+
+<details>
+<summary><b><code>UnsupportedClassVersionError</code> or Java errors</b></summary>
+
+Your Java is too old. Install Java 21 or newer and check with `java -version`.
+</details>
+
+<details>
+<summary><b><code>npm was not found on PATH</code></b></summary>
+
+Install Node.js, which includes npm. If you installed it with nvm, open a new terminal so it's on your `PATH`, then run `python run.py` again.
+</details>
+
+<details>
+<summary><b>Validation or rules are slow on large files</b></summary>
+
+pySHACL runs SPARQL-based constraints and rules once per targeted record, so they take a few seconds per thousand records. SHACL Core constraints (cardinality, datatypes, patterns) are much faster. Rules run once, in `sh:order`. Validation doesn't re-run them, so apply rules first when your constraints depend on inferred facts.
+</details>
+
+---
+
+## 🗂️ Project structure
+
+```text
+Generic-Dashboard-System/
+├── run.py                       # One-command launcher
+├── requirements.txt             # Python dependencies
+├── frontend/                    # React + Vite dashboard
+│   └── src/
+│       ├── views/               # Overview, Data, Mapping, Data quality, Knowledge graph, Query & Agent
+│       └── components/          # Shared UI, paste-or-upload input, query results
+├── pipeline/
+│   ├── playground_server.py     # FastAPI app; also serves the built dashboard
+│   ├── generic_pipeline.py      # Parsing, RMLMapper, SHACL actions, RDF export, ingestion
+│   ├── run_store.py             # Dataset state and files
+│   ├── rmlmapper.jar            # ← you add this (step 3)
+│   └── tests/
+├── SHACL/shacl_engine.py        # SHACL validation and rules
+├── query_agent/operations.py    # Query operations catalog
+├── triple_store_ingestion/      # Fuseki client
+├── docs/images/                 # README screenshots
+└── test-data/                   # Sample data, mapping, and shapes
 ```
 
-Do not use an absolute path; RMLMapper runs inside the dataset's isolated directory. Column names in `rr:template` and `rml:reference` must match the CSV headers exactly.
-
-## Performance notes
-
-pySHACL evaluates SPARQL-based constraints and rules once per target record, so they dominate run time on large datasets (roughly a few seconds per thousand targeted records). SHACL Core constraints are much faster. RDF is held in memory while it is processed.
-
-## Tests
+## 🧪 Running the tests
 
 ```bash
+pip install pytest
 python -m pytest pipeline/tests
 ```
 
-Integration tests that run RMLMapper are skipped when Java or `pipeline/rmlmapper.jar` is missing.
+Tests that run RMLMapper are skipped automatically when Java or `pipeline/rmlmapper.jar` is missing.
 
-## License
+## 📄 License
 
-This project is available under the [MIT License](LICENSE).
+Released under the [MIT License](LICENSE).
