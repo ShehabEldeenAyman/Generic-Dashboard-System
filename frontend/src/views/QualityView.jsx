@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { apiUrl } from '../api.js'
-import { emptySource, formatNumber, isDone, shortIri } from '../format.js'
+import { currentRdf, emptySource, formatNumber, isDone, shortIri } from '../format.js'
 import SourceInput from '../components/SourceInput.jsx'
 import { Badge, Button, Card, EmptyState, Icon, Kpi, LinkButton, Segmented, StageResult } from '../components/ui.jsx'
 
@@ -106,7 +106,12 @@ export default function QualityView({ run, busy, onRunStage, navigate, artifacts
   }
 
   const body = { shapes: shapes.text, source_name: shapes.mode === 'file' ? shapes.fileName : null }
-  const enriched = rules?.status === 'success'
+  const rdf = currentRdf(run)
+  const checkedNote = {
+    reasoned: 'EYE inferences are included in validation, downloads, and publishing.',
+    enriched: 'Rule inferences are included in validation, downloads, and publishing.',
+    mapped: 'Validation checks the data as it is. Apply rules first if your constraints depend on inferred facts.',
+  }[rdf.kind]
 
   return (
     <div className="view">
@@ -124,17 +129,16 @@ export default function QualityView({ run, busy, onRunStage, navigate, artifacts
               onClick={() => onRunStage('shacl', body)}>Validate data</Button>
             <Button variant="secondary" icon="sparkle" busy={busy === 'shacl-rules'} disabled={!shapes.text.trim() || Boolean(busy)}
               onClick={() => onRunStage('shacl-rules', body)}>Apply rules</Button>
+            {run.stages.reasoning && <span className="muted small">Applying rules clears the EYE inferences. Run the reasoner again afterwards.</span>}
           </div>
         </Card>
         <div className="stack">
           <Card title="Data being checked" icon="database">
             <div className="fact-list">
-              <div><span>Source</span><strong>{enriched ? 'Enriched RDF' : 'Mapped RDF'}</strong></div>
-              <div><span>Triples</span><strong>{formatNumber(enriched ? rules.details.total_triples : run.stages.rml.details.rdf_triples)}</strong></div>
+              <div><span>Source</span><strong>{rdf.label}</strong></div>
+              <div><span>Triples</span><strong>{formatNumber(rdf.triples)}</strong></div>
             </div>
-            <p className="muted small">{enriched
-              ? 'Rule inferences are included in validation, downloads, and publishing.'
-              : 'Validation checks the data as it is. Apply rules first if your constraints depend on inferred facts.'}</p>
+            <p className="muted small">{checkedNote}</p>
           </Card>
           <Card title="What is supported" icon="info">
             <ul className="plain-list">

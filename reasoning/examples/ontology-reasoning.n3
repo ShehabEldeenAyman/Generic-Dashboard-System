@@ -1,0 +1,67 @@
+# Ontology reasoning with RDFS and OWL rules
+# ==========================================
+#
+# Generic rules for part of RDFS and OWL: class and property hierarchies,
+# domains and ranges, inverse, symmetric and transitive properties, and
+# property chains. The axioms at the top are taken from the W3C SOSA/SSN
+# ontology. The rules work with any vocabulary: replace the axioms with your
+# own ontology to reuse them on other data.
+#
+# On the sample water data, this infers that each sensor is a sosa:Sensor and
+# an ssn:System, lists every sensor's observations (sosa:madeObservation), and
+# derives which property each sensor observes (sosa:observes).
+#
+# Performance: the OWL rules have a variable as the predicate of their
+# conclusion, such as { ?y ?q ?x }. That is quick on the sample, but much slower
+# than a fixed predicate on large data. For large datasets, write the rule for
+# your property: { ?o sosa:madeBySensor ?s } => { ?s sosa:madeObservation ?o } .
+
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix log:  <http://www.w3.org/2000/10/swap/log#> .
+@prefix sosa: <http://www.w3.org/ns/sosa/> .
+@prefix ssn:  <http://www.w3.org/ns/ssn/> .
+
+# ---------------------------------------------------------------------------
+# Axioms (SOSA/SSN)
+# ---------------------------------------------------------------------------
+
+sosa:madeBySensor owl:inverseOf sosa:madeObservation ;
+    rdfs:domain sosa:Observation ;
+    rdfs:range sosa:Sensor .
+
+sosa:observedProperty rdfs:range sosa:ObservableProperty .
+
+sosa:observes owl:propertyChainAxiom ( sosa:madeObservation sosa:observedProperty ) .
+
+sosa:Sensor rdfs:subClassOf ssn:System .
+sosa:ObservableProperty rdfs:subClassOf ssn:Property .
+
+# ---------------------------------------------------------------------------
+# RDFS rules
+# ---------------------------------------------------------------------------
+
+# Class hierarchy: subclasses are transitive, and instances inherit types.
+{ ?a rdfs:subClassOf ?b . ?b rdfs:subClassOf ?c } => { ?a rdfs:subClassOf ?c } .
+{ ?a rdfs:subClassOf ?b . ?x a ?a } => { ?x a ?b } .
+
+# Property hierarchy.
+{ ?p rdfs:subPropertyOf ?q . ?q rdfs:subPropertyOf ?r } => { ?p rdfs:subPropertyOf ?r } .
+{ ?p rdfs:subPropertyOf ?q . ?x ?p ?y } => { ?x ?q ?y } .
+
+# Domains and ranges give a type to the subject and object of a property.
+# The range rule skips literals, which cannot have a type in RDF.
+{ ?p rdfs:domain ?c . ?x ?p ?y } => { ?x a ?c } .
+{ ?p rdfs:range ?c . ?x ?p ?y . ?y log:rawType log:Other } => { ?y a ?c } .
+
+# ---------------------------------------------------------------------------
+# OWL rules
+# ---------------------------------------------------------------------------
+
+{ ?p owl:inverseOf ?q . ?x ?p ?y } => { ?y ?q ?x } .
+{ ?p owl:inverseOf ?q . ?x ?q ?y } => { ?y ?p ?x } .
+{ ?p a owl:SymmetricProperty . ?x ?p ?y } => { ?y ?p ?x } .
+{ ?p a owl:TransitiveProperty . ?x ?p ?y . ?y ?p ?z } => { ?x ?p ?z } .
+
+# Property chains of two steps: x -first-> y -second-> z gives x -p-> z.
+{ ?p owl:propertyChainAxiom ( ?first ?second ) . ?x ?first ?y . ?y ?second ?z } => { ?x ?p ?z } .

@@ -1,10 +1,11 @@
-import { compactNumber, formatNumber, isDone, shortIri, timeAgo } from '../format.js'
+import { compactNumber, currentRdf, formatNumber, isDone, shortIri, timeAgo } from '../format.js'
 import { Badge, Button, Card, EmptyState, Icon, Kpi } from '../components/ui.jsx'
 
 const ACTIVITY = {
   upload: ['table', 'Dataset uploaded'],
   rml: ['mapping', 'RDF generated'],
   rules: ['sparkle', 'SHACL rules applied'],
+  reasoning: ['bulb', 'Facts inferred with EYE'],
   shacl: ['shield', 'Data validated'],
   ingest: ['database', 'Published to Fuseki'],
 }
@@ -43,11 +44,9 @@ export default function Overview({ run, config, store, navigate }) {
   const source = run?.source
   const uploaded = isDone(run, 'upload')
   const mapped = isDone(run, 'rml')
-  const rml = run?.stages?.rml
-  const rules = run?.stages?.rules
   const shacl = run?.stages?.shacl
   const ingest = run?.stages?.ingest
-  const triples = rules?.status === 'success' ? rules.details.total_triples : rml?.details?.rdf_triples
+  const rdf = currentRdf(run)
   const graphCount = store.data?.graphs?.length
 
   const qualityValue = !shacl ? 'Not checked'
@@ -60,6 +59,7 @@ export default function Overview({ run, config, store, navigate }) {
     { view: 'data', icon: 'upload', title: uploaded ? 'Review dataset' : 'Upload a dataset', text: 'CSV or Excel files, previewed instantly.', done: uploaded },
     { view: 'mapping', icon: 'mapping', title: 'Map to RDF', text: 'Paste or upload an RML mapping.', done: mapped, locked: !uploaded },
     { view: 'quality', icon: 'shield', title: 'Check data quality', text: 'Validate with SHACL shapes and apply rules.', done: Boolean(shacl), locked: !mapped },
+    { view: 'reasoning', icon: 'bulb', title: 'Infer new facts', text: 'Run N3 rules with the EYE reasoner.', done: isDone(run, 'reasoning'), locked: !mapped },
     { view: 'graph', icon: 'database', title: 'Download or publish', text: 'Export RDF or load it into Fuseki.', done: isDone(run, 'ingest'), locked: !mapped },
     { view: 'query', icon: 'agent', title: 'Query & Agent', text: 'Explore every graph in the triple store.', done: false, locked: false },
   ]
@@ -74,7 +74,7 @@ export default function Overview({ run, config, store, navigate }) {
         <div>
           <p className="eyebrow">Semantic Data Studio</p>
           <h1>{run ? `Working on ${source?.stored_filename}` : 'Turn spreadsheets into a trusted knowledge graph'}</h1>
-          <p className="lede">Map tabular data to RDF, check its quality with SHACL, publish it to Fuseki, and query it in one place.</p>
+          <p className="lede">Map tabular data to RDF, check its quality with SHACL, infer new facts with EYE, publish it to Fuseki, and query it in one place.</p>
         </div>
         {!run && <Button icon="upload" onClick={() => navigate('data')}>Upload a dataset</Button>}
       </div>
@@ -84,8 +84,8 @@ export default function Overview({ run, config, store, navigate }) {
           value={uploaded ? `${formatNumber(source.preview.total_rows)} rows` : 'No dataset'}
           hint={uploaded ? `${source.preview.columns.length} columns · ${source.preview.format.toUpperCase()}` : 'Upload CSV or XLSX'} />
         <Kpi label="RDF triples" icon="mapping" onClick={() => navigate(mapped ? 'graph' : 'mapping')}
-          value={mapped ? compactNumber(triples) : '—'}
-          hint={rules?.status === 'success' ? `incl. ${formatNumber(rules.details.inferred_triples)} inferred` : mapped ? 'From RML mapping' : 'Not mapped yet'} />
+          value={mapped ? compactNumber(rdf.triples) : '—'}
+          hint={rdf.kind !== 'mapped' ? `incl. ${formatNumber(rdf.triples - rdf.mapped)} inferred` : mapped ? 'From RML mapping' : 'Not mapped yet'} />
         <Kpi label="Data quality" icon="shield" tone={qualityTone} value={qualityValue} onClick={() => navigate('quality')}
           hint={shacl?.details?.severity_counts ? `${formatNumber(shacl.details.severity_counts.Warning)} warnings` : 'SHACL validation'} />
         <Kpi label="Published graph" icon="database" onClick={() => navigate('graph')}

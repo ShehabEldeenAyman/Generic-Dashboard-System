@@ -7,6 +7,7 @@ import Overview from './views/Overview.jsx'
 import DataView from './views/DataView.jsx'
 import MappingView from './views/MappingView.jsx'
 import QualityView from './views/QualityView.jsx'
+import ReasoningView from './views/ReasoningView.jsx'
 import GraphView from './views/GraphView.jsx'
 import QueryView from './views/QueryView.jsx'
 
@@ -15,6 +16,7 @@ const NAV = [
   { id: 'data', label: 'Data', icon: 'table' },
   { id: 'mapping', label: 'Mapping', icon: 'mapping' },
   { id: 'quality', label: 'Data quality', icon: 'shield' },
+  { id: 'reasoning', label: 'Reasoning', icon: 'bulb' },
   { id: 'graph', label: 'Knowledge graph', icon: 'database' },
   { id: 'query', label: 'Query & Agent', icon: 'agent' },
 ]
@@ -34,7 +36,7 @@ const viewFromHash = () => {
 
 function navStatus(run, id) {
   if (!run) return null
-  const stage = { data: 'upload', mapping: 'rml', quality: 'shacl', graph: 'ingest' }[id]
+  const stage = { data: 'upload', mapping: 'rml', quality: 'shacl', reasoning: 'reasoning', graph: 'ingest' }[id]
   const result = run.stages?.[stage]
   if (!result) return null
   if (result.status === 'error') return 'danger'
@@ -145,13 +147,14 @@ export default function App() {
   const datasetKey = run?.id || 'none'
   const shared = { run, config, busy, navigate, onRunStage: runStage }
   const fusekiOnline = Boolean(config?.fuseki?.connected)
+  const eye = config?.tools?.eye
 
   return (
     <div className="app">
       <aside className="sidebar">
         <div className="brand">
           <span className="brand-mark"><Icon name="layers" size={18} /></span>
-          <div><strong>Semantic Data Studio</strong><small>RDF · SHACL · SPARQL</small></div>
+          <div><strong>Semantic Data Studio</strong><small>RDF · SHACL · N3 · SPARQL</small></div>
         </div>
 
         <nav className="nav" aria-label="Workspaces">
@@ -186,6 +189,9 @@ export default function App() {
             <div className={`service ${fusekiOnline ? 'ok' : 'down'}`}><i />Fuseki<span>{fusekiOnline ? 'Connected' : 'Offline'}</span></div>
             <div className={`service ${config?.tools?.rml_mapper ? 'ok' : 'down'}`}><i />RMLMapper<span>{config?.tools?.rml_mapper ? 'Ready' : 'Missing'}</span></div>
             <div className={`service ${config?.tools?.java ? 'ok' : 'down'}`}><i />Java<span>{config?.tools?.java ? 'Found' : 'Missing'}</span></div>
+            <div className={`service ${eye?.ready ? 'ok' : 'down'}`} title={eye?.ready ? `${eye.version} · ${eye.label}` : eye?.detail}>
+              <i />EYE reasoner<span>{eye?.ready ? 'Ready' : 'Missing'}</span>
+            </div>
           </div>
         </div>
       </aside>
@@ -200,6 +206,7 @@ export default function App() {
         <div hidden={view !== 'data'}><DataView key={datasetKey} run={run} config={config} busy={busy} onUpload={upload} onDelete={removeDataset} /></div>
         <div hidden={view !== 'mapping'}><MappingView key={datasetKey} {...shared} /></div>
         <div hidden={view !== 'quality'}><QualityView key={datasetKey} {...shared} artifactsFor={artifactsFor} /></div>
+        <div hidden={view !== 'reasoning'}><ReasoningView key={datasetKey} {...shared} artifactsFor={artifactsFor} /></div>
         <div hidden={view !== 'graph'}><GraphView key={datasetKey} {...shared} onQueryGraph={queryGraph} /></div>
         <div hidden={view !== 'query'}>
           <QueryView config={config} store={store} onRefreshStore={refreshStore} active={view === 'query'}

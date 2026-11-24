@@ -5,6 +5,19 @@ export const completedStatuses = new Set(['success', 'nonconformant'])
 
 export const isDone = (run, stage) => completedStatuses.has(run?.stages?.[stage]?.status)
 
+/** The RDF that validation, downloads, and publishing use: reasoned, else enriched, else mapped. */
+export function currentRdf(run) {
+  const stages = run?.stages || {}
+  const mapped = stages.rml?.details?.rdf_triples
+  if (stages.reasoning?.status === 'success') {
+    return { kind: 'reasoned', label: 'Reasoned RDF', triples: stages.reasoning.details.total_triples, mapped }
+  }
+  if (stages.rules?.status === 'success') {
+    return { kind: 'enriched', label: 'Enriched RDF', triples: stages.rules.details.total_triples, mapped }
+  }
+  return { kind: 'mapped', label: 'Mapped RDF', triples: mapped, mapped }
+}
+
 export function formatNumber(value) {
   if (value === null || value === undefined || Number.isNaN(Number(value))) return '—'
   return Number(value).toLocaleString()
@@ -34,13 +47,17 @@ export function timeAgo(isoString) {
   return new Date(isoString).toLocaleDateString()
 }
 
-/** Last readable segment of an IRI, for compact display. */
+/** Last readable segment of an IRI, for compact display. A numeric segment keeps its parent (sensor/123). */
 export function shortIri(value) {
   if (!value) return ''
   const text = String(value)
   if (!/^[a-z][a-z0-9+.-]*:/i.test(text)) return text
   const trimmed = text.replace(/[/#]+$/, '')
-  const cut = Math.max(trimmed.lastIndexOf('#'), trimmed.lastIndexOf('/'))
+  let cut = Math.max(trimmed.lastIndexOf('#'), trimmed.lastIndexOf('/'))
+  if (cut > 0 && /^\d+$/.test(trimmed.slice(cut + 1))) {
+    const parent = Math.max(trimmed.lastIndexOf('#', cut - 1), trimmed.lastIndexOf('/', cut - 1))
+    if (parent > trimmed.indexOf('//') + 1) cut = parent
+  }
   const tail = cut >= 0 ? trimmed.slice(cut + 1) : trimmed
   try {
     return decodeURIComponent(tail) || text

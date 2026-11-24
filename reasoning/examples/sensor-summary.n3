@@ -1,0 +1,46 @@
+# Summarise each sensor
+# =====================
+#
+# For every sensor: the number of readings, the lowest, highest and mean
+# value, and the times of the first and last reading. Shows aggregation with
+# log:collectAllIn and the list and math built-ins.
+#
+# The summary facts describe the sensors, so the observations are unchanged.
+
+@prefix sosa: <http://www.w3.org/ns/sosa/> .
+@prefix math: <http://www.w3.org/2000/10/swap/math#> .
+@prefix list: <http://www.w3.org/2000/10/swap/list#> .
+@prefix log:  <http://www.w3.org/2000/10/swap/log#> .
+@prefix wq:   <http://example.com/water-quality#> .
+
+# Every resource that made an observation is a sensor.
+{ ?reading sosa:madeBySensor ?sensor } => { ?sensor a sosa:Sensor } .
+
+# Count, minimum, maximum and mean (rounded to two decimals).
+{ ?sensor a sosa:Sensor .
+  ( ?value { ?reading sosa:madeBySensor ?sensor ; sosa:hasSimpleResult ?value } ?values ) log:collectAllIn _:scope .
+  ?values list:length ?count .
+  ?values math:min ?minimum .
+  ?values math:max ?maximum .
+  ?values math:sum ?total .
+  ( ?total ?count ) math:quotient ?mean .
+  ( ?mean 100 ) math:product ?scaled .
+  ?scaled math:rounded ?rounded .
+  ( ?rounded 100 ) math:quotient ?meanRounded .
+} => {
+  ?sensor wq:readingCount ?count ;
+      wq:minimumValue ?minimum ;
+      wq:maximumValue ?maximum ;
+      wq:meanValue ?meanRounded .
+} .
+
+# First and last reading time. ISO 8601 times in UTC sort chronologically.
+{ ?sensor a sosa:Sensor .
+  ( ?time { ?reading sosa:madeBySensor ?sensor ; sosa:resultTime ?time } ?times ) log:collectAllIn _:scope .
+  ?times list:sort ?sorted .
+  ?sorted list:first ?first .
+  ?sorted list:last ?last .
+} => {
+  ?sensor wq:firstReading ?first ;
+      wq:lastReading ?last .
+} .

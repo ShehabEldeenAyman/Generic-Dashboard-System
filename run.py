@@ -6,13 +6,16 @@
     python run.py --dev    Hot-reloading backend (port 8000) and Vite dev server
                            (port 5173) side by side; Ctrl+C stops both.
 
-Fuseki is an external service and still has to be started separately.
+Fuseki is an external service and still has to be started separately. The EYE
+reasoner is installed automatically (npm package eyereasoner) unless native EYE
+is available.
 """
 
 from __future__ import annotations
 
 import argparse
 import importlib.util
+import json
 import os
 import shutil
 import subprocess
@@ -23,6 +26,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 FRONTEND = ROOT / "frontend"
 DIST_INDEX = FRONTEND / "dist" / "index.html"
+REASONING = ROOT / "reasoning"
 
 
 BACKEND_MODULES = ("fastapi", "uvicorn", "multipart", "rdflib", "pyshacl", "openpyxl", "requests")
@@ -51,6 +55,24 @@ def ensure_frontend_dependencies() -> None:
     if not (FRONTEND / "node_modules").is_dir():
         print("Installing frontend dependencies...")
         subprocess.run([npm(), "install"], cwd=FRONTEND, check=True)
+
+
+def ensure_reasoner() -> None:
+    """Install the WebAssembly build of EYE unless native EYE is configured or on PATH."""
+    if os.getenv("EYE_COMMAND") or shutil.which("eye"):
+        return
+    wanted = json.loads((REASONING / "package.json").read_text(encoding="utf-8"))["dependencies"]["eyereasoner"]
+    installed = REASONING / "node_modules" / "eyereasoner" / "package.json"
+    if installed.is_file() and json.loads(installed.read_text(encoding="utf-8")).get("version") == wanted:
+        return
+    executable = shutil.which("npm")
+    if not executable:
+        print("EYE reasoning is unavailable: install Node.js for the bundled reasoner, or install native EYE.")
+        return
+    print("Installing the EYE reasoner (npm package eyereasoner)...")
+    command = "ci" if (REASONING / "package-lock.json").is_file() else "install"
+    if subprocess.run([executable, command, "--no-audit", "--no-fund"], cwd=REASONING).returncode != 0:
+        print("The EYE reasoner could not be installed. The Reasoning workspace stays unavailable.")
 
 
 def frontend_is_stale() -> bool:
@@ -111,6 +133,7 @@ def main() -> int:
     parser.add_argument("--port", type=int, default=8000, help="backend port")
     arguments = parser.parse_args()
     check_backend_dependencies()
+    ensure_reasoner()
 
     if arguments.dev:
         ensure_frontend_dependencies()

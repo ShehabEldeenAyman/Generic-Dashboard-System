@@ -1,0 +1,47 @@
+# Detect sudden changes in a time series
+# ======================================
+#
+# Readings arrive every 15 minutes. A reading that differs by more than the
+# threshold from the same sensor's reading 15 minutes earlier is flagged as a
+# sudden change, together with the size of the change (in µS/cm).
+#
+# Shows date-time arithmetic, joins on computed values, and log:query. The
+# helper facts (epoch seconds and links to the previous reading) are only used
+# while reasoning: when a document contains a log:query, EYE outputs only the
+# query's answers, so just the flags are added to your data.
+
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix sosa: <http://www.w3.org/ns/sosa/> .
+@prefix math: <http://www.w3.org/2000/10/swap/math#> .
+@prefix log:  <http://www.w3.org/2000/10/swap/log#> .
+@prefix wq:   <http://example.com/water-quality#> .
+
+wq:thresholds wq:maximumChangeIn15Minutes 4000 .
+
+# Helper: seconds since 1970, so readings can be matched by time.
+{ ?reading sosa:resultTime ?time .
+  ( ?time "1970-01-01T00:00:00Z"^^xsd:dateTime ) math:difference ?seconds .
+} => { ?reading wq:epochSeconds ?seconds } .
+
+# Helper: the same sensor's reading 900 seconds (15 minutes) earlier.
+{ ?reading wq:epochSeconds ?seconds ; sosa:madeBySensor ?sensor .
+  ( ?seconds 900 ) math:difference ?earlier .
+  ?previous wq:epochSeconds ?earlier ; sosa:madeBySensor ?sensor .
+} => { ?reading wq:previousReading ?previous } .
+
+# Flag readings that changed by more than the threshold.
+{ ?reading wq:previousReading ?previous ; sosa:hasSimpleResult ?value .
+  ?previous sosa:hasSimpleResult ?previousValue .
+  ( ?value ?previousValue ) math:difference ?difference .
+  ( ?difference 100 ) math:product ?scaled .
+  ?scaled math:rounded ?rounded .
+  ( ?rounded 100 ) math:quotient ?change .
+  ?change math:absoluteValue ?size .
+  wq:thresholds wq:maximumChangeIn15Minutes ?limit .
+  ?size math:greaterThan ?limit .
+} => { ?reading a wq:SuddenChange ; wq:changeFromPrevious ?change } .
+
+# Output only the flags, not the helper facts.
+{ ?reading a wq:SuddenChange ; wq:changeFromPrevious ?change }
+  log:query
+{ ?reading a wq:SuddenChange ; wq:changeFromPrevious ?change } .

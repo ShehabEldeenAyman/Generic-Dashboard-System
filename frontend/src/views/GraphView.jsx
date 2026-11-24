@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api.js'
-import { datasetStem, formatNumber, isDone } from '../format.js'
+import { currentRdf, datasetStem, formatNumber, isDone } from '../format.js'
 import { Button, Card, CopyButton, EmptyState, Kpi, LinkButton, Notice, Segmented, Spinner, StageResult } from '../components/ui.jsx'
 
 const FORMATS = [
@@ -15,7 +15,7 @@ function RdfBrowser({ run }) {
   const [page, setPage] = useState(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const version = `${run.stages.rml?.completed_at}|${run.stages.rules?.completed_at}`
+  const version = `${run.stages.rml?.completed_at}|${run.stages.rules?.completed_at}|${run.stages.reasoning?.completed_at}`
 
   useEffect(() => { setOffset(0) }, [version])
 
@@ -55,7 +55,6 @@ export default function GraphView({ run, config, busy, onRunStage, navigate, onQ
   const [graphName, setGraphName] = useState(() => datasetStem(run))
   const [mode, setMode] = useState('replace')
   const fusekiOnline = Boolean(config?.fuseki?.connected)
-  const rules = run?.stages?.rules
   const ingest = run?.stages?.ingest
 
   if (!isDone(run, 'rml')) {
@@ -70,8 +69,12 @@ export default function GraphView({ run, config, busy, onRunStage, navigate, onQ
     )
   }
 
-  const enriched = rules?.status === 'success'
-  const triples = enriched ? rules.details.total_triples : run.stages.rml.details.rdf_triples
+  const rdf = currentRdf(run)
+  const description = {
+    reasoned: 'reasoned data: your mapping plus every inference',
+    enriched: 'enriched data: your mapping plus SHACL rule inferences',
+    mapped: 'output of your mapping',
+  }[rdf.kind]
   const graphBase = config?.default_graph_base || 'https://example.org/graphs/'
   const previewIri = /^https?:\/\//.test(graphName.trim())
     ? graphName.trim()
@@ -81,12 +84,13 @@ export default function GraphView({ run, config, busy, onRunStage, navigate, onQ
     <div className="view">
       <div className="view-header">
         <div><p className="eyebrow">Knowledge graph</p><h1>Download and publish RDF</h1>
-          <p className="lede">The current RDF is the {enriched ? 'enriched data (mapping plus rule inferences)' : 'output of your mapping'}.</p></div>
+          <p className="lede">The current RDF is the {description}.</p></div>
       </div>
 
       <div className="kpi-grid">
-        <Kpi label="Current RDF" icon="layers" value={enriched ? 'Enriched' : 'Mapped'} hint={enriched ? `${formatNumber(rules.details.inferred_triples)} inferred triples` : 'From RML mapping'} />
-        <Kpi label="Triples" icon="mapping" value={formatNumber(triples)} />
+        <Kpi label="Current RDF" icon="layers" value={rdf.label.replace(' RDF', '')}
+          hint={rdf.kind === 'mapped' ? 'From RML mapping' : `${formatNumber(rdf.triples - rdf.mapped)} inferred triples`} />
+        <Kpi label="Triples" icon="mapping" value={formatNumber(rdf.triples)} />
         <Kpi label="Published graph" icon="database" tone={isDone(run, 'ingest') ? 'success' : 'neutral'}
           value={isDone(run, 'ingest') ? 'Live' : 'Not published'} hint={run.graph?.uri || 'Publish below'} />
       </div>

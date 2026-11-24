@@ -41,6 +41,7 @@ export const api = {
   },
   deleteRun: (runId) => request(`/api/runs/${runId}`, { method: 'DELETE' }),
   runStage: (runId, stage, body) => postJson(`/api/runs/${runId}/stages/${stage}`, body),
+  reasoningExamples: () => request('/api/reasoning/examples'),
   rdfPreview: (runId, offset) => request(`/api/runs/${runId}/rdf-preview?offset=${offset}&limit=10`),
   rdfDownloadUrl: (runId, format) => apiUrl(`/api/runs/${runId}/rdf?format=${format}`),
   storeGraphs: () => request('/api/store/graphs'),

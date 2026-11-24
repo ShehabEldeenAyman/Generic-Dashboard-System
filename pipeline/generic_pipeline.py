@@ -15,6 +15,7 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+import time
 from typing import Any, Sequence
 from urllib.parse import quote
 from zipfile import BadZipFile
@@ -23,6 +24,7 @@ from openpyxl import load_workbook
 from openpyxl.utils.exceptions import InvalidFileException
 from rdflib import Graph
 
+from reasoning import eye_engine
 from SHACL import shacl_engine
 from triple_store_ingestion import ingest
 
@@ -630,6 +632,62 @@ def run_shacl_rules(run_directory: Path, data_path: Path, shapes_text: str) -> d
     }
 
 
+def run_eye_reasoning(run_directory: Path, data_path: Path, rules_text: str) -> dict[str, Any]:
+    """Run N3 rules with EYE and write the derived triples, alone and merged with the input."""
+    started = time.perf_counter()
+    if not rules_text.strip():
+        raise PipelineError("Provide N3 rules by pasting them, uploading a file, or loading an example.")
+    if not eye_engine.contains_rules(rules_text):
+        raise PipelineError(
+            "No N3 rules found. A rule has the form { ?x a ex:Sensor } => { ?x a ex:Device } ."
+        )
+    data = load_rdf(data_path)
+    input_triples = len(data)
+    rules_path = run_directory / "reasoning_rules.n3"
+    inferred_path = run_directory / "inferred.ttl"
+    output_path = run_directory / "reasoned.ttl"
+    rules_path.write_text(rules_text, encoding="utf-8")
+    try:
+        outcome = eye_engine.reason(
+            run_directory, data, rules_path.name, timeout=COMMAND_TIMEOUT_SECONDS
+        )
+    except eye_engine.EyeError as error:
+        raise PipelineError(str(error), error.log) from error
+
+    inferred = Graph()
+    for prefix, namespace in [*data.namespaces(), *eye_engine.declared_prefixes(rules_text)]:
+        inferred.bind(prefix, namespace, override=False)
+    for triple in outcome.graph:
+        if triple not in data:
+            inferred.add(triple)
+    for triple in inferred:
+        data.add(triple)
+    for prefix, namespace in inferred.namespaces():
+        data.bind(prefix, namespace, override=False)
+    inferred.serialize(destination=inferred_path, format="turtle")
+    data.serialize(destination=output_path, format="turtle")
+    return {
+        "rules_path": rules_path,
+        "inferred_path": inferred_path,
+        "output_path": output_path,
+        "input_triples": input_triples,
+        "derived_triples": len(outcome.graph),
+        "inferred_triples": len(inferred),
+        "total_triples": len(data),
+        "skipped_statements": outcome.skipped_statements,
+        "output_mode": "query" if outcome.query_mode else "derivations",
+        "engine": outcome.engine.kind,
+        "engine_label": outcome.engine.label,
+        "eye_version": outcome.version,
+        "eye_stats": outcome.stats,
+        "eye_seconds": outcome.seconds,
+        "warnings": outcome.warnings,
+        "summary": eye_engine.summarise(inferred),
+        "duration_seconds": round(time.perf_counter() - started, 2),
+        "log": outcome.log,
+    }
+
+
 RDF_EXPORT_FORMATS = {
     "turtle": ("text/turtle", "ttl"),
     "ntriples": ("application/n-triples", "nt"),
@@ -660,4 +718,5 @@ def tool_status() -> dict[str, Any]:
         "java": bool(shutil.which("java")),
         "rml_mapper": RML_MAPPER_JAR.is_file(),
         "rml_mapper_path": str(RML_MAPPER_JAR),
+        "eye": eye_engine.status(),
     }

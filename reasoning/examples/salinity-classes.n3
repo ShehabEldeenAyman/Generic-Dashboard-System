@@ -1,0 +1,77 @@
+# Classify readings with thresholds
+# =================================
+#
+# Puts each conductivity reading in a salinity class and flags readings that
+# a conductivity sensor cannot produce. The thresholds are facts at the top,
+# so you change them in one place. They are illustrative values in µS/cm,
+# not an official classification.
+#
+# The last rule uses scoped negation (log:notIncludes): a sensor passes the
+# plausibility check only when none of its readings was flagged.
+#
+# Observations only receive rdf:type facts, so closed SHACL shapes that
+# ignore rdf:type (such as test-data/SHACL_in.ttl) still validate.
+
+@prefix sosa: <http://www.w3.org/ns/sosa/> .
+@prefix math: <http://www.w3.org/2000/10/swap/math#> .
+@prefix log:  <http://www.w3.org/2000/10/swap/log#> .
+@prefix wq:   <http://example.com/water-quality#> .
+
+# ---------------------------------------------------------------------------
+# Thresholds (µS/cm)
+# ---------------------------------------------------------------------------
+
+wq:thresholds wq:freshBelow 1500 ;
+    wq:salineFrom 15000 ;
+    wq:implausibleAbove 60000 .
+
+# ---------------------------------------------------------------------------
+# Salinity class of each reading
+# ---------------------------------------------------------------------------
+
+{ ?reading sosa:hasSimpleResult ?value .
+  wq:thresholds wq:freshBelow ?fresh .
+  ?value math:greaterThan 0 .
+  ?value math:lessThan ?fresh .
+} => { ?reading a wq:FreshReading } .
+
+{ ?reading sosa:hasSimpleResult ?value .
+  wq:thresholds wq:freshBelow ?fresh ; wq:salineFrom ?saline .
+  ?value math:notLessThan ?fresh .
+  ?value math:lessThan ?saline .
+} => { ?reading a wq:BrackishReading } .
+
+{ ?reading sosa:hasSimpleResult ?value .
+  wq:thresholds wq:salineFrom ?saline ; wq:implausibleAbove ?maximum .
+  ?value math:notLessThan ?saline .
+  ?value math:notGreaterThan ?maximum .
+} => { ?reading a wq:SalineReading } .
+
+# ---------------------------------------------------------------------------
+# Implausible readings: zero, negative, or above any natural water
+# ---------------------------------------------------------------------------
+
+{ ?reading sosa:hasSimpleResult ?value .
+  ?value math:notGreaterThan 0 .
+} => { ?reading a wq:ImplausibleReading } .
+
+{ ?reading sosa:hasSimpleResult ?value .
+  wq:thresholds wq:implausibleAbove ?maximum .
+  ?value math:greaterThan ?maximum .
+} => { ?reading a wq:ImplausibleReading } .
+
+# ---------------------------------------------------------------------------
+# Sensor status
+# ---------------------------------------------------------------------------
+
+{ ?reading sosa:madeBySensor ?sensor } => { ?sensor a sosa:Sensor } .
+
+# Pattern order matters for speed: starting from sosa:madeBySensor (data) rather
+# than from wq:SalineReading (a class the rules above derive in bulk) makes this
+# rule about ten times faster on large datasets.
+{ ?reading sosa:madeBySensor ?sensor . ?reading a wq:SalineReading } => { ?sensor a wq:SensorWithSalineReadings } .
+
+# Scoped negation: no reading of this sensor is implausible.
+{ ?sensor a sosa:Sensor .
+  ?scope log:notIncludes { ?other a wq:ImplausibleReading ; sosa:madeBySensor ?sensor } .
+} => { ?sensor a wq:PlausibleSensor } .

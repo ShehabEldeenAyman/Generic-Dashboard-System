@@ -5,7 +5,7 @@ import { Button, Icon, Segmented } from './ui.jsx'
 const MAX_SOURCE_BYTES = 2_000_000
 
 /** A semantic contract (RML mapping, SHACL shapes) given as pasted text or an uploaded file. */
-export default function SourceInput({ id, label, value, onChange, accept = '.ttl,.txt', placeholder, hint }) {
+export default function SourceInput({ id, label, value, onChange, accept = '.ttl,.txt', fileLabel = 'Turtle files', placeholder, hint }) {
   const fileInput = useRef(null)
   const [error, setError] = useState('')
   const [dragging, setDragging] = useState(false)
@@ -75,7 +75,7 @@ export default function SourceInput({ id, label, value, onChange, accept = '.ttl
           <input id={id} type="file" accept={accept} onChange={(event) => readFile(event.target.files?.[0])} />
           <Icon name="upload" size={22} />
           <strong>Drop a file here or browse</strong>
-          <span>Turtle files ({accept.replaceAll(',', ', ')}), up to 2 MB</span>
+          <span>{fileLabel} ({accept.replaceAll(',', ', ')}), up to 2 MB</span>
         </label>
       )}
       {hint && <p className="field-hint">{hint}</p>}

@@ -21,6 +21,7 @@ from pydantic import BaseModel, Field
 from pipeline import generic_pipeline as pipeline
 from pipeline.run_store import RunStore
 from query_agent import operations
+from reasoning import eye_engine
 from triple_store_ingestion import ingest
 
 
@@ -37,8 +38,11 @@ def configured_origins() -> list[str]:
 
 app = FastAPI(
     title="Semantic Data Studio API",
-    description="Map tabular data to RDF, check it with SHACL, publish it to Fuseki, and query the triple store.",
-    version="2.0.0",
+    description=(
+        "Map tabular data to RDF, check it with SHACL, infer new facts with the EYE reasoner, "
+        "publish it to Fuseki, and query the triple store."
+    ),
+    version="2.1.0",
 )
 app.add_middleware(
     CORSMiddleware,
@@ -56,6 +60,12 @@ class RmlRequest(BaseModel):
 class ShaclRequest(BaseModel):
     shapes: str = Field(min_length=1, max_length=2_000_000)
     source_name: str | None = Field(default=None, max_length=300)
+
+
+class ReasoningRequest(BaseModel):
+    rules: str = Field(min_length=1, max_length=2_000_000)
+    source_name: str | None = Field(default=None, max_length=300)
+    example_id: str | None = Field(default=None, max_length=100)
 
 
 class IngestRequest(BaseModel):
@@ -88,7 +98,12 @@ def public_state(state: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
-STAGE_LABELS = {"upload": "data upload", "rml": "RML mapping", "rules": "SHACL rules"}
+STAGE_LABELS = {
+    "upload": "data upload",
+    "rml": "RML mapping",
+    "rules": "SHACL rules",
+    "reasoning": "EYE reasoning",
+}
 
 
 def require_stage(state: dict[str, Any], stage: str) -> None:
@@ -154,8 +169,8 @@ def source_path(state: dict[str, Any]) -> Path:
     return RUN_STORE.resolve_relative(state["id"], relative_path)
 
 
-def current_rdf(state: dict[str, Any], directory: Path) -> tuple[Path, str]:
-    """The dataset's current RDF: SHACL-enriched when rules ran, otherwise mapped."""
+def reasoning_input(state: dict[str, Any], directory: Path) -> tuple[Path, str]:
+    """The RDF EYE reasons over: SHACL-enriched when rules ran, otherwise mapped."""
     rules = state.get("stages", {}).get("rules") or {}
     if rules.get("status") == "success":
         enriched_path = directory / "enriched.ttl"
@@ -165,8 +180,27 @@ def current_rdf(state: dict[str, Any], directory: Path) -> tuple[Path, str]:
     return directory / "mapped.ttl", "mapped RDF"
 
 
+def current_rdf(state: dict[str, Any], directory: Path) -> tuple[Path, str]:
+    """The dataset's current RDF: reasoned, else SHACL-enriched, else mapped."""
+    reasoning = state.get("stages", {}).get("reasoning") or {}
+    if reasoning.get("status") == "success":
+        reasoned_path = directory / "reasoned.ttl"
+        if not reasoned_path.is_file():
+            raise pipeline.PipelineError("The reasoned RDF is missing. Run the reasoner again.")
+        return reasoned_path, "reasoned RDF"
+    return reasoning_input(state, directory)
+
+
 def source_note(source_name: str | None) -> str:
     return f"uploaded file {source_name}" if source_name else "pasted text"
+
+
+def rules_note(request: ReasoningRequest) -> str:
+    example = eye_engine.find_example(request.example_id)
+    if example:
+        edited = request.rules.strip() != example["rules"].strip()
+        return f"example “{example['title']}”{' (edited)' if edited else ''}"
+    return source_note(request.source_name)
 
 
 # --- Service status -------------------------------------------------------------------
@@ -339,6 +373,47 @@ def shacl_rules_stage(run_id: str, request: ShaclRequest) -> dict[str, Any]:
     return execute_stage(run_id, "rules", "rml", operation)
 
 
+@app.post("/api/runs/{run_id}/stages/reasoning")
+def reasoning_stage(run_id: str, request: ReasoningRequest) -> dict[str, Any]:
+    def operation(state: dict[str, Any], directory: Path) -> dict[str, Any]:
+        input_path, input_label = reasoning_input(state, directory)
+        result = pipeline.run_eye_reasoning(directory, input_path, request.rules)
+        count = result["inferred_triples"]
+        noun = "triple" if count == 1 else "triples"
+        if count:
+            message = f"EYE inferred {count:,} new {noun} from the {input_label}."
+        elif result["output_mode"] == "query":
+            message = f"EYE ran the rules, but the query found no new facts in the {input_label}."
+        else:
+            message = f"EYE ran the rules, but they did not infer any new facts from the {input_label}."
+        return {
+            "message": message,
+            "rules_source": rules_note(request),
+            "input_rdf": input_label,
+            **{
+                key: result[key]
+                for key in (
+                    "input_triples", "derived_triples", "inferred_triples", "total_triples",
+                    "skipped_statements", "output_mode", "engine", "engine_label", "eye_version",
+                    "eye_stats", "eye_seconds", "warnings", "summary", "duration_seconds",
+                )
+            },
+            "log": result["log"],
+            "artifacts": [
+                {"path": result["rules_path"], "name": "N3 rules", "kind": "n3"},
+                {"path": result["inferred_path"], "name": "Inferred triples", "kind": "ttl"},
+                {"path": result["output_path"], "name": "Reasoned RDF", "kind": "ttl"},
+            ],
+        }
+
+    return execute_stage(run_id, "reasoning", "rml", operation)
+
+
+@app.get("/api/reasoning/examples")
+def reasoning_examples() -> dict[str, Any]:
+    return {"examples": eye_engine.list_examples()}
+
+
 @app.post("/api/runs/{run_id}/stages/shacl")
 def shacl_validation_stage(run_id: str, request: ShaclRequest) -> dict[str, Any]:
     def operation(state: dict[str, Any], directory: Path) -> dict[str, Any]:
@@ -407,7 +482,7 @@ def download_rdf(
     except pipeline.PipelineError as error:
         raise HTTPException(400, str(error)) from error
     stem = Path(state["source"]["stored_filename"]).stem or "dataset"
-    suffix = "enriched" if label == "enriched RDF" else "mapped"
+    suffix = {"reasoned RDF": "reasoned", "enriched RDF": "enriched"}.get(label, "mapped")
     return Response(
         content,
         media_type=media_type,

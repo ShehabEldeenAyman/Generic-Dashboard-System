@@ -20,12 +20,15 @@ from uuid import UUID, uuid4
 
 # Operations are independent actions on one dataset, not a fixed sequence.
 # Re-running an operation clears the results that were derived from its output.
-STAGE_ORDER = ("upload", "rml", "rules", "shacl", "ingest")
+# The RDF flows mapped -> SHACL rules (enriched) -> EYE reasoning (reasoned); both
+# enrichment steps are optional, and validation and publishing use the latest RDF.
+STAGE_ORDER = ("upload", "rml", "rules", "reasoning", "shacl", "ingest")
 
 STAGE_INVALIDATIONS = {
     "upload": set(STAGE_ORDER),
-    "rml": {"rml", "rules", "shacl", "ingest"},
-    "rules": {"rules", "shacl", "ingest"},
+    "rml": {"rml", "rules", "reasoning", "shacl", "ingest"},
+    "rules": {"rules", "reasoning", "shacl", "ingest"},
+    "reasoning": {"reasoning", "shacl", "ingest"},
     "shacl": {"shacl"},
     "ingest": {"ingest"},
 }

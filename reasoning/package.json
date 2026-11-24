@@ -1,0 +1,9 @@
+{
+  "name": "semantic-data-studio-reasoner",
+  "private": true,
+  "description": "WebAssembly build of the EYE reasoner, used by the Reasoning workspace when native EYE is not installed.",
+  "license": "MIT",
+  "dependencies": {
+    "eyereasoner": "21.1.28"
+  }
+}
