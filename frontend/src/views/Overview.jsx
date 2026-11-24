@@ -1,4 +1,4 @@
-import { compactNumber, currentRdf, formatNumber, isDone, shortIri, timeAgo } from '../format.js'
+import { compactNumber, currentRdf, formatNumber, isAgentOutput, isDone, shortIri, timeAgo } from '../format.js'
 import { Badge, Button, Card, EmptyState, Icon, Kpi } from '../components/ui.jsx'
 
 const ACTIVITY = {
@@ -47,7 +47,7 @@ export default function Overview({ run, config, store, navigate }) {
   const shacl = run?.stages?.shacl
   const ingest = run?.stages?.ingest
   const rdf = currentRdf(run)
-  const graphCount = store.data?.graphs?.length
+  const graphCount = store.data?.graphs?.filter((graph) => !isAgentOutput(graph.uri, config)).length
 
   const qualityValue = !shacl ? 'Not checked'
     : shacl.status === 'success' ? 'Conforms'
@@ -62,6 +62,7 @@ export default function Overview({ run, config, store, navigate }) {
     { view: 'reasoning', icon: 'bulb', title: 'Infer new facts', text: 'Run N3 rules with the EYE reasoner.', done: isDone(run, 'reasoning'), locked: !mapped },
     { view: 'graph', icon: 'database', title: 'Download or publish', text: 'Export RDF or load it into Fuseki.', done: isDone(run, 'ingest'), locked: !mapped },
     { view: 'query', icon: 'agent', title: 'Query & Agent', text: 'Explore every graph in the triple store.', done: false, locked: false },
+    { view: 'orchestration', icon: 'flow', title: 'Agent orchestration', text: 'Chain SPARQL agents that build on each other.', done: false, locked: false },
   ]
 
   const activity = Object.entries(run?.stages || {})

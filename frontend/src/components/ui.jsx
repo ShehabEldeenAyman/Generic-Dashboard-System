@@ -26,6 +26,8 @@ const ICONS = {
   sparkle: <><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z" /><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15Z" /></>,
   layers: <><path d="m12 3 9 5-9 5-9-5 9-5Z" /><path d="m3 13 9 5 9-5" /></>,
   bulb: <><path d="M9 18h6M10 21h4" /><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.3 1.1 2.2v1h5v-1c0-.9.4-1.7 1.1-2.2A6 6 0 0 0 12 3Z" /></>,
+  flow: <><rect x="3" y="3" width="7" height="5" rx="1.5" /><rect x="14" y="3" width="7" height="5" rx="1.5" /><rect x="8.5" y="16" width="7" height="5" rx="1.5" /><path d="M6.5 8v2.5a1.5 1.5 0 0 0 1.5 1.5h8a1.5 1.5 0 0 0 1.5-1.5V8M12 12v4" /></>,
+  plus: <><path d="M12 5v14M5 12h14" /></>,
 }
 
 export function Icon({ name, size = 18, className = '' }) {

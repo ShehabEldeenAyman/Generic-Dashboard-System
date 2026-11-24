@@ -10,6 +10,7 @@ import QualityView from './views/QualityView.jsx'
 import ReasoningView from './views/ReasoningView.jsx'
 import GraphView from './views/GraphView.jsx'
 import QueryView from './views/QueryView.jsx'
+import OrchestrationView from './views/OrchestrationView.jsx'
 
 const NAV = [
   { id: 'overview', label: 'Overview', icon: 'home' },
@@ -19,6 +20,7 @@ const NAV = [
   { id: 'reasoning', label: 'Reasoning', icon: 'bulb' },
   { id: 'graph', label: 'Knowledge graph', icon: 'database' },
   { id: 'query', label: 'Query & Agent', icon: 'agent' },
+  { id: 'orchestration', label: 'Agent orchestration', icon: 'flow' },
 ]
 const VIEW_IDS = new Set(NAV.map((item) => item.id))
 const RUN_KEY = 'semantic-data-studio.dataset'
@@ -211,6 +213,9 @@ export default function App() {
         <div hidden={view !== 'query'}>
           <QueryView config={config} store={store} onRefreshStore={refreshStore} active={view === 'query'}
             selectedGraph={selectedGraph} onSelectGraph={setSelectedGraph} />
+        </div>
+        <div hidden={view !== 'orchestration'}>
+          <OrchestrationView config={config} store={store} onRefreshStore={refreshStore} active={view === 'orchestration'} />
         </div>
         {!config && !notice && <div className="boot"><Button variant="ghost" busy>Connecting to the API</Button></div>}
       </main>

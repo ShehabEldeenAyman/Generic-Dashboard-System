@@ -20,7 +20,7 @@ from pydantic import BaseModel, Field
 
 from pipeline import generic_pipeline as pipeline
 from pipeline.run_store import RunStore
-from query_agent import operations
+from query_agent import operations, orchestration
 from reasoning import eye_engine
 from triple_store_ingestion import ingest
 
@@ -40,9 +40,9 @@ app = FastAPI(
     title="Semantic Data Studio API",
     description=(
         "Map tabular data to RDF, check it with SHACL, infer new facts with the EYE reasoner, "
-        "publish it to Fuseki, and query the triple store."
+        "publish it to Fuseki, query the triple store, and chain SPARQL agents."
     ),
-    version="2.1.0",
+    version="2.2.0",
 )
 app.add_middleware(
     CORSMiddleware,
@@ -79,6 +79,13 @@ class QueryRequest(BaseModel):
 
 class OperationRequest(BaseModel):
     parameters: dict[str, Any] = Field(default_factory=dict)
+
+
+class AgentRunRequest(BaseModel):
+    environment_id: str = Field(min_length=1, max_length=64)
+    agent_id: str = Field(min_length=1, max_length=64)
+    query: str = Field(min_length=1, max_length=2_000_000)
+    sources: list[str] = Field(default_factory=list)
 
 
 def load_run(run_id: str) -> dict[str, Any]:
@@ -237,6 +244,7 @@ def configuration() -> dict[str, Any]:
         "tools": pipeline.tool_status(),
         "max_upload_bytes": MAX_UPLOAD_BYTES,
         "default_graph_base": pipeline.DEFAULT_GRAPH_BASE,
+        "orchestration_graph_base": orchestration.OUTPUT_BASE,
         "rdf_formats": list(pipeline.RDF_EXPORT_FORMATS),
     }
 
@@ -544,6 +552,27 @@ def run_store_operation(operation_id: str, request: OperationRequest) -> dict[st
     if operation_id not in operations.OPERATIONS:
         raise HTTPException(404, f"Unknown operation: {operation_id}")
     return store_call(lambda: operations.run_operation(operation_id, request.parameters))
+
+
+# --- Agent orchestration --------------------------------------------------------------
+
+
+@app.post("/api/orchestration/run")
+def run_orchestration_agent(request: AgentRunRequest) -> dict[str, Any]:
+    """Run one agent over its source graphs; CONSTRUCT output replaces its output graph."""
+    return store_call(
+        lambda: orchestration.run_agent(
+            request.query, request.sources, request.environment_id, request.agent_id
+        )
+    )
+
+
+@app.delete("/api/orchestration/environments/{environment_id}/outputs")
+def drop_orchestration_outputs(
+    environment_id: str, agent_id: str | None = Query(default=None, max_length=64)
+) -> dict[str, Any]:
+    """Delete the output graphs of an environment, or of one of its agents."""
+    return store_call(lambda: orchestration.drop_outputs(environment_id, agent_id))
 
 
 # --- Artifacts ------------------------------------------------------------------------

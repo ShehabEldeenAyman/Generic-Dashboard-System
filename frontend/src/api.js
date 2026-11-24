@@ -48,4 +48,9 @@ export const api = {
   operations: () => request('/api/store/operations'),
   runOperation: (operationId, parameters) => postJson(`/api/store/operations/${operationId}`, { parameters }),
   query: (query) => postJson('/api/store/query', { query }),
+  runAgent: (body) => postJson('/api/orchestration/run', body),
+  dropAgentOutputs: (environmentId, agentId) => request(
+    `/api/orchestration/environments/${environmentId}/outputs${agentId ? `?agent_id=${agentId}` : ''}`,
+    { method: 'DELETE' },
+  ),
 }

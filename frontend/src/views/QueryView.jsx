@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '../api.js'
-import { formatNumber, shortIri } from '../format.js'
+import { formatNumber, isAgentOutput, shortIri } from '../format.js'
 import QueryResults from '../components/QueryResults.jsx'
 import { Badge, Button, Card, EmptyState, Icon, Notice, Segmented, Spinner } from '../components/ui.jsx'
 
@@ -17,24 +17,38 @@ WHERE {
 }
 LIMIT 100`
 
-function GraphList({ store, selected, onSelect, onRefresh }) {
-  const graphs = store.data?.graphs || []
+function GraphButton({ graph, selected, onSelect, label }) {
   return (
-    <Card title="Graphs" icon="database" subtitle={store.data ? `${graphs.length} named graph${graphs.length === 1 ? '' : 's'}` : 'Triple store'}
+    <button className={`graph-item ${selected === graph.uri ? 'active' : ''}`} onClick={() => onSelect(graph.uri)} title={graph.uri}>
+      <Icon name={label ? 'flow' : 'layers'} size={16} />
+      <span><strong>{label || shortIri(graph.uri)}</strong><small>{graph.uri}</small></span>
+      <Badge>{formatNumber(graph.triples)}</Badge>
+    </button>
+  )
+}
+
+function GraphList({ store, config, selected, onSelect, onRefresh }) {
+  const graphs = store.data?.graphs || []
+  const published = graphs.filter((graph) => !isAgentOutput(graph.uri, config))
+  const outputs = graphs.filter((graph) => isAgentOutput(graph.uri, config))
+  return (
+    <Card title="Graphs" icon="database" subtitle={store.data ? `${published.length} named graph${published.length === 1 ? '' : 's'}` : 'Triple store'}
       actions={<Button variant="ghost" icon="refresh" busy={store.loading} onClick={onRefresh} aria-label="Refresh graphs" />}>
       {store.error && <Notice tone="danger" title="Could not list graphs">{store.error}</Notice>}
       {!store.error && store.data && !graphs.length && (
         <EmptyState icon="database" title="No named graphs yet">Publish a dataset from the Knowledge graph workspace.</EmptyState>
       )}
       <div className="graph-list">
-        {graphs.map((graph) => (
-          <button key={graph.uri} className={`graph-item ${selected === graph.uri ? 'active' : ''}`} onClick={() => onSelect(graph.uri)} title={graph.uri}>
-            <Icon name="layers" size={16} />
-            <span><strong>{shortIri(graph.uri)}</strong><small>{graph.uri}</small></span>
-            <Badge>{formatNumber(graph.triples)}</Badge>
-          </button>
-        ))}
+        {published.map((graph) => <GraphButton key={graph.uri} graph={graph} selected={selected} onSelect={onSelect} />)}
       </div>
+      {outputs.length > 0 && (
+        <div className="graph-list">
+          <p className="eyebrow graph-group-label">Agent outputs (temporary)</p>
+          {outputs.map((graph) => (
+            <GraphButton key={graph.uri} graph={graph} selected={selected} onSelect={onSelect} label={`Output ${graph.uri.split('/').slice(-2).join('/')}`} />
+          ))}
+        </div>
+      )}
       {store.data?.default_graph_triples > 0 && (
         <p className="muted small">The default graph also holds {formatNumber(store.data.default_graph_triples)} triples.</p>
       )}
@@ -103,8 +117,10 @@ export default function QueryView({ config, store, onRefreshStore, selectedGraph
 
   useEffect(() => {
     const graphs = store.data?.graphs || []
-    if (graphs.length && !graphs.some((graph) => graph.uri === selectedGraph)) onSelectGraph(graphs[0].uri)
-  }, [store.data, selectedGraph, onSelectGraph])
+    if (graphs.length && !graphs.some((graph) => graph.uri === selectedGraph)) {
+      onSelectGraph((graphs.find((graph) => !isAgentOutput(graph.uri, config)) || graphs[0]).uri)
+    }
+  }, [store.data, selectedGraph, onSelectGraph, config])
 
   useEffect(() => { if (!queryEdited) setQuery(starterQuery(selectedGraph)) }, [selectedGraph, queryEdited])
 
@@ -153,7 +169,7 @@ export default function QueryView({ config, store, onRefreshStore, selectedGraph
       )}
 
       <div className="query-layout">
-        <GraphList store={store} selected={selectedGraph} onSelect={onSelectGraph} onRefresh={onRefreshStore} />
+        <GraphList store={store} config={config} selected={selectedGraph} onSelect={onSelectGraph} onRefresh={onRefreshStore} />
 
         <div className="stack">
           <Card padded={false}>

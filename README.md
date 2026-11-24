@@ -6,7 +6,7 @@
 
 Upload a CSV or Excel file, map it to RDF with RML, check and enrich it with SHACL,<br>
 infer new facts with N3 rules and the EYE reasoner, publish it to Apache Jena Fuseki,<br>
-and explore it with ready-made queries or SPARQL.
+and explore it with ready-made queries, SPARQL, or chains of SPARQL agents.
 
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-backend-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
@@ -18,7 +18,7 @@ and explore it with ready-made queries or SPARQL.
 
 <img src="docs/images/overview.png" alt="Semantic Data Studio overview page with dataset, triples, data quality, published graph and triple store tiles" width="900">
 
-[Features](#-features) · [Formats](#-supported-data-formats) · [Reasoning](#-reasoning-with-eye) · [Installation](#-installation) · [Quick tour](#-quick-tour) · [Agent API](#-query--agent-api) · [Troubleshooting](#-troubleshooting)
+[Features](#-features) · [Formats](#-supported-data-formats) · [Reasoning](#-reasoning-with-eye) · [Orchestration](#-agent-orchestration) · [Installation](#-installation) · [Quick tour](#-quick-tour) · [Agent API](#-query--agent-api) · [Troubleshooting](#-troubleshooting)
 
 </div>
 
@@ -35,6 +35,7 @@ and explore it with ready-made queries or SPARQL.
 | 💡 | **Reasoning** | **Paste** or **upload** N3 rules, or start from one of four **examples**. The **EYE reasoner** adds the facts the rules imply and shows which classes and properties it inferred, with a sample. A `log:query` limits what is added. See the [reasoning guide](docs/reasoning.md). |
 | 🗄️ | **Knowledge graph** | **Download** the RDF as Turtle, N-Triples, JSON-LD, or RDF/XML. **Publish** it to a Fuseki named graph, replacing or adding to its content. Browse it entity by entity. |
 | 🤖 | **Query & Agent** | Query **any graph** in Fuseki, no upload needed. Use ready-made operations (overview, entity types, property usage, search, and more) or write SPARQL, then export results as CSV. The operations are also exposed as an API that AI agents can call as tools. |
+| 🧩 | **Agent orchestration** | Create **environments** of **agents** (SPARQL queries). A CONSTRUCT agent saves its result as a **temporary graph** that other agents can read, by ticking it or inserting a reference, so you never type its name. Agents that depend on a re-run agent are marked **stale**, and **Run all** runs them in order. See the [orchestration guide](docs/orchestration.md). |
 
 You can open the workspaces in any order. Each one says what it needs before it can run.
 
@@ -46,6 +47,9 @@ You can open the workspaces in any order. Each one says what it needs before it 
   <tr>
     <td width="50%"><img src="docs/images/reasoning.png" alt="Reasoning workspace with the facts EYE inferred: classes assigned and a sample of inferred triples"><p align="center"><b>Reasoning:</b> facts inferred by EYE</p></td>
     <td width="50%"><img src="docs/images/knowledge-graph.png" alt="Knowledge graph workspace with download formats, Fuseki publishing and an RDF browser"><p align="center"><b>Knowledge graph:</b> download, publish, and browse RDF</p></td>
+  </tr>
+  <tr>
+    <td colspan="2"><img src="docs/images/orchestration.png" alt="Agent orchestration workspace with an environment of three agents; the first CONSTRUCT agent saved 10,532 triples to its output graph"><p align="center"><b>Agent orchestration:</b> SPARQL agents that build on each other's results</p></td>
   </tr>
 </table>
 
@@ -98,6 +102,19 @@ The **Reasoning** workspace runs [Notation3 (N3)](https://w3c.github.io/N3/spec/
 EYE works out of the box: `python run.py` installs the WebAssembly build of EYE (npm package [`eyereasoner`](https://www.npmjs.com/package/eyereasoner)), which runs on Node.js. For large datasets you can install native EYE; the app uses it automatically when `eye` is on your `PATH`.
 
 📖 The [reasoning guide](docs/reasoning.md) covers writing rules, each example in detail, validating inferred facts, performance, and installing native EYE.
+
+## 🧩 Agent orchestration
+
+An **environment** holds **agents**, and every agent is a SPARQL query. Press **New** to create an environment, then **Add agent**:
+
+- **A CONSTRUCT agent saves its result** as a temporary graph in Fuseki, its *output graph*. Every run replaces it. SELECT and ASK agents show their results.
+- **Other agents read it without typing its name.** Tick it under **Reads from**, next to your original graphs; ticked graphs are combined, so the query needs no `FROM` or `GRAPH`. Or pick it from **Insert reference**, which adds a short reference such as `<agent:high-readings>` for queries that treat graphs separately.
+- **Chains stay consistent.** When an agent runs again, the agents that read its output are marked **stale**. **Run all** runs every agent after the agents it reads from, and agents cannot read from each other in a loop.
+- **Environments are saved in your browser**; output graphs live in Fuseki. Deleting an agent or an environment removes its output graphs.
+
+Press **Try an example** for three agents on the sample data: a CONSTRUCT agent saves the high conductivity readings, one agent counts them per sensor by reading that output, and one compares it with the original graph.
+
+📖 The [orchestration guide](docs/orchestration.md) explains both ways of reading graphs, the statuses, where everything is stored, and the API.
 
 ---
 
@@ -249,6 +266,7 @@ The `test-data/` folder has everything you need for a first run:
 5. **Data quality:** click **Validate data** again. It now checks the reasoned RDF.
 6. **Knowledge graph:** download the RDF in your preferred format, or enter a graph name such as `waterinfo-sample` and click **Publish**.
 7. **Query & Agent:** pick the graph and run **Entity types**. The classes EYE inferred are listed next to the observations. You can also switch to the SPARQL editor.
+8. **Agent orchestration:** press **Try an example**, then **Run all**. The first agent saves 10,532 triples of high readings as a temporary graph, and the other two agents build on it.
 
 > [!NOTE]
 > The file name in `rml:source` must match the name shown on the Data page exactly. Uploading `sample.xlsx` gives `sample.csv`, because Excel files are converted to CSV for RMLMapper. Use the file name only, not a path. Column names in `rr:template` and `rml:reference` must also match the headers exactly.
@@ -293,6 +311,8 @@ curl -X POST http://localhost:8000/api/store/operations/entity_types \
 | `POST /api/store/query` | Run a read-only SPARQL query |
 | `GET /api/store/operations` | Operations catalog |
 | `POST /api/store/operations/{id}` | Run an operation |
+| `POST /api/orchestration/run` | Run an agent over chosen graphs; CONSTRUCT output replaces its output graph (`environment_id`, `agent_id`, `query`, `sources`) |
+| `DELETE /api/orchestration/environments/{id}/outputs` | Remove an environment's output graphs (optional `agent_id`) |
 
 Interactive documentation is at <http://localhost:8000/docs> while the app is running.
 
@@ -308,7 +328,7 @@ All settings are optional environment variables.
 | --- | --- | --- |
 | `FUSEKI_DATA_URL` | `http://localhost:3030/dataset/data` | Fuseki Graph Store endpoint |
 | `FUSEKI_QUERY_URL` | derived from the data URL | Fuseki SPARQL endpoint |
-| `FUSEKI_GRAPH_BASE` | `https://example.org/graphs/` | Base IRI for short graph names |
+| `FUSEKI_GRAPH_BASE` | `https://example.org/graphs/` | Base IRI for short graph names and agent output graphs |
 | `RML_MAPPER_JAR` | `pipeline/rmlmapper.jar` | Location of RMLMapper |
 | `EYE_COMMAND` | `eye` on `PATH`, else the bundled build | Command that starts native EYE |
 | `PIPELINE_STORAGE_DIR` | system temp folder | Where uploaded and generated files are kept |
@@ -390,7 +410,8 @@ Generic-Dashboard-System/
 ├── requirements.txt             # Python dependencies
 ├── frontend/                    # React + Vite dashboard
 │   └── src/
-│       ├── views/               # Overview, Data, Mapping, Data quality, Reasoning, Knowledge graph, Query & Agent
+│       ├── views/               # Overview, Data, Mapping, Data quality, Reasoning, Knowledge graph, Query & Agent, Agent orchestration
+│       ├── orchestration.js     # Environments and agents kept in the browser
 │       └── components/          # Shared UI, paste-or-upload input, query results
 ├── pipeline/
 │   ├── playground_server.py     # FastAPI app; also serves the built dashboard
@@ -403,10 +424,13 @@ Generic-Dashboard-System/
 │   ├── eye_engine.py            # Runs EYE (native or bundled) and reads its output
 │   ├── examples/                # Example N3 rule sets
 │   └── package.json             # Bundled EYE (npm package eyereasoner)
-├── query_agent/operations.py    # Query operations catalog
+├── query_agent/
+│   ├── operations.py            # Query operations catalog
+│   └── orchestration.py         # Runs agents and keeps their output graphs
 ├── triple_store_ingestion/      # Fuseki client
 ├── docs/
 │   ├── reasoning.md             # Reasoning guide
+│   ├── orchestration.md         # Agent orchestration guide
 │   └── images/                  # Screenshots
 └── test-data/                   # Sample data, mapping, and shapes
 ```

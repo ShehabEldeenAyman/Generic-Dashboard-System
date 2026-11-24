@@ -347,6 +347,41 @@ button.kpi:hover { transform: translateY(-1px); box-shadow: var(--shadow-lg); }
 .breakdown-list strong { min-width: 44px; text-align: right; }
 .bar-primary { background: var(--primary); }
 
+/* ---------- Agent orchestration ---------- */
+.environment-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.inline-input {
+  flex: 1; min-width: 160px; margin-left: -8px; padding: 6px 8px; border: 1px solid transparent; border-radius: var(--radius-sm);
+  background: transparent; color: var(--text); font: inherit; font-size: 15px; font-weight: 650;
+}
+.inline-input:hover { border-color: var(--border); }
+.inline-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); background: var(--surface); }
+.inline-input.title { font-size: 20px; }
+.agent-list { display: flex; flex-direction: column; gap: 16px; }
+.agent-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.agent-head .button-row { margin-left: auto; }
+.agent-number { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--primary-soft); color: var(--primary); font-size: 13px; font-weight: 700; flex: none; }
+.source-picker { display: flex; flex-direction: column; gap: 10px; min-width: 0; margin: 0; padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-2); }
+.source-picker legend { padding: 0 6px; color: var(--text-2); font-size: 13px; font-weight: 600; }
+.source-group { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.source-group > span { color: var(--muted); font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.source-option { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 4px 2px; font-size: 13px; cursor: pointer; }
+.source-option input { flex: none; accent-color: var(--primary); }
+.source-option span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.source-option small { margin-left: auto; color: var(--muted); white-space: nowrap; }
+.source-option.disabled { cursor: not-allowed; opacity: .55; }
+.warn-text { color: var(--warning) !important; }
+.editor-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.insert-select { max-width: 100%; padding: 6px 10px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--text-2); font: inherit; font-size: 13px; }
+.agent-card .code-editor textarea { min-height: 200px; }
+.agent-result { display: flex; flex-direction: column; gap: 12px; }
+.add-agent {
+  display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 16px;
+  border: 1.5px dashed var(--border-strong); border-radius: var(--radius); background: transparent; color: var(--muted); font-weight: 600;
+}
+.add-agent:not(:disabled):hover { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); }
+.graph-group-label { margin-top: 12px; padding: 0 2px; color: var(--muted); }
+.link-button { padding: 0; border: 0; background: none; color: var(--primary); font: inherit; text-decoration: underline; cursor: pointer; }
+
 /* ---------- Query & Agent ---------- */
 .graph-list { display: flex; flex-direction: column; gap: 4px; }
 .graph-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border: 1px solid transparent; border-radius: var(--radius-sm); background: transparent; text-align: left; color: var(--text-2); }

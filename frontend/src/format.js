@@ -18,6 +18,9 @@ export function currentRdf(run) {
   return { kind: 'mapped', label: 'Mapped RDF', triples: mapped, mapped }
 }
 
+/** True for the temporary graphs that Agent orchestration keeps for agent outputs. */
+export const isAgentOutput = (uri, config) => Boolean(config?.orchestration_graph_base) && String(uri).startsWith(config.orchestration_graph_base)
+
 export function formatNumber(value) {
   if (value === null || value === undefined || Number.isNaN(Number(value))) return '—'
   return Number(value).toLocaleString()

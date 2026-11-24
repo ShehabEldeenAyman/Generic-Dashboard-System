@@ -1,6 +1,7 @@
 """Apache Jena Fuseki graph-store client used by the pipeline."""
 
 import os
+from pathlib import Path
 
 import requests
 
@@ -74,6 +75,106 @@ def delete_graph(graph_uri):
     return False
 
 
+def _select_or_ask(response):
+    """Parse a SPARQL JSON response into a SELECT table or an ASK answer."""
+    try:
+        payload = response.json()
+    except ValueError as error:
+        raise FusekiError("Fuseki returned invalid SPARQL JSON.") from error
+
+    if "boolean" in payload:
+        return {"type": "ask", "boolean": bool(payload["boolean"])}
+
+    bindings = payload.get("results", {}).get("bindings")
+    if not isinstance(bindings, list):
+        raise FusekiError("Fuseki returned JSON without SPARQL result bindings.")
+    variables = payload.get("head", {}).get("vars", [])
+    rows = bindings[:MAX_QUERY_ROWS]
+    return {
+        "type": "select",
+        "variables": variables,
+        "rows": rows,
+        "row_count": len(rows),
+        "truncated": len(bindings) > len(rows),
+    }
+
+
+def _error_detail(response):
+    return response.text.strip()[:2_000] or "Fuseki did not provide an error message."
+
+
+def list_graph_names():
+    """The IRIs of the named graphs that hold data."""
+    result = query_graph("SELECT ?graph WHERE { GRAPH ?graph { } }")
+    return [
+        row["graph"]["value"]
+        for row in result.get("rows", [])
+        if row.get("graph", {}).get("type") == "uri"
+    ]
+
+
+def run_query(query, *, graph_destination, default_graphs=(), named_graphs=(), timeout=300):
+    """Run a read-only query over the chosen graphs.
+
+    ``default_graphs`` form the graph the query's patterns match (merged), and
+    ``named_graphs`` the graphs its ``GRAPH`` blocks can reach. Without either,
+    Fuseki's own dataset is used. SELECT and ASK results come back parsed. A
+    CONSTRUCT or DESCRIBE result is written in full to ``graph_destination`` as
+    N-Triples, and the result reports how many triples it holds.
+    """
+    data = [("query", query)]
+    data += [("default-graph-uri", graph) for graph in default_graphs]
+    data += [("named-graph-uri", graph) for graph in named_graphs]
+    try:
+        with requests.post(
+            get_query_url(),
+            data=data,
+            headers={"Accept": "application/sparql-results+json, application/n-triples;q=0.9"},
+            stream=True,
+            timeout=timeout,
+        ) as response:
+            if not response.ok:
+                raise FusekiError(
+                    f"Fuseki query failed with HTTP {response.status_code}: {_error_detail(response)}",
+                    response.status_code,
+                )
+            content_type = response.headers.get("Content-Type", "").split(";", 1)[0].strip()
+            if content_type == "application/sparql-results+json":
+                return _select_or_ask(response)
+            if content_type not in {"application/n-triples", "text/plain"}:
+                raise FusekiError(f"Fuseki answered with an unexpected content type: {content_type or 'none'}.")
+            destination = Path(graph_destination)
+            with destination.open("wb") as handle:
+                for chunk in response.iter_content(chunk_size=1 << 16):
+                    handle.write(chunk)
+    except requests.RequestException as error:
+        raise FusekiError(f"Fuseki query request failed: {error}") from error
+
+    with destination.open("rb") as handle:
+        triples = sum(1 for line in handle if line.strip() and not line.lstrip().startswith(b"#"))
+    return {"type": "graph", "triples": triples}
+
+
+def put_graph(path, graph_uri, content_type="application/n-triples"):
+    """Replace a named graph's content with an RDF file. Raises ``FusekiError``."""
+    try:
+        with open(path, "rb") as source:
+            response = requests.put(
+                FUSEKI_DATA_URL,
+                params={"graph": graph_uri},
+                data=source,
+                headers={"Content-Type": content_type},
+                timeout=300,
+            )
+    except requests.RequestException as error:
+        raise FusekiError(f"Fuseki upload request failed: {error}") from error
+    if response.status_code not in (200, 201, 204):
+        raise FusekiError(
+            f"Fuseki could not store graph {graph_uri} (HTTP {response.status_code}): {_error_detail(response)}",
+            response.status_code,
+        )
+
+
 def query_graph(query):
     """Run a read-only SPARQL query without overriding Fuseki's query dataset."""
     try:
@@ -99,26 +200,7 @@ def query_graph(query):
 
     content_type = response.headers.get("Content-Type", "").split(";", 1)[0].strip()
     if content_type == "application/sparql-results+json":
-        try:
-            payload = response.json()
-        except ValueError as error:
-            raise FusekiError("Fuseki returned invalid SPARQL JSON.") from error
-
-        if "boolean" in payload:
-            return {"type": "ask", "boolean": bool(payload["boolean"])}
-
-        bindings = payload.get("results", {}).get("bindings")
-        if not isinstance(bindings, list):
-            raise FusekiError("Fuseki returned JSON without SPARQL result bindings.")
-        variables = payload.get("head", {}).get("vars", [])
-        rows = bindings[:MAX_QUERY_ROWS]
-        return {
-            "type": "select",
-            "variables": variables,
-            "rows": rows,
-            "row_count": len(rows),
-            "truncated": len(bindings) > len(rows),
-        }
+        return _select_or_ask(response)
 
     text = response.text
     return {
