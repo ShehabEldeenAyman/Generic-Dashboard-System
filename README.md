@@ -408,17 +408,20 @@ pySHACL runs SPARQL-based constraints and rules once per targeted record, so the
 Generic-Dashboard-System/
 ├── run.py                       # One-command launcher
 ├── requirements.txt             # Python dependencies
+├── requirements-dev.txt         # Test dependencies (pytest, Playwright)
+├── pytest.ini                   # Test settings and markers (live, e2e)
 ├── frontend/                    # React + Vite dashboard
-│   └── src/
-│       ├── views/               # Overview, Data, Mapping, Data quality, Reasoning, Knowledge graph, Query & Agent, Agent orchestration
-│       ├── orchestration.js     # Environments and agents kept in the browser
-│       └── components/          # Shared UI, paste-or-upload input, query results
+│   ├── src/
+│   │   ├── views/               # Overview, Data, Mapping, Data quality, Reasoning, Knowledge graph, Query & Agent, Agent orchestration
+│   │   ├── orchestration.js     # Environments and agents kept in the browser
+│   │   └── components/          # Shared UI, paste-or-upload input, query results
+│   └── tests/                   # Frontend tests (npm test)
 ├── pipeline/
 │   ├── playground_server.py     # FastAPI app; also serves the built dashboard
 │   ├── generic_pipeline.py      # Parsing, RMLMapper, SHACL actions, RDF export, ingestion
 │   ├── run_store.py             # Dataset state and files
 │   ├── rmlmapper.jar            # ← you add this (step 3)
-│   └── tests/
+│   └── tests/                   # Backend, live, and browser tests
 ├── SHACL/shacl_engine.py        # SHACL validation and rules
 ├── reasoning/
 │   ├── eye_engine.py            # Runs EYE (native or bundled) and reads its output
@@ -431,18 +434,32 @@ Generic-Dashboard-System/
 ├── docs/
 │   ├── reasoning.md             # Reasoning guide
 │   ├── orchestration.md         # Agent orchestration guide
+│   ├── testing.md               # Testing guide
 │   └── images/                  # Screenshots
 └── test-data/                   # Sample data, mapping, and shapes
 ```
 
 ## 🧪 Running the tests
 
+There are four kinds of tests, from fast checks to the dashboard in a real browser:
+
+| Tests | What they check | Needs |
+| --- | --- | --- |
+| **Backend** (`pipeline/tests/`) | The API and every module: uploads, mapping, SHACL, EYE, publishing, downloads, query operations, orchestration, the launcher. Fuseki is replaced by a stand-in. | Python only; RMLMapper and EYE tests run when those are installed |
+| **Live** (`-m live`) | The whole pipeline through the API against a real Fuseki, RMLMapper, and EYE. | Java and a Fuseki download |
+| **Browser** (`-m e2e`) | Every workspace in a real browser, from upload to Agent orchestration. | Also Playwright and a built frontend |
+| **Frontend** (`frontend/tests/`) | Display helpers and the orchestration logic (references, dependencies, stale agents). | Node.js |
+
 ```bash
-pip install pytest
-python -m pytest pipeline/tests
+pip install -r requirements-dev.txt
+python -m playwright install chromium     # for the browser tests (or use a local Google Chrome)
+
+python -m pytest                          # everything that can run here
+python -m pytest -m "not live and not e2e"   # the fast tests only, in a few seconds
+cd frontend && npm test                   # the frontend tests
 ```
 
-Tests that run RMLMapper are skipped automatically when Java or `pipeline/rmlmapper.jar` is missing. Tests that run EYE are skipped when neither native EYE nor the bundled reasoner is available.
+The live and browser tests start their own throwaway Fuseki on a free port and never touch the Fuseki you run on port 3030. They find Fuseki in `~/Downloads`, `~`, or `/opt`, or through `FUSEKI_HOME`. Tests whose tools are missing are skipped, with the reason in `python -m pytest -rs`. See the [testing guide](docs/testing.md) for details.
 
 ## 📄 License
 

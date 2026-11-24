@@ -1,6 +1,5 @@
 from io import BytesIO
 from datetime import datetime
-from pathlib import Path
 import shutil
 
 from fastapi.testclient import TestClient

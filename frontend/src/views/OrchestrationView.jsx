@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { api } from '../api.js'
 import { formatNumber, isAgentOutput, shortIri, timeAgo } from '../format.js'
 import QueryResults from '../components/QueryResults.jsx'
@@ -127,12 +128,12 @@ function AgentCard({
     const element = editor.current
     const start = element?.selectionStart ?? agent.query.length
     const end = element?.selectionEnd ?? start
-    onChange({ query: agent.query.slice(0, start) + text + agent.query.slice(end) })
-    requestAnimationFrame(() => {
-      if (!element) return
-      element.focus()
-      element.setSelectionRange(start + text.length, start + text.length)
-    })
+    // Commit the new text right away, so the cursor lands after the reference
+    // before anything else is typed.
+    flushSync(() => onChange({ query: agent.query.slice(0, start) + text + agent.query.slice(end) }))
+    if (!element) return
+    element.focus()
+    element.setSelectionRange(start + text.length, start + text.length)
   }
 
   const names = (agents) => agents.map((item) => `“${item.name}”`).join(', ')
