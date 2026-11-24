@@ -3,6 +3,7 @@
 from datetime import datetime, timezone
 import os
 from pathlib import Path
+import shutil
 
 from fastapi.testclient import TestClient
 import pytest
@@ -301,15 +302,35 @@ def test_blank_nodes_keep_their_identity_across_input_files(tmp_path):
     }
 
 
+def _native_engine():
+    command = os.getenv("EYE_COMMAND") or shutil.which("eye")
+    return eye_engine._native(command) if command else None
+
+
+def _bundled_engine():
+    node = shutil.which("node")
+    if node and eye_engine.BUNDLED_CLI.is_file():
+        return eye_engine.Engine("bundled", (node, str(eye_engine.BUNDLED_CLI)))
+    return None
+
+
+def _by_value(graph):
+    return {(s, p, o.toPython() if isinstance(o, Literal) else o) for s, p, o in graph}
+
+
 @needs_eye
 def test_native_eye_command_is_used_when_configured(tmp_path, monkeypatch):
     engine = eye_engine.find_engine()
-    if engine.kind != "bundled" or os.name == "nt":
-        pytest.skip("Uses a POSIX shell script that forwards to the bundled build.")
-    stand_in = tmp_path / "eye"
-    stand_in.write_text(f'#!/bin/sh\nexec "{engine.command[0]}" "{engine.command[1]}" "$@"\n', encoding="utf-8")
-    stand_in.chmod(0o755)
-    monkeypatch.setenv("EYE_COMMAND", str(stand_in))
+    if engine.kind == "native":
+        command = engine.command[-1]
+    elif os.name != "nt":
+        # Stand in for a native installation with a script that forwards to the bundled build.
+        command = tmp_path / "eye"
+        command.write_text(f'#!/bin/sh\nexec "{engine.command[0]}" "{engine.command[1]}" "$@"\n', encoding="utf-8")
+        command.chmod(0o755)
+    else:
+        pytest.skip("Needs native EYE, or a POSIX shell for the stand-in script.")
+    monkeypatch.setenv("EYE_COMMAND", str(command))
     work = tmp_path / "run"
     work.mkdir()
     data_path = _write(work / "mapped.ttl", LAMP_DATA)
@@ -319,6 +340,22 @@ def test_native_eye_command_is_used_when_configured(tmp_path, monkeypatch):
     assert result["engine"] == "native"
     assert result["inferred_triples"] == 2
     assert eye_engine.status()["engine"] == "native"
+
+
+@pytest.mark.skipif(
+    not (_native_engine() and _bundled_engine()),
+    reason="Needs both native EYE and the bundled build.",
+)
+@pytest.mark.parametrize("example_id", [example["id"] for example in eye_engine.EXAMPLES])
+def test_native_and_bundled_eye_derive_the_same_facts(tmp_path, monkeypatch, example_id):
+    data = Graph().parse(data=SENSOR_DATA, format="turtle")
+    _write(tmp_path / "rules.n3", _example_rules(example_id))
+    derived = {}
+    for engine in (_native_engine(), _bundled_engine()):
+        monkeypatch.setattr(eye_engine, "find_engine", lambda engine=engine: engine)
+        derived[engine.kind] = eye_engine.reason(tmp_path, data, "rules.n3", timeout=120).graph
+    assert derived["native"]
+    assert _by_value(derived["native"]) == _by_value(derived["bundled"])
 
 
 @needs_eye

@@ -149,10 +149,13 @@ Both builds take the same arguments, and the app treats them the same way. The b
 
 ### Installing native EYE
 
-1. Install [SWI-Prolog](https://www.swi-prolog.org/Download.html) and check it with `swipl --version`.
-   On macOS: `brew install swi-prolog`. On Ubuntu: `sudo apt install swi-prolog`. On Windows: use the installer.
-2. Download `eye.zip` from the [EYE releases](https://github.com/eyereasoner/eye/releases) and unzip it.
-3. Run the installation script in the unzipped folder.
+1. Install [SWI-Prolog](https://www.swi-prolog.org/Download.html) and check it with `swipl --version`:
+   - macOS: `brew install swi-prolog`
+   - Ubuntu or Debian: `sudo apt install swi-prolog` (the full package: EYE needs its `semweb` and `pcre` libraries)
+   - Windows: the installer from the SWI-Prolog website
+   - Without administrator rights, with conda: `conda create -n eye-swipl -c conda-forge swi-prolog`
+2. Download the source code of the [latest EYE release](https://github.com/eyereasoner/eye/releases/latest) (**Source code (zip)**) and unzip it.
+3. In the unzipped folder, run the installation script. `swipl` must be on your `PATH` while it runs; with conda, run `conda activate eye-swipl` first.
 
    **macOS / Linux**, to install into your home folder:
 
@@ -160,11 +163,18 @@ Both builds take the same arguments, and the app treats them the same way. The b
    ./install.sh --prefix=$HOME/.local
    ```
 
-   This creates `$HOME/.local/bin/eye`. Make sure `$HOME/.local/bin` is on your `PATH`.
+   This builds `$HOME/.local/lib/eye.pvm` and creates the launcher `$HOME/.local/bin/eye`. Make sure `$HOME/.local/bin` is on your `PATH`.
 
    **Windows**: run `install.cmd`, then add `C:\Program Files\eye\bin` to your `PATH`.
 
-4. Check it with `eye --version`, then restart `python run.py`. The Services panel then shows the native build.
+4. Check it with `eye --version`, then restart `python run.py`. Hover over **EYE reasoner** in the Services panel: it now says **Native EYE**.
+
+The launcher runs `swipl` from your `PATH`. If SWI-Prolog is not on your `PATH`, as with the conda option, edit `$HOME/.local/bin/eye` to use the full path to `swipl`, for example:
+
+```sh
+#!/bin/sh
+exec /home/you/anaconda3/envs/eye-swipl/bin/swipl -x /home/you/.local/lib/eye.pvm -- "$@"
+```
 
 To use an `eye` that is not on your `PATH`, set `EYE_COMMAND` to its full path, for example `EYE_COMMAND=/opt/eye/bin/eye python run.py`.
 
@@ -172,16 +182,18 @@ To use an `eye` that is not on your `PATH`, set `EYE_COMMAND` to its full path, 
 
 The app writes the input as N-Triples files of at most 100,000 triples each and has EYE read them with its `--turtle` parser, which is about ten times faster than its N3 parser. The run time shown in the result covers the whole run: loading the input, reasoning, and writing the reasoned RDF.
 
-Measured with the bundled build on the development machine, on `waterinfo-sample.csv` (32,244 triples):
+Total run times measured on the development machine with EYE v11.24.8. Both builds derived exactly the same facts.
 
-| Example | Run time |
-| --- | ---: |
-| Ontology reasoning | 5.5 s |
-| Classify readings | 5.0 s |
-| Summarise each sensor | 2.7 s |
-| Detect sudden changes | 3.6 s |
+| Example | Sample, 32,244 triples<br>bundled · native | Full `waterinfo.csv`, 837,870 triples<br>bundled · native |
+| --- | ---: | ---: |
+| Ontology reasoning | 5.4 s · 3.2 s | over 7 min (stopped) · 14 min |
+| Classify readings | 3.9 s · 2.6 s | 80 s · 72 s |
+| Summarise each sensor | 1.9 s · 1.7 s | over 14 min (stopped) · 41 s |
+| Detect sudden changes | 2.9 s · 2.0 s | not measured · 56 s |
 
-On the full `waterinfo.csv` (837,870 triples), **Classify readings** takes 80 seconds, 38 of them in EYE. **Ontology reasoning** had not finished after 7 minutes, because its generic OWL rules have a variable as the predicate of their conclusion (see [Rules that stay fast on large data](#rules-that-stay-fast-on-large-data)). For large datasets, install native EYE and write rules for your specific properties.
+- On the sample, native EYE itself is 2 to 3 times faster, but loading the input and writing the result takes about 1.5 seconds with either build.
+- On the full file, loading and writing take 35 to 45 seconds per run. Native EYE is what makes aggregation (**Summarise each sensor**) feasible at this size.
+- **Ontology reasoning** exceeds the default 5-minute limit on the full file even with native EYE, because its generic OWL rules have a variable as the predicate of their conclusion (see [Rules that stay fast on large data](#rules-that-stay-fast-on-large-data)). Raise `PIPELINE_COMMAND_TIMEOUT`, or write the rules for your specific properties.
 
 ## Troubleshooting
 

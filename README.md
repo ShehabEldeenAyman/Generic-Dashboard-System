@@ -197,11 +197,11 @@ There is nothing to do for the Reasoning workspace. The first time `python run.p
 > [!TIP]
 > For large datasets, install **native EYE** instead:
 >
-> 1. Install [SWI-Prolog](https://www.swi-prolog.org/Download.html): `brew install swi-prolog` on macOS, `sudo apt install swi-prolog` on Ubuntu, or the installer on Windows.
-> 2. Download `eye.zip` from the [EYE releases](https://github.com/eyereasoner/eye/releases), unzip it, and run `./install.sh --prefix=$HOME/.local` in it. This creates `$HOME/.local/bin/eye`; make sure that folder is on your `PATH`. On Windows, run `install.cmd` and add `C:\Program Files\eye\bin` to your `PATH`.
+> 1. Install [SWI-Prolog](https://www.swi-prolog.org/Download.html): `brew install swi-prolog` on macOS, `sudo apt install swi-prolog` on Ubuntu, or the installer on Windows. Without administrator rights: `conda create -n eye-swipl -c conda-forge swi-prolog`.
+> 2. Download the source code of the [latest EYE release](https://github.com/eyereasoner/eye/releases/latest), unzip it, and run `./install.sh --prefix=$HOME/.local` in it while `swipl` is on your `PATH`. This creates `$HOME/.local/bin/eye`; make sure that folder is on your `PATH`. On Windows, run `install.cmd` and add `C:\Program Files\eye\bin` to your `PATH`.
 > 3. Check that `eye --version` works. The app then uses native EYE automatically. To use an `eye` that is not on your `PATH`, set `EYE_COMMAND` to its full path.
 >
-> More in [Bundled or native EYE](docs/reasoning.md#bundled-or-native-eye).
+> More in [Installing native EYE](docs/reasoning.md#installing-native-eye), including what to do when `swipl` is not on your `PATH`.
 
 ### 6. Run Semantic Data Studio
 
